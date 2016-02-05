@@ -1,0 +1,16 @@
+Fri Feb 5th, 2016 -- Meeting with Ethan, Hardik, Leo
+    
+    - Agreed upon using Java with SableCC3 to do a GoLite compiler that compiles to Python
+    - Agreed upon which tools to use, documentation, etc.
+    
+    - Created a broad timeline for completing the milestone:
+        - Week 1: Write programs and agree on Scanner/tokens
+        - Week 2: Write CFG/parser/prettyprinter
+        - Week 3: Clean up the project and run lots of tests
+
+    - TODOs for next meeting:
+        - Each person should create a minimum of five correct and five incorrect programs
+        - Each person should write the first half of the sablecc document
+            - We will compare our documents and agree on one version together in the next meeting
+
+    - Next Meeting: Thu Feb 11th, 2016
