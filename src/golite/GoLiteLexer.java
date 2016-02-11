@@ -7,14 +7,26 @@ import golite.lexer.Lexer.State;
 import golite.node.*;
 
 
-// TODO: Document.
+/**
+ * GoLite Scanner.
+ */
 public class GoLiteLexer extends Lexer {
+    /** Tracks the last token seen. */
     private Token lastToken = null;
 
+    /**
+     * @param in - GoLite program reader
+     */
     public GoLiteLexer(PushbackReader in) {
         super(in);
     }
 
+    /**
+     * Checks if a semi-colon token needs to be entered into the scanning stream.
+     * 
+     * @return True if a semi-colon token (TSemi) needs to be inserted into the
+     *  scanning stream
+     */
     private boolean requiresSemi() {
         // if (state != State.NORMAL)
         //     return false;
@@ -49,6 +61,9 @@ public class GoLiteLexer extends Lexer {
                 this.lastToken instanceof TBquote);
     }
 
+    /**
+     * Updates the scanning stream.
+     */
     protected void filter() {
         if (requiresSemi())
             this.token = new TSemi();
