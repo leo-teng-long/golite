@@ -132,7 +132,8 @@ Tokens
     {normal} eol = lf | cr | cr lf ;
 
     // Single-line and block comments.
-    {normal} comment = '//' not_eol* | '/*' not_star* '*'+ (not_star_slash not_star* '*'+)* '*/' ;
+    // TODO: Fix to allow slashes in multi-liners.
+    {normal} comment = '//' not_eol* | ('/*' [all - '\']* '*/') ;
 
     /* Literals. */
     // Integer.
