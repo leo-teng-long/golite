@@ -1,1 +1,11 @@
+# Java .class files
+*.class
+
+# Stupid Mac directory utility files
 .DS_Store
+
+# SableCC 3 generated classes
+src/golite/analysis/
+src/golite/lexer/
+src/golite/node/
+src/golite/parser/
