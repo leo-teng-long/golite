@@ -133,7 +133,7 @@ Tokens
 
     // Single-line and block comments.
     // TODO: Fix to allow slashes in multi-liners.
-    {normal} comment = '//' not_eol* | ('/*' [all - '\']* '*/') ;
+    {normal} comment = '//' not_eol* | ('/*' [all - '/']* '*/') ;
 
     /* Literals. */
     // Integer.
