@@ -131,9 +131,10 @@ Tokens
     // End-of-line.
     {normal} eol = lf | cr | cr lf ;
 
-    // Single-line and block comments.
-    // TODO: Fix to allow slashes in multi-liners.
-    {normal} comment = '//' not_eol* | ('/*' [all - '/']* '*/') ;
+    // Single-line comment and multi-line comments.
+    {normal} comment = '//' not_eol* | '/*' ([all - '*'] | '*' [all - '/'])* '*/' ;
+    // Alternative form for handling multi-line comments:
+    // {normal} comment = '//' not_eol* | '/*' '*'* [all - '*']+ '*'+ ([all - ['*' + '/']] [all - '*']* '*'+)* '/' ;
 
     /* Literals. */
     // Integer.
