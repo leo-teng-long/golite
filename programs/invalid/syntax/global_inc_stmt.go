@@ -4,4 +4,8 @@
 package main;
 
 var i = 1
-i++ // Error
+i++ // Error: Top-level increment statement
+
+func main() {
+	// Do nothing
+}

@@ -3,6 +3,11 @@
 
 package main;
 
+// Error: Top-level for loop
 for i := 0; i < 10; i++ {
 	sum += 1
+}
+
+func main() {
+	// Do nothing
 }

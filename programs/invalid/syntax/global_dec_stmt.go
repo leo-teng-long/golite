@@ -4,4 +4,8 @@
 package main;
 
 var i = 1
-i--
+i-- // Error: Top-level decrement statement
+
+func main() {
+	// Do nothing
+}
