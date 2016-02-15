@@ -7,3 +7,7 @@ func loop() {
 		break
 	}
 }
+
+func main() {
+	loop()
+}

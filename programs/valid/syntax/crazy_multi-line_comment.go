@@ -8,4 +8,6 @@ var x int
  * /* /* /* comment /////.
  */
 
-print x
+func main() {
+	// Do nothing
+}

@@ -4,4 +4,6 @@ var x int
 
 /**/
 
-print x
+func main() {
+	print(x)
+}

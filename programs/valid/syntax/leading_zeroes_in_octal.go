@@ -2,3 +2,7 @@
 
 var o int = 000000001
 var z int = 0000
+
+func main() {
+	// Do nothing
+}
