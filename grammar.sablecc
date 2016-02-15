@@ -33,136 +33,123 @@ Helpers
     alpha = ['A' .. 'Z'] | ['a' .. 'z'] | '_' ;
     alpha_num = alpha | digit ;
 
-States
-    normal,
-    rune_lit,
-    interpreted_string_lit,
-    raw_string_lit;
-
 Tokens
     /* Go keywords. */
-    {normal} break = 'break' ;
-    {normal} case = 'case' ;
-    {normal} chan = 'chan' ;
-    {normal} const = 'const' ;
-    {normal} continue = 'continue' ;
-    {normal} default = 'default' ;
-    {normal} defer = 'defer' ;
-    {normal} else = 'else' ;
-    {normal} fallthrough = 'fallthrough' ;
-    {normal} for = 'for' ;
-    {normal} func = 'func' ;
-    {normal} go = 'go' ;
-    {normal} goto = 'goto' ;
-    {normal} if = 'if' ;
-    {normal} import = 'import' ;
-    {normal} interface = 'interface' ;
-    {normal} map = 'map' ;
-    {normal} package = 'package' ;
-    {normal} range = 'range' ;
-    {normal} return = 'return' ;
-    {normal} select = 'select' ;
-    {normal} struct = 'struct' ;
-    {normal} switch = 'switch' ;
-    {normal} type = 'type' ;
-    {normal} var = 'var' ;
+    break = 'break' ;
+    case = 'case' ;
+    chan = 'chan' ;
+    const = 'const' ;
+    continue = 'continue' ;
+    default = 'default' ;
+    defer = 'defer' ;
+    else = 'else' ;
+    fallthrough = 'fallthrough' ;
+    for = 'for' ;
+    func = 'func' ;
+    go = 'go' ;
+    goto = 'goto' ;
+    if = 'if' ;
+    import = 'import' ;
+    interface = 'interface' ;
+    map = 'map' ;
+    package = 'package' ;
+    range = 'range' ;
+    return = 'return' ;
+    select = 'select' ;
+    struct = 'struct' ;
+    switch = 'switch' ;
+    type = 'type' ;
+    var = 'var' ;
 
     /* GoLite keywords. */
-    {normal} int = 'int' ;
-    {normal} float64 = 'float64' ;
-    {normal} bool = 'bool' ;
-    {normal} rune = 'rune' ;
-    {normal} string = 'string' ;
-    {normal} print = 'print' ;
-    {normal} println = 'println' ;
-    {normal} append = 'append' ;
+    int = 'int' ;
+    float64 = 'float64' ;
+    bool = 'bool' ;
+    rune = 'rune' ;
+    string = 'string' ;
+    print = 'print' ;
+    println = 'println' ;
+    append = 'append' ;
 
     /*  Operators. */
-    {normal} plus = '+' ;
-    {normal} minus = '-' ;
-    {normal} star = '*' ;
-    {normal} slash = '/' ;
-    {normal} perc = '%' ;
-    {normal} amp = '&' ;
-    {normal} pipe = '|' ;
-    {normal} carot = '^';
-    {normal} lshift = '<<' ;
-    {normal} rshift = '>>' ;
-    {normal} amp_carot = '&^' ;
-    {normal} plus_assign = '+=' ;
-    {normal} minus_assign = '-=' ;
-    {normal} star_assign = '*=' ;
-    {normal} slash_assign = '/=' ;
-    {normal} perc_assign = '%=' ;
-    {normal} and_assign = '&=' ;
-    {normal} pipe_assign = '|=' ;
-    {normal} carot_assign = '^=' ;
-    {normal} lshift_assign = '<<=' ;
-    {normal} rshift_assign = '>>=' ;
-    {normal} amp_carot_assign = '&^=' ;
-    {normal} amp_amp = '&&' ;
-    {normal} pipe_pipe = '||' ;
-    {normal} arrow = '<-' ;
-    {normal} plus_plus = '++' ;
-    {normal} minus_minus = '--' ;
-    {normal} equals = '==' ;
-    {normal} lt = '<' ;
-    {normal} gt = '>' ;
-    {normal} assing = '=' ;
-    {normal} not = '!' ;
-    {normal} not_equals = '!=' ;
-    {normal} lte = '<=' ;
-    {normal} gte = '>=' ;
-    {normal} short_assign = ':=' ;
-    {normal} ellipsis = '...' ;
-    {normal} lparen = '(' ;
-    {normal} rparen = ')' ;
-    {normal} lsquare = '[' ;
-    {normal} rsquare = ']' ;
-    {normal} lbrace = '{' ;
-    {normal} rbrace = '}' ;
-    {normal} comma = ',' ;
-    {normal} semi = ';' ;
-    {normal} dot = '.' ;
-    {normal} colon = ':' ;
+    plus = '+' ;
+    minus = '-' ;
+    star = '*' ;
+    slash = '/' ;
+    perc = '%' ;
+    amp = '&' ;
+    pipe = '|' ;
+    carot = '^';
+    lshift = '<<' ;
+    rshift = '>>' ;
+    amp_carot = '&^' ;
+    plus_assign = '+=' ;
+    minus_assign = '-=' ;
+    star_assign = '*=' ;
+    slash_assign = '/=' ;
+    perc_assign = '%=' ;
+    and_assign = '&=' ;
+    pipe_assign = '|=' ;
+    carot_assign = '^=' ;
+    lshift_assign = '<<=' ;
+    rshift_assign = '>>=' ;
+    amp_carot_assign = '&^=' ;
+    amp_amp = '&&' ;
+    pipe_pipe = '||' ;
+    arrow = '<-' ;
+    plus_plus = '++' ;
+    minus_minus = '--' ;
+    equals = '==' ;
+    lt = '<' ;
+    gt = '>' ;
+    assing = '=' ;
+    not = '!' ;
+    not_equals = '!=' ;
+    lte = '<=' ;
+    gte = '>=' ;
+    short_assign = ':=' ;
+    ellipsis = '...' ;
+    lparen = '(' ;
+    rparen = ')' ;
+    lsquare = '[' ;
+    rsquare = ']' ;
+    lbrace = '{' ;
+    rbrace = '}' ;
+    comma = ',' ;
+    semi = ';' ;
+    dot = '.' ;
+    colon = ':' ;
 
     // Blank space.
-    {normal} blank = ' ' | tab ;
+    blank = ' ' | tab ;
     // End-of-line.
-    {normal} eol = lf | cr | cr lf ;
+    eol = lf | cr | cr lf ;
 
     // Single-line comment and multi-line comments.
-    {normal} comment = '//' not_eol* | '/*' ([all - '*'] | '*' [all - '/'])* '*/' ;
+    comment = '//' not_eol* | '/*' ([all - '*'] | '*' [all - '/'])* '*/' ;
     // Alternative form for handling multi-line comments:
-    // {normal} comment = '//' not_eol* | '/*' '*'* [all - '*']+ '*'+ ([all - ['*' + '/']] [all - '*']* '*'+)* '/' ;
+    // comment = '//' not_eol* | '/*' '*'* [all - '*']+ '*'+ ([all - ['*' + '/']] [all - '*']* '*'+)* '/' ;
 
     /* Literals. */
     // Integer.
-    {normal} int_lit = '0' | pos_digit digit* ;
-    {normal} oct_lit = '0' oct_digit+ ;
-    {normal} hex_lit = '0' ['x' + 'X'] hex_digit+ ;
+    int_lit = '0' | pos_digit digit* ;
+    oct_lit = '0' oct_digit+ ;
+    hex_lit = '0' ['x' + 'X'] hex_digit+ ;
 
     // Floating-point.
-    {normal} float_lit = ('0' | pos_digit digit*)? '.' digit* | '.' digit+ ;
+    float_lit = ('0' | pos_digit digit*)? '.' digit* | '.' digit+ ;
 
     // Rune.
-    {normal->rune_lit, rune_lit->normal} squote = squote ;
-    {rune_lit} rune_lit = [not_eol - [squote + '\']] | escape_squote ;
+    rune_lit = squote ([not_eol - [squote + '\']] | escape_squote| escapes) squote ;
 
     // Interpreted string.
-    {normal->interpreted_string_lit, interpreted_string_lit->normal} dquote = dquote ;    
-    {interpreted_string_lit} escape_dquote = escape_dquote ;
-    {interpreted_string_lit} interpreted_string_chars = [not_eol - [dquote + '\']]* ;
-
-    // Rune or interpreted string.
-    {rune_lit, interpreted_string_lit} escapes = escapes ;
+    interpreted_string_lit = dquote ([not_eol - [dquote + '\']] | escape_dquote| escapes)* dquote ;
 
     // Raw string.
-    {normal->raw_string_lit, raw_string_lit->normal} bquote = bquote ;
-    {raw_string_lit} raw_string_lit = [all - bquote]*;
+    raw_string_lit = bquote [all - bquote]* bquote ;
 
     /* Identifiers. */
-    {normal} id = alpha alpha_num*;
+    id = alpha alpha_num* ;
 
 Ignored Tokens
     blank, eol, comment ;

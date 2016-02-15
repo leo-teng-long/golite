@@ -56,9 +56,9 @@ public class GoLiteLexer extends Lexer {
                 this.lastToken instanceof TOctLit ||
                 this.lastToken instanceof THexLit ||
                 this.lastToken instanceof TFloatLit ||
-                this.lastToken instanceof TSquote ||
-                this.lastToken instanceof TDquote ||
-                this.lastToken instanceof TBquote);
+                this.lastToken instanceof TRuneLit ||
+                this.lastToken instanceof TInterpretedStringLit ||
+                this.lastToken instanceof TRawStringLit);
     }
 
     /**
