@@ -1,1 +1,1 @@
-# comp520-2016-05
+# COMP 520 Project, Group 5 a.k.a. The Heapsters
