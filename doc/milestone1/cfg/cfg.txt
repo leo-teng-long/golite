@@ -1,8 +1,23 @@
+-------------Mon Feb 15th---------------
 prog = pack_dec top_dec*
 pack_dec = package id semi
-top_dec = var_dec | type_dec | func_dec
+top_dec = top_var_dec | top_type_dec | func_dec
 func_dec = func id lparen args rparen type? lbrace stmt* rbrace semi
 args = (args_of_type comma)* args_of_type
 args_of_type = id_list type
-id_list = id (comma id)
+id_list = id (comma id)*
 type = int | float64 | string | rune | id
+
+-------------Tue Feb 16th---------------
+top_var_dec = var var_dec | var lparen var_dec* rparen semi
+var_dec = id_list type semi | id_list type? eq exp_list semi
+exp_list = exp (comma exp)*
+
+top_type_dec = type type_dec | type lparen type_dec* rparen semi
+type_dec = id type semi | id struct lbrace (id_list type semi)* rbrace semi
+
+type = list_type | def_type
+def_type = int | float64 | string | rune | id
+list_type = array | slice
+array = lbracket int_lit rbracket prim_type
+slice = lbracket rbracket prim_type
