@@ -95,6 +95,9 @@ class Main {
      * along with the underlying scanned text in brackets (except for TEol token).
      *
      * @param inPath - Filepath to GoLite program to scan
+     *
+     * Consulted <a href="http://www.sable.mcgill.ca/~hendren/520/2016/tiny/sablecc-3/tiny/Main.java">
+     * Main.java</a> of the Tiny language example on the course website.
      */
     public static void displayTokens(String inPath) throws LexerException, IOException {
 
