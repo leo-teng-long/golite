@@ -1,5 +1,9 @@
 # COMP 520 Project, Group 5 a.k.a. The Heapsters
 
+## Requirements
+
+Java SE 7 or higher
+
 ## Milestone #1
 
 ### Sources
