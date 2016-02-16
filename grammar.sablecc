@@ -154,6 +154,51 @@ Tokens
 Ignored Tokens
     blank, eol, comment ;
 
-// (Empty for now...)
 Productions
-    program = return ;
+    expr =
+          {conjunction} conjunction
+        | {cst_or}      expr pipe_pipe conjunction ;
+
+    conjunction =
+          {clause} clause
+        | {cst_and} conjunction amp_amp clause ;
+
+    clause =
+          {sub_expr} sub_expr
+        | {cst_eq} clause equals sub_expr
+        | {cst_neq} clause not_equals sub_expr
+        | {cst_lt} clause lt sub_expr
+        | {cst_lte} clause lte sub_expr
+        | {cst_gt} clause gt sub_expr
+        | {cst_gte} clause gte sub_expr ;
+
+    sub_expr =
+          {factor} factor
+        | {cst_plus} sub_expr plus factor
+        | {cst_minus} sub_expr minus factor
+        | {cst_bit_or} sub_expr pipe factor
+        | {cst_bit_xor} sub_expr carot factor ;
+
+    factor =
+          {term} term
+        | {cst_mult} factor star term
+        | {cst_div} factor slash term
+        | {cst_mod} factor perc term
+        | {cst_lshift} factor lshift term
+        | {cst_rshift} factor rshift term
+        | {cst_bit_and} factor amp term
+        | {cst_bit_clear} factor amp_carot term ;
+
+    term =
+          {cst_lit} lit
+        | {cst_id} id
+        | {paren} lparen expr rparen ;
+
+    lit =
+          {int_lit} int_lit
+        | {oct_lit} oct_lit
+        | {hex_lit} hex_lit
+        | {float_lit} float_lit
+        | {rune_lit} rune_lit
+        | {interpreted_string_lit} interpreted_string_lit
+        | {raw_string_lit} raw_string_lit ;
