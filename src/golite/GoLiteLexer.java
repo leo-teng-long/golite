@@ -9,6 +9,9 @@ import golite.node.*;
 
 /**
  * GoLite Scanner.
+ *
+ * Used <a href="http://www.sable.mcgill.ca/~hendren/520/2016/semicolon-test/go/GoLexer.java">
+ * GoLexer.java</a> in the example SableCC code for handling the GoLite semicolon rule.
  */
 public class GoLiteLexer extends Lexer {
     /** Tracks the last token seen. */
@@ -28,9 +31,6 @@ public class GoLiteLexer extends Lexer {
      *  scanning stream
      */
     private boolean requiresSemi() {
-        // if (state != State.NORMAL)
-        //     return false;
-
         return
             (this.token instanceof TEol || this.token instanceof EOF) &&
             (this.lastToken instanceof TId ||
