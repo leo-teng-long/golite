@@ -1,0 +1,8 @@
+prog = pack_dec top_dec*
+pack_dec = package id semi
+top_dec = var_dec | type_dec | func_dec
+func_dec = func id lparen args rparen type? lbrace stmt* rbrace semi
+args = (args_of_type comma)* args_of_type
+args_of_type = id_list type
+id_list = id (comma id)
+type = int | float64 | string | rune | id
