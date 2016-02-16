@@ -1,6 +1,6 @@
 /* Escaped double quote rune. */
 
-package escaped_dquote_rune
+package main
 
 var r rune = '\"' // Error: Escaped double quote note allowed as a rune
 

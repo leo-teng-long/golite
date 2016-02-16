@@ -1,5 +1,7 @@
 /* A crazy multi-line comment. */
 
+package main
+
 var x int
 
 /* *** This //* is a *** crazy

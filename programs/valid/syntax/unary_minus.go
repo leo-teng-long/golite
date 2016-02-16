@@ -1,6 +1,6 @@
 /* Unary minus. */
 
-package unary_minus
+package main
 
 var x: int
 

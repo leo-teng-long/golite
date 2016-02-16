@@ -1,6 +1,6 @@
 /* Empty function. */
 
-package empty_func
+package main
 
 func f() {}
 

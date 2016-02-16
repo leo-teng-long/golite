@@ -1,6 +1,6 @@
 /* Multi-character rune. */
 
-package multicharacter_rune
+package main
 
 var r rune = 'ab'
 

@@ -1,6 +1,6 @@
 /* Invalid hexidecimal digit */
 
-package invalid_hex_digit
+package main
 
 var h int = 0xG // Error: Not a hexidecimal digit
 

@@ -1,6 +1,6 @@
 /* Infinite loop. */
 
-package infinite_loop
+package main
 
 func loop() {
 	for {

@@ -2,6 +2,8 @@
  * pi(x)), x > 0, using the crude approximation given by the prime number
  * theorem (x/lnx). */
 
+package main
+
 var x float64 = 100
 var lnx, term float64
 var niter int = 100

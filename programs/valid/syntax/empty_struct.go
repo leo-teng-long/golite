@@ -1,6 +1,6 @@
 /* Empty struct. */
 
-package empty_struct
+package main
 
 type empt struct {
 	

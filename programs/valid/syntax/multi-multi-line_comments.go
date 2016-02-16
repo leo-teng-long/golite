@@ -1,5 +1,7 @@
 /* Multiple multi-line comments. */
 
+package main
+
 var x int
 
 /* Another multi-line comment. */

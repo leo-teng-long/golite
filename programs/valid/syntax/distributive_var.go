@@ -1,6 +1,6 @@
 /* "Distributive" var declaration. */
 
-package distributive_var
+package main
 
 var (
         x int
