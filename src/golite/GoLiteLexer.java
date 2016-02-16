@@ -10,7 +10,7 @@ import golite.node.*;
 /**
  * GoLite Scanner.
  *
- * Used <a href="http://www.sable.mcgill.ca/~hendren/520/2016/semicolon-test/go/GoLexer.java">
+ * Consulted <a href="http://www.sable.mcgill.ca/~hendren/520/2016/semicolon-test/go/GoLexer.java">
  * GoLexer.java</a> in the example SableCC code for handling the GoLite semicolon rule.
  */
 public class GoLiteLexer extends Lexer {
