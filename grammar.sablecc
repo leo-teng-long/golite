@@ -102,7 +102,7 @@ Tokens
     equals = '==' ;
     lt = '<' ;
     gt = '>' ;
-    assing = '=' ;
+    assign = '=' ;
     not = '!' ;
     not_equals = '!=' ;
     lte = '<=' ;
@@ -155,7 +155,57 @@ Ignored Tokens
     blank, eol, comment ;
 
 Productions
-    /* Expression */
+    /* Program */
+    
+    prog = {prog} pack_dec top_dec* ;
+
+    /* Package declaration */
+
+    pack_dec = {pack} package id semi ;
+    
+    /* Top-level declaration */
+
+    top_dec = {top} top_var_dec ; // TODO: Add to top_dec: top_type_dec | func_dec
+
+    /*
+        TODO: Add these productions:
+
+        func_dec = func id lparen args rparen val_type? lbrace stmt* rbrace semi
+        args = (args_of_type comma)* args_of_type
+        args_of_type = id_list val_type
+    */
+
+    /* Variable declarations */
+
+    top_var_dec =
+          {top_var} var var_dec
+        | {top_var_dist} var lparen var_dec* rparen semi ;
+
+    var_dec =
+          {var_dec} id_list val_type semi
+        | {var_dec_init} id_list assign expr_list semi
+        | {var_dec_typed_init} id_list val_type assign expr_list semi ;
+
+    /* Identifiers */
+
+    id_list =
+          {id} id
+        | {cst_ids} id comma id_list ;
+
+    /* Types */
+
+    val_type =
+          {int} int
+        | {float} float64
+        | {string} string
+        | {rune} rune
+        | {id} id ;
+
+    /* Expressions */
+
+    expr_list =
+          {expr} expr
+        | {cst_exprs} expr comma expr_list ;
 
     expr =
           {conjunction} conjunction
