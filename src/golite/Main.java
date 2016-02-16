@@ -13,20 +13,25 @@ class Main {
 
     public static void main(String args[]) {
         try {
-            if (args.length == 0)
+            if (args.length < 2 || args.length > 2)
                 printUsage();
-            else if (args[0].equals("-print")) {
-                if (args.length == 1)
-                    printUsage();
-                else
-                    // Display the scanned tokens in the GoLite program designated by
-                    // the argument filepath.
-                    displayTokens(args[1]);
-            } else {
-                if (scan(args[0]))
+            // Scan.
+            else if (args[0].equals("-scan")) {
+                if (scan(args[1]))
                     System.out.println("VALID");
                 else
                     System.out.println("INVALID");
+            // Parse.
+            } else if (args[0].equals("-parse")) {
+                if (parse(args[1]))
+                    System.out.println("VALID");
+                else
+                    System.out.println("INVALID");
+            // Print scanner tokens to stdout.
+            } else if (args[0].equals("-printTokens"))
+                displayTokens(args[1]);
+            else {
+                printUsage();
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -37,7 +42,7 @@ class Main {
      * Prints the command-line usage to stderr.
      */
     public static void printUsage() {
-        System.err.println("Usage: Main [-print] filename");
+        System.err.println("Usage: Main -[scan | parse | printTokens] filename");
     }
 
     /**
@@ -57,10 +62,31 @@ class Main {
                 token = lexer.next()
             ) {}
         } catch (LexerException le) {
-            System.err.println(le);
+            System.err.println("ERROR: " + le);
             return false;
         }
         
+        return true;
+    }
+
+    /**
+     * Parses a GoLite program.
+     *
+     * @param inPath - Filepath to GoLite program to parse
+     * @return True if the program passed parsing, false otherwise (If false, prints the error to
+     *  stderr as well)
+     */
+    public static boolean parse(String inPath) throws IOException {
+        try {
+            Lexer lexer = new GoLiteLexer(new PushbackReader(new FileReader(inPath), 1024));
+            Parser p = new Parser(lexer);
+            p.parse();
+        }
+        catch (LexerException|ParserException e) {
+            System.err.println("ERROR: " + e);
+            return false;
+        }
+
         return true;
     }
 
@@ -69,6 +95,9 @@ class Main {
      * along with the underlying scanned text in brackets (except for TEol token).
      *
      * @param inPath - Filepath to GoLite program to scan
+     *
+     * Consulted <a href="http://www.sable.mcgill.ca/~hendren/520/2016/tiny/sablecc-3/tiny/Main.java">
+     * Main.java</a> of the Tiny language example on the course website.
      */
     public static void displayTokens(String inPath) throws LexerException, IOException {
 

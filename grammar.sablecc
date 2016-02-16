@@ -155,6 +155,8 @@ Ignored Tokens
     blank, eol, comment ;
 
 Productions
+    /* Expression */
+
     expr =
           {conjunction} conjunction
         | {cst_or}      expr pipe_pipe conjunction ;
@@ -190,9 +192,18 @@ Productions
         | {cst_bit_clear} factor amp_carot term ;
 
     term =
-          {cst_lit} lit
-        | {cst_id} id
+          {atom} atom
+        | {cst_pos} plus atom
+        | {cst_neg} minus atom
+        | {cst_not} not atom
+        | {cst_bit_comp} carot atom ;
+
+    atom =
+          {lit} lit
+        | {id} id
         | {paren} lparen expr rparen ;
+
+    /* Literals */
 
     lit =
           {int_lit} int_lit
