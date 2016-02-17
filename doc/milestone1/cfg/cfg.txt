@@ -22,10 +22,6 @@ list_type = array | slice
 array = lbracket int_lit rbracket prim_type
 slice = lbracket rbracket prim_type
 
-stmt = (exp_stmt | assign | dec | short_dec ...) semi
-
-dec = top_var_dec | top_type_dec | short_dec
-
 assign = reg_assign | op_assign
 reg_assign = id_list eq exp_list
 op_assign = id op exp
@@ -33,9 +29,6 @@ op_assign = id op exp
 exp_stmt = exp
 
 short_dec = id_list short_assign expr_lit semi
-
-increment_smt = id inc
-decrement_smt = id dec
 
 print_smt = print lparen exp_list rparen
 println_smt = println lparen exp_list rparen
@@ -52,3 +45,10 @@ elif = rbrace else if exp lbrace smt*
 loop_smt = for_loop | while_loop
 for_loop = for short_assign semi expr semi increment lbrace smt* rbrace
 while_loop = for expr? lbrace smt* rbrace
+
+-------------Wed Feb 17th---------------
+switch = switch (simple_stmt semi)? exp? lbrace switch_clause rbrace semi
+simple_stmt = empty_stmt | exp_stmt | inc_decrement | assign | short_dec
+stmt = simple_stmt | top_var_dec | top_type_dec | print_stmt | println_stmt | return_stmt | if_stmt | if_else_stmt | switch_stmt | loop_stmt | break_stmt | continue_stmt
+stmt_list = (stmt semi)*
+inc_decrement = id (increment | decrement)
