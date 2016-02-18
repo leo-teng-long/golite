@@ -9,16 +9,8 @@ id_list = id (comma id)*
 type = int | float64 | string | rune | id
 
 -------------Tue Feb 16th---------------
-top_var_dec = var var_dec | var lparen var_dec* rparen semi
-var_dec = id_list type semi | id_list type? eq exp_list semi
 exp_list = exp (comma exp)*
 
-top_type_dec = type type_dec | type lparen type_dec* rparen semi
-type_dec = id type semi | id struct lbrace (id_list type semi)* rbrace semi
-
-type = list_type | def_type
-def_type = int | float64 | string | rune | id
-list_type = array | slice
 array = lbracket int_lit rbracket prim_type
 slice = lbracket rbracket prim_type
 
@@ -50,5 +42,20 @@ while_loop = for expr? lbrace smt* rbrace
 switch = switch (simple_stmt semi)? exp? lbrace switch_clause rbrace semi
 simple_stmt = empty_stmt | exp_stmt | inc_decrement | assign | short_dec
 stmt = simple_stmt | top_var_dec | top_type_dec | print_stmt | println_stmt | return_stmt | if_stmt | if_else_stmt | switch_stmt | loop_stmt | break_stmt | continue_stmt
-stmt_list = (stmt semi)*
+stmt_list = (stmt semi)* stmt?
 inc_decrement = id (increment | decrement)
+
+type = list_type | def_type | string_type
+def_type = int | float64 | rune | id 
+string_type = string
+list_type = array | slice
+
+top_var_dec = var var_dec | var lparen (var_dec semi)* var_dec? rparen
+var_dec = id_list type | id_list type? eq exp_list
+
+top_type_dec = type type_dec | type lparen (type_dec semi)* type_dec? rparen
+type_dec = id type | id struct lbrace (id_list type semi)* (id_list type)? rbrace
+
+func_exp = id lparen exp_list rparen
+append_exp = append lparen id comma exp rparen
+cast_exp = type lparen expr rparen
