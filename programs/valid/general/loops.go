@@ -22,7 +22,7 @@ func main() {
 	for sum < 10 {
 		sum++
 	}
-	for ; sum > 0; {
+	for sum > 0 {
 		sum--
 	}
 }
