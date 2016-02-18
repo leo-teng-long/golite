@@ -2,7 +2,8 @@
 
 ## Requirements
 
-Java SE 7 or higher
+* Java SE 7 or higher
+* [sablecc-3.7](http://www.sablecc.org/) in `src` directory
 
 ## Milestone #1
 
