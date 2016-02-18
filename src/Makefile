@@ -2,7 +2,7 @@ run: build
 	./run.sh
 
 build: clean
-	java -jar ./sablecc-3.7/lib/sablecc.jar ../grammar.sablecc -d .
+	java -jar ./sablecc-3.7/lib/sablecc.jar golite.sablecc -d .
 	javac golite/*.java golite/lexer/*.java golite/parser/*.java golite/node/*.java golite/analysis/*.java
 
 clean:
