@@ -170,15 +170,8 @@ Productions
     top_dec =
           {top_var_dec} top_var_dec
         | {top_type_dec} top_type_dec
-        | {top_struct_dec} top_struct_dec ; // TODO: Add to top_dec: func_dec
-
-    /*
-        TODO: Add these productions:
-
-        func_dec = func id lparen args rparen val_type? lbrace stmt* rbrace semi
-        args = (args_of_type comma)* args_of_type
-        args_of_type = id_list val_type
-    */
+        | {top_struct_dec} top_struct_dec
+        | {func_dec} func_dec ;
 
     /* Variable declarations */
 
@@ -215,15 +208,38 @@ Productions
 
     top_struct_dec = {top_struct_stmt} struct_dec semi ;
 
-    struct_dec = {struct_dec} id struct lbrace struct_dec_stmt* rbrace ;
+    struct_dec = {struct_dec} id struct lbrace struct_dec_list rbrace ;
 
-    struct_dec_stmt = {struct_dec_stmt} id_list val_type tail ;
+    struct_dec_list =
+          {struct_dec_list_semi} struct_dec_sub*
+        | {struct_dec_list} struct_dec_sub* id_list val_type ;
 
-    // Tail for optional ending semi-colons
-    tail =
-          {tail_semi} semi
-        | {tail_empty} ;
+    struct_dec_sub = {struct_dec_sub} id_list val_type semi ;
 
+    /* Function declaration */
+
+    func_dec =
+          {func_dec_args_rettype} func id lparen args rparen val_type lbrace stmt* rbrace semi
+        | {func_dec_args_no_rettype} func id lparen args rparen lbrace stmt* rbrace semi
+        | {func_dec_no_args_rettype} func id lparen rparen val_type lbrace stmt* rbrace semi
+        | {func_dec_no_args_no_rettype} func id lparen args rparen lbrace stmt* rbrace semi ;
+    
+    args = {func_args} arg_non_tail* arg_of_type ;
+
+    arg_non_tail = {func_arg_non_tail} arg_of_type comma ;
+
+    arg_of_type = {arg_of_type} id_list val_type ;
+
+    /* Statements */
+
+    stmt =
+          {simple_stmt} simple_stmt
+        | {top_var_dec_stmt} top_var_dec
+        | {top_type_dec_stmt}
+        | {print_stmt} print_stmt
+        | {println_stmt} println_stmt
+        | {return_stmt} return_stmt
+        | {if_stmt} if_stmt ;
 
     /* Identifiers */
 
