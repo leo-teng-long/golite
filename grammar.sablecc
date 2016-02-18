@@ -155,6 +155,8 @@ Ignored Tokens
     blank, eol, comment ;
 
 Productions
+    // TODO: Fix variable naming.
+
     /* Program */
     
     prog = {prog} pack_dec top_dec* ;
@@ -163,9 +165,12 @@ Productions
 
     pack_dec = {pack} package id semi ;
     
-    /* Top-level declaration */
+    /* Top-level declarations */
 
-    top_dec = {top} top_var_dec ; // TODO: Add to top_dec: top_type_dec | func_dec
+    top_dec =
+          {top_var_dec} top_var_dec
+        | {top_type_dec} top_type_dec
+        | {top_struct_dec} top_struct_dec ; // TODO: Add to top_dec: func_dec
 
     /*
         TODO: Add these productions:
@@ -178,13 +183,47 @@ Productions
     /* Variable declarations */
 
     top_var_dec =
-          {top_var} var var_dec
-        | {top_var_dist} var lparen var_dec* rparen semi ;
+          {top_var_stmt} var var_dec semi
+        | {top_var_dist_stmt} var lparen var_dist_dec_list rparen semi ;
+
+    var_dist_dec_list =
+          {var_dist_dec_list_semi} var_dist_dec_sub*
+        | {var_dist_dec_list} var_dist_dec_sub* var_dec ;
+
+    var_dist_dec_sub = {var_dist_dec_sub} var_dec semi ;
 
     var_dec =
-          {var_dec} id_list val_type semi
-        | {var_dec_init} id_list assign expr_list semi
-        | {var_dec_typed_init} id_list val_type assign expr_list semi ;
+          {var_dec} id_list val_type
+        | {var_dec_init} id_list assign expr_list
+        | {var_dec_typed_init} id_list val_type assign expr_list ;
+    
+    /* Type declarations */
+
+    top_type_dec =
+          {top_type_stmt} type type_dec semi
+        | {top_type_dist_stmt} type lparen type_dist_dec_list rparen semi ;
+
+    type_dist_dec_list =
+          {type_dist_dec_list_semi} type_dist_dec_sub*
+        | {type_dist_dec_list} type_dist_dec_sub* type_dec ;
+
+    type_dist_dec_sub = {type_dist_dec_sub} type_dec semi ;
+
+    type_dec = {type_dec} id val_type ;
+
+    /* Struct declaration */
+
+    top_struct_dec = {top_struct_stmt} struct_dec semi ;
+
+    struct_dec = {struct_dec} id struct lbrace struct_dec_stmt* rbrace ;
+
+    struct_dec_stmt = {struct_dec_stmt} id_list val_type tail ;
+
+    // Tail for optional ending semi-colons
+    tail =
+          {tail_semi} semi
+        | {tail_empty} ;
+
 
     /* Identifiers */
 
