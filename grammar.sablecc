@@ -290,7 +290,15 @@ Productions
     atom =
           {lit} lit
         | {id} id
+        | {func_exp} func_exp
         | {paren} lparen expr rparen ;
+
+    func_exp = /* MORE TESTING NEEDED */
+          {append} append lparen expr_list rparen 
+        | {rune} rune lparen expr_list rparen 
+        | {float64} float64 lparen expr_list rparen 
+        | {int} int lparen expr_list rparen 
+        | {id} id lparen expr_list rparen ;
 
     /* Literals */
 

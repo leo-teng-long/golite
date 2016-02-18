@@ -9,3 +9,6 @@ src/golite/analysis/
 src/golite/lexer/
 src/golite/node/
 src/golite/parser/
+
+# SableCC 3 Source Code
+src/sablecc-3.7
