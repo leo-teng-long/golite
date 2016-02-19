@@ -157,15 +157,15 @@ Ignored Tokens
 Productions
     // TODO: Fix variable naming.
 
-    ///* Program */
+    /* Program */
     
     prog = {prog} pack_dec top_dec* ;
 
-    ///* Package declaration */
+    /* Package declaration */
 
     pack_dec = {pack} package id semi ;
     
-    ///* Top-level declarations */
+    /* Top-level declarations */
 
     top_dec =
           {top_var_dec} top_var_dec
@@ -173,15 +173,11 @@ Productions
         | {top_struct_dec} top_struct_dec
         | {func_dec} func_dec ;
 
-    ///* Variable declarations */
+    /* Variable declarations */
 
     top_var_dec =
           {top_var_stmt} var var_dec semi
-        | {top_var_dist_stmt} var lparen var_dist_dec_list rparen semi ;
-
-    var_dist_dec_list =
-          {var_dist_dec_list_semi} var_dist_dec_sub*
-        | {var_dist_dec_list} var_dist_dec_sub* var_dec ;
+        | {top_var_dist_stmt} var lparen var_dist_dec_sub rparen semi ;
 
     var_dist_dec_sub = {var_dist_dec_sub} var_dec semi ;
 
@@ -190,33 +186,25 @@ Productions
         | {var_dec_init} id_list assign expr_list
         | {var_dec_typed_init} id_list val_type assign expr_list ;
     
-    ///* Type declarations */
+    /* Type declarations */
 
     top_type_dec =
           {top_type_stmt} type type_dec semi
-        | {top_type_dist_stmt} type lparen type_dist_dec_list rparen semi ;
-
-    type_dist_dec_list =
-          {type_dist_dec_list_semi} type_dist_dec_sub*
-        | {type_dist_dec_list} type_dist_dec_sub* type_dec ;
+        | {top_type_dist_stmt} type lparen type_dist_dec_sub* rparen semi ;
 
     type_dist_dec_sub = {type_dist_dec_sub} type_dec semi ;
 
     type_dec = {type_dec} id val_type ;
 
-    ///* Struct declaration */
+    /* Struct declaration */
 
     top_struct_dec = {top_struct_stmt} struct_dec semi ;
 
-    struct_dec = {struct_dec} id struct lbrace struct_dec_list rbrace ;
-
-    struct_dec_list =
-          {struct_dec_list_semi} struct_dec_sub*
-        | {struct_dec_list} struct_dec_sub* id_list val_type ;
+    struct_dec = {struct_dec} id struct lbrace struct_dec_sub* rbrace ;
 
     struct_dec_sub = {struct_dec_sub} id_list val_type semi ;
 
-    ///* Function declaration */
+    /* Function declaration */
 
     func_dec =
           {func_dec_args_rettype} func id lparen args rparen val_type lbrace stmt_list rbrace semi
@@ -230,7 +218,7 @@ Productions
 
     arg_of_type = {arg_of_type} id_list val_type ;
 
-    ///* Statements */
+    /* Statements */
 
     stmt_list =
           {simple} stmt semi
@@ -245,7 +233,10 @@ Productions
         | {return_stmt} return_stmt */ /* TODO: finish this production */
 
     simple_stmt =
-          {empty_stmt} ; /* TODO: finish this production */
+          {empty_stmt}
+        | {expr_stmt} expr_stmt ; // TODO: inc_decrement | assign | short_dec
+
+    expr_stmt = {expr} expr semi ;
 
     print_stmt = 
           {print} print lparen expr_list rparen ;
@@ -257,13 +248,13 @@ Productions
           {return} return 
         | {return_with_exp} return expr ;
 
-    ///* Identifiers */
+    /* Identifiers */
 
     id_list =
           {id} id
         | {cst_ids} id comma id_list ;
 
-    ///* Types */
+    /* Types */
 
     val_type =
           {int} int
@@ -272,7 +263,7 @@ Productions
         | {rune} rune
         | {id} id ;
 
-    ///* Expressions */
+    /* Expressions */
 
     expr_list =
           {expr} expr
