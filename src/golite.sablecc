@@ -266,10 +266,9 @@ Productions
           {return} return semi
         | {return_with_exp} return expr semi ;
 
-    // TODO: Adding '{if_else} if expr block else block' causes a "Redefinition of
-    // AIfElseIfSent.Block." error.
     if_sent =
           {if} if expr block
+        | {if_else} if expr [first]:block else [second]:block
         | {if_elif} if expr block else if_sent ;
 
     // TODO: Verify.
@@ -279,10 +278,9 @@ Productions
         | {switch_expr} switch expr block
         | {switch_empty} switch block ;
 
-    // TODO: Adding '{for_loop} for short_dec semi expr semi incr_decr block' causes a "Redefinition
-    // of AForLoopLoop.Semi." error.
     loop =
-          {while_loop} for expr block
+          {for_loop} for short_dec [first]:semi expr [second]:semi incr_decr block
+        | {while_loop} for expr block
         | {inf_loop} for block ;
 
     block = {block} lbrace stmt* rbrace ;
