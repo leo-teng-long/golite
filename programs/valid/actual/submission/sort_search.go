@@ -4,10 +4,21 @@
 package main
 
 // Array to be sorted.
-var nums []int = []int{10, 9, 8, 7, 6, 5, 4, 3, 2, 1}
+var nums []int
 
 /* Main */
 func main() {
+  nums = append(nums, 10)
+  nums = append(nums, 9)
+  nums = append(nums, 8)
+  nums = append(nums, 7)
+  nums = append(nums, 6)
+  nums = append(nums, 5)
+  nums = append(nums, 4)
+  nums = append(nums, 3)
+  nums = append(nums, 2)
+  nums = append(nums, 1)
+
   selectionSort(nums, 10)
   println(binarySearch(nums, 10, 10) >= 0)
 }
