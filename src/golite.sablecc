@@ -293,16 +293,18 @@ Productions
 
     /* Types */
 
-    // TODO: Can array/slice types be non-primitive?
     val_type =
+          {reg_type} reg_type
+        | {array} lsquare int_lit rbrace val_type
+        | {slice} lsquare rsquare val_type ;
+
+    reg_type = 
           {bool} bool
         | {int} int
         | {float} float64
         | {string} string
         | {rune} rune
-        | {id} id
-        | {array} lsquare int_lit rbrace val_type
-        | {slice} lsquare rsquare val_type ;
+        | {id} id ;
 
     /* Expressions */
 
