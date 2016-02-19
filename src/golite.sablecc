@@ -224,6 +224,7 @@ Productions
           {simple_stmt} simple_stmt
         | {var_dec_stmt} top_var_dec
         | {type_dec_stmt} top_type_dec
+        | {struct_stmt} top_struct_dec
         | {print_stmt} print lparen expr_list rparen semi
         | {println_stmt} println lparen expr_list rparen semi
         | {return_stmt} return_stmt
@@ -244,8 +245,8 @@ Productions
         | {decr} id minus_minus ;
 
     assign_stmt =
-          {reg_assign_stmt} id_list assign expr_list
-        | {op_assign_smt} id op_assign expr ; 
+          {reg_assign_stmt} assignable_list assign expr_list
+        | {op_assign_smt} assignable op_assign expr ; 
 
     short_dec = {short_dec} id_list short_assign expr_list ;
 
@@ -361,6 +362,7 @@ Productions
     atom =
           {lit} lit
         | {id} id
+        | {field} field
         | {func_expr} func_expr
         | {paren} lparen expr rparen ;
 
@@ -381,3 +383,13 @@ Productions
         | {rune_lit} rune_lit
         | {interpreted_string_lit} interpreted_string_lit
         | {raw_string_lit} raw_string_lit ;
+
+    assignable_list =
+          {assignable} assignable
+        | {assignables} assignable comma assignable_list ;
+
+    assignable = 
+          {id} id
+        | {field} field ;
+
+    field = {field} [first]:id dot [second]:id ;
