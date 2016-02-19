@@ -207,10 +207,10 @@ Productions
     /* Function declaration */
 
     func_dec =
-          {func_dec_args_rettype} func id lparen args rparen val_type lbrace stmt_list rbrace semi
-        | {func_dec_args_no_rettype} func id lparen args rparen lbrace stmt_list rbrace semi
-        | {func_dec_no_args_rettype} func id lparen rparen val_type lbrace stmt_list rbrace semi
-        | {func_dec_no_args_no_rettype} func id lparen rparen lbrace stmt_list rbrace semi ; 
+          {func_dec_args_rettype} func id lparen args rparen val_type lbrace stmt* rbrace semi
+        | {func_dec_args_no_rettype} func id lparen args rparen lbrace stmt* rbrace semi
+        | {func_dec_no_args_rettype} func id lparen rparen val_type lbrace stmt* rbrace semi
+        | {func_dec_no_args_no_rettype} func id lparen rparen lbrace stmt* rbrace semi ; 
     
     args = {func_args} arg_non_tail* arg_of_type ;
 
@@ -220,23 +220,34 @@ Productions
 
     /* Statements */
 
-    stmt_list =
-          {simple} stmt semi
-        | {list} stmt semi stmt_list ;
-
     stmt =
-          {simple_stmt} simple_stmt ;
+          {expr_stmt} expr semi
+        | {incr_stmt} id plus_plus semi
+        | {decr_stmt} id minus_minus semi
+        | {assign_stmt} assign_stmt semi
+        | {short_dec_stmt} id_list short_assign expr_list semi ;
         /* | {top_var_dec_stmt} top_var_dec
         | {top_type_dec_stmt} top_type_dec
         | {print_stmt} print_stmt
         | {println_stmt} println_stmt
-        | {return_stmt} return_stmt */ /* TODO: finish this production */
+        | {return_stmt} return_stmt */ /* TODO: finish this production */          
+          
+    assign_stmt =
+        | {reg_assign_stmt} id_list assign expr_list
+        | {op_assign_smt} id op_assign expr ; 
 
-    simple_stmt =
-          {empty_stmt}
-        | {expr_stmt} expr_stmt ; // TODO: inc_decrement | assign | short_dec
-
-    expr_stmt = {expr} expr semi ;
+    op_assign =
+          {plus_assign} plus_assign
+        | {minus_assign} minus_assign
+        | {star_assign} star_assign
+        | {slash_assign} slash_assign
+        | {perc_assign} perc_assign
+        | {and_assign} and_assign
+        | {pipe_assign} pipe_assign
+        | {carot_assign} carot_assign
+        | {lshift_assign} lshift_assign
+        | {rshift_assign} rshift_assign
+        | {amp_carot_assign} amp_carot_assign ;
 
     print_stmt = 
           {print} print lparen expr_list rparen ;
@@ -313,14 +324,14 @@ Productions
     atom =
           {lit} lit
         | {id} id
-        | {func_exp} func_exp
+        | {func_expr} func_expr
         | {paren} lparen expr rparen ;
 
-    func_exp = 
-          {append} append lparen expr_list rparen 
-        | {rune} rune lparen expr_list rparen 
-        | {float64} float64 lparen expr_list rparen 
-        | {int} int lparen expr_list rparen 
+    func_expr = 
+          {append} append lparen expr_list rparen  
+        | {int} int lparen expr_list rparen
+        | {float64} float64 lparen expr_list rparen
+        | {rune} rune lparen expr_list rparen
         | {id} id lparen expr_list rparen ;
 
     /* Literals */
