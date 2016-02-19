@@ -273,10 +273,14 @@ Productions
 
     // TODO: Verify.
     switch_sent =
-          {switch_simple_expr} switch simple_stmt expr block
-        | {switch_simple} switch simple_stmt block
-        | {switch_expr} switch expr block
-        | {switch_empty} switch block ;
+          {switch_simple_expr} switch simple_stmt expr lbrace case_block* rbrace
+        | {switch_simple} switch simple_stmt lbrace case_block* rbrace
+        | {switch_expr} switch expr lbrace case_block* rbrace
+        | {switch_empty} switch lbrace case_block* rbrace ;
+
+    case_block =
+          {case} case expr_list colon stmt*
+        | {default} default colon stmt* ;
 
     loop =
           {for_loop} for short_dec [first]:semi expr [second]:semi incr_decr block
