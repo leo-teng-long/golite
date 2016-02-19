@@ -177,7 +177,7 @@ Productions
 
     top_var_dec =
           {top_var_stmt} var var_dec semi
-        | {top_var_dist_stmt} var lparen var_dist_dec_sub rparen semi ;
+        | {top_var_dist_stmt} var lparen var_dist_dec_sub* rparen semi ;
 
     var_dist_dec_sub = {var_dist_dec_sub} var_dec semi ;
 
