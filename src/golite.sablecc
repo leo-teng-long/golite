@@ -221,20 +221,33 @@ Productions
     /* Statements */
 
     stmt =
+          {simple_stmt} simple_stmt
+        | {var_dec_stmt} top_var_dec
+        | {type_dec_stmt} top_type_dec
+        | {print_stmt} print lparen expr_list rparen semi
+        | {println_stmt} println lparen expr_list rparen semi
+        | {return_stmt} return_stmt
+        | {if_stmt} if_sent semi
+        | {switch_stmt} switch_sent semi
+        | {loop_stmt} loop semi
+        | {break_stmt} break semi
+        | {continue_stmt} continue semi ;
+
+    simple_stmt =
           {expr_stmt} expr semi
-        | {incr_stmt} id plus_plus semi
-        | {decr_stmt} id minus_minus semi
+        | {incr_decr_stmt} incr_decr semi
         | {assign_stmt} assign_stmt semi
-        | {short_dec_stmt} id_list short_assign expr_list semi ;
-        /* | {top_var_dec_stmt} top_var_dec
-        | {top_type_dec_stmt} top_type_dec
-        | {print_stmt} print_stmt
-        | {println_stmt} println_stmt
-        | {return_stmt} return_stmt */ /* TODO: finish this production */          
-          
+        | {short_dec_stmt} short_dec semi ;
+
+    incr_decr =
+          {incr} id plus_plus
+        | {decr} id minus_minus ;
+
     assign_stmt =
-        | {reg_assign_stmt} id_list assign expr_list
+          {reg_assign_stmt} id_list assign expr_list
         | {op_assign_smt} id op_assign expr ; 
+
+    short_dec = {short_dec} id_list short_assign expr_list ;
 
     op_assign =
           {plus_assign} plus_assign
@@ -249,15 +262,30 @@ Productions
         | {rshift_assign} rshift_assign
         | {amp_carot_assign} amp_carot_assign ;
 
-    print_stmt = 
-          {print} print lparen expr_list rparen ;
-
-    println_stmt = 
-          {println} println lparen expr_list rparen ; 
-
     return_stmt = 
-          {return} return 
-        | {return_with_exp} return expr ;
+          {return} return semi
+        | {return_with_exp} return expr semi ;
+
+    // TODO: Adding '{if_else} if expr block else block' causes a "Redefinition of
+    // AIfElseIfSent.Block." error.
+    if_sent =
+          {if} if expr block
+        | {if_elif} if expr block else if_sent ;
+
+    // TODO: Verify.
+    switch_sent =
+          {switch_simple_expr} switch simple_stmt expr block
+        | {switch_simple} switch simple_stmt block
+        | {switch_expr} switch expr block
+        | {switch_empty} switch block ;
+
+    // TODO: Adding '{for_loop} for short_dec semi expr semi incr_decr block' causes a "Redefinition
+    // of AForLoopLoop.Semi." error.
+    loop =
+          {while_loop} for expr block
+        | {inf_loop} for block ;
+
+    block = {block} lbrace stmt* rbrace ;
 
     /* Identifiers */
 
@@ -267,12 +295,15 @@ Productions
 
     /* Types */
 
+    // TODO: Can array/slice types be non-primitive?
     val_type =
           {int} int
         | {float} float64
         | {string} string
         | {rune} rune
-        | {id} id ;
+        | {id} id
+        | {array} lsquare int_lit rbrace val_type
+        | {slice} lsquare rsquare val_type ;
 
     /* Expressions */
 
