@@ -306,7 +306,8 @@ Productions
     /* Expressions */
 
     expr_list =
-          {expr} expr
+          {empty_expr}
+        | {expr} expr
         | {cst_exprs} expr comma expr_list ;
 
     expr =
