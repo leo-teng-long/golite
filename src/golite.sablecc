@@ -310,7 +310,7 @@ Productions
 
     val_type =
           {reg_type} reg_type
-        | {array} lsquare int_lit rsquare val_type
+        | {array} lsquare array_index rsquare val_type
         | {slice} lsquare rsquare val_type ;
 
     reg_type = 
@@ -374,6 +374,7 @@ Productions
         | {id} id
         | {field} field
         | {func_expr} func_expr
+        | {array_elem} id lsquare array_index rsquare
         | {paren} lparen expr rparen ;
 
     func_expr = 
@@ -402,6 +403,10 @@ Productions
     assignable = 
           {id} id
         | {field} field
-        | {array_elem} id lsquare int_lit rsquare ;
+        | {array_elem} id lsquare array_index rsquare ;
+
+    array_index =
+          {int_lit_index} int_lit
+        | {id_index} id ;
 
     field = {field} [first]:id dot [second]:id ;
