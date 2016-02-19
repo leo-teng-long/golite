@@ -59,3 +59,7 @@ type_dec = id type | id struct lbrace (id_list type semi)* (id_list type)? rbrac
 func_exp = id lparen exp_list rparen
 append_exp = append lparen id comma exp rparen
 cast_exp = type lparen expr rparen
+
+-------------Thu Feb 18th---------------
+NOTE FROM MEETING WITH VINCE:
+if = "if" exp block | "if" exp block "else" block | "if" exp block "else" if
