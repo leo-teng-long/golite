@@ -272,9 +272,14 @@ Productions
         | {return_with_exp} return expr semi ;
 
     if_sent =
-          {if} if expr block
-        | {if_else} if expr [first]:block else [second]:block
-        | {if_elif} if expr block else if_sent ;
+          {if} if condition block
+        | {if_else} if condition [first]:block else [second]:block
+        | {if_elif} if condition block else if_sent ;
+
+    // TODO: Verify
+    condition = 
+          {condition_expr} expr
+        | {condition_init_expr} simple_stmt expr ;
 
     // TODO: Verify.
     switch_sent =
@@ -287,6 +292,7 @@ Productions
           {case} case expr_list colon stmt*
         | {default} default colon stmt* ;
 
+    // TODO: Verify
     loop =
           {for_loop} for short_dec [first]:semi expr [second]:semi incr_decr block
         | {while_loop} for expr block
