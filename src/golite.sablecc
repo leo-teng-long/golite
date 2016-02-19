@@ -295,7 +295,8 @@ Productions
 
     // TODO: Can array/slice types be non-primitive?
     val_type =
-          {int} int
+          {bool} bool
+        | {int} int
         | {float} float64
         | {string} string
         | {rune} rune
