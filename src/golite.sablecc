@@ -200,7 +200,7 @@ Productions
 
     top_struct_dec = {top_struct_stmt} struct_dec semi ;
 
-    struct_dec = {struct_dec} id struct lbrace struct_dec_sub* rbrace ;
+    struct_dec = {struct_dec} type id struct lbrace struct_dec_sub* rbrace ;
 
     struct_dec_sub = {struct_dec_sub} id_list val_type semi ;
 
