@@ -131,6 +131,10 @@ Tokens
     // comment = '//' not_eol* | '/*' '*'* [all - '*']+ '*'+ ([all - ['*' + '/']] [all - '*']* '*'+)* '/' ;
 
     /* Literals. */
+
+    // Boolean.
+    bool_lit = 'true' | 'false' ;
+
     // Integer.
     int_lit = '0' | pos_digit digit* ;
     oct_lit = '0' oct_digit+ ;
@@ -376,7 +380,8 @@ Productions
     /* Literals */
 
     lit =
-          {int_lit} int_lit
+          {bool_lit} bool_lit
+        | {int_lit} int_lit
         | {oct_lit} oct_lit
         | {hex_lit} hex_lit
         | {float_lit} float_lit
