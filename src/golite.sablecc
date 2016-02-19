@@ -157,15 +157,15 @@ Ignored Tokens
 Productions
     // TODO: Fix variable naming.
 
-    /* Program */
+    ///* Program */
     
     prog = {prog} pack_dec top_dec* ;
 
-    /* Package declaration */
+    ///* Package declaration */
 
     pack_dec = {pack} package id semi ;
     
-    /* Top-level declarations */
+    ///* Top-level declarations */
 
     top_dec =
           {top_var_dec} top_var_dec
@@ -173,7 +173,7 @@ Productions
         | {top_struct_dec} top_struct_dec
         | {func_dec} func_dec ;
 
-    /* Variable declarations */
+    ///* Variable declarations */
 
     top_var_dec =
           {top_var_stmt} var var_dec semi
@@ -190,7 +190,7 @@ Productions
         | {var_dec_init} id_list assign expr_list
         | {var_dec_typed_init} id_list val_type assign expr_list ;
     
-    /* Type declarations */
+    ///* Type declarations */
 
     top_type_dec =
           {top_type_stmt} type type_dec semi
@@ -204,7 +204,7 @@ Productions
 
     type_dec = {type_dec} id val_type ;
 
-    /* Struct declaration */
+    ///* Struct declaration */
 
     top_struct_dec = {top_struct_stmt} struct_dec semi ;
 
@@ -216,13 +216,13 @@ Productions
 
     struct_dec_sub = {struct_dec_sub} id_list val_type semi ;
 
-    /* Function declaration */
+    ///* Function declaration */
 
     func_dec =
-          {func_dec_args_rettype} func id lparen args rparen val_type lbrace stmt* rbrace semi
-        | {func_dec_args_no_rettype} func id lparen args rparen lbrace stmt* rbrace semi
-        | {func_dec_no_args_rettype} func id lparen rparen val_type lbrace stmt* rbrace semi
-        | {func_dec_no_args_no_rettype} func id lparen args rparen lbrace stmt* rbrace semi ;
+          {func_dec_args_rettype} func id lparen args rparen val_type lbrace stmt_list rbrace semi
+        | {func_dec_args_no_rettype} func id lparen args rparen lbrace stmt_list rbrace semi
+        | {func_dec_no_args_rettype} func id lparen rparen val_type lbrace stmt_list rbrace semi
+        | {func_dec_no_args_no_rettype} func id lparen rparen lbrace stmt_list rbrace semi ; 
     
     args = {func_args} arg_non_tail* arg_of_type ;
 
@@ -230,24 +230,40 @@ Productions
 
     arg_of_type = {arg_of_type} id_list val_type ;
 
-    /* Statements */
+    ///* Statements */
+
+    stmt_list =
+          {simple} stmt semi
+        | {list} stmt semi stmt_list ;
 
     stmt =
-          {simple_stmt} simple_stmt
-        | {top_var_dec_stmt} top_var_dec
-        | {top_type_dec_stmt}
+          {simple_stmt} simple_stmt ;
+        /* | {top_var_dec_stmt} top_var_dec
+        | {top_type_dec_stmt} top_type_dec
         | {print_stmt} print_stmt
         | {println_stmt} println_stmt
-        | {return_stmt} return_stmt
-        | {if_stmt} if_stmt ;
+        | {return_stmt} return_stmt */ /* TODO: finish this production */
 
-    /* Identifiers */
+    simple_stmt =
+          {empty_stmt} ; /* TODO: finish this production */
+
+    print_stmt = 
+          {print} print lparen expr_list rparen ;
+
+    println_stmt = 
+          {println} println lparen expr_list rparen ; 
+
+    return_stmt = 
+          {return} return 
+        | {return_with_exp} return expr ;
+
+    ///* Identifiers */
 
     id_list =
           {id} id
         | {cst_ids} id comma id_list ;
 
-    /* Types */
+    ///* Types */
 
     val_type =
           {int} int
@@ -256,7 +272,7 @@ Productions
         | {rune} rune
         | {id} id ;
 
-    /* Expressions */
+    ///* Expressions */
 
     expr_list =
           {expr} expr
@@ -309,7 +325,7 @@ Productions
         | {func_exp} func_exp
         | {paren} lparen expr rparen ;
 
-    func_exp = /* MORE TESTING NEEDED */
+    func_exp = 
           {append} append lparen expr_list rparen 
         | {rune} rune lparen expr_list rparen 
         | {float64} float64 lparen expr_list rparen 
