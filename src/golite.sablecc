@@ -310,7 +310,7 @@ Productions
 
     val_type =
           {reg_type} reg_type
-        | {array} lsquare int_lit rbrace val_type
+        | {array} lsquare int_lit rsquare val_type
         | {slice} lsquare rsquare val_type ;
 
     reg_type = 
@@ -401,6 +401,7 @@ Productions
 
     assignable = 
           {id} id
-        | {field} field ;
+        | {field} field
+        | {array_elem} id lsquare int_lit rsquare ;
 
     field = {field} [first]:id dot [second]:id ;
