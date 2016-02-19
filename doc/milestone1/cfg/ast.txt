@@ -1,0 +1,94 @@
+prog =
+	  {program} [package]:expr [top_decs]:stmt*
+
+stmt =
+	  {empty} 
+	| {expr} expr
+	| {assign} [ids]:id* type expr:expr*
+	| {short_assign} [ids]:id* [expr]:expr*
+	| {plus_assign} id expr
+	| {minus_assign} id expr
+	| {times_assign} id expr
+	| {div_assign} id expr
+	| {amp_asign} id expr
+	| {pipe_asign} id expr
+	| {carot_asign} id expr
+	| {lshift_asign} id expr
+	| {rshift_asign} id expr
+	| {ampcarot_asign} id expr
+	| {inc} id
+	| {dec} id
+	| {print} expr*
+	| {println} expr*
+	| {return} expr
+	| {infinate} block
+	| {while} [cond]:expr [block]:block
+	| {for} [pre]:stmt [stmt]:expr [post]:stmt [block]:block
+	| {if} [cond]:expr [block]:block
+	| {if_else} [cond]:expr [ifblock]:block [elseblock]:block
+	| {if_elif} [cond]:expr [block]:block [elif]:stmt*
+	| {switch_block} block
+	| {switch_expr_block} [cond]:exp [block]:block
+	| {switch_stmt_block} [stmt]:stmt [block]:block
+	| {switch_stmt_expr_block} [stmt]:stmt [expr]:expr [block]:block //TODO: Still need to do declaration statements
+	| {var_dec_type_only} [ids]:expr* [type]:var_type
+	| {var_dec_exp} [ids]:expr* [values]:expr*
+	| {var_dec_type_exp} [ids]:expr* [type]:var_type [values]:expr*
+	| {dist_var_dec} stmt*
+	| {alias_type_dec} [id]:expr [type]:var_type
+	| {struct_type_dec} [id]:expr [struct_block]:stmt*
+	| {dist_type_dec} stmt*
+
+expr_list =
+	  {id_list} [id]:id* [type]:var_type
+
+func_dec =
+	  {func_dec} [id]:id [expr]:expr_list* [type]:var_type* [block]:block
+
+block =
+	  {stmt_block} stmt*
+	| {case_block} expr* stmt*
+	| {default_case_block} stmt*
+
+expr =
+	  {empty} //TODO: come back and check that we can have these here
+	| {plus} [left]:expr [right]:exp
+	| {minus} [left]:expr [right]:exp
+	| {star} [left]:expr [right]:exp
+	| {slash} [left]:expr [right]:exp
+	| {perc} [left]:expr [right]:exp
+	| {pluseqal} [left]:expr [right]:exp
+	| {pipe} [left]:expr [right]:exp
+	| {carot} [left]:expr [right]:exp
+	| {lshift} [left]:expr [right]:exp
+	| {rshift} [left]:expr [right]:exp
+	| {andcarot} [left]:expr [right]:exp
+	| {ampamp} [left]:expr [right]:exp
+	| {pipepipe} [left]:expr [right]:exp
+	| {equalequal} [left]:expr [right]:exp
+	| {gt} [left]:expr [right]:exp
+	| {lt} [left]:expr [right]:exp
+	| {gte} [left]:expr [right]:exp
+	| {lte} [left]:expr [right]:exp
+	| {lte} [left]:expr [right]:exp
+	| {unary_minus} expr
+	| {unary_plus} expr
+	| {unary_carot} expr
+	| {unary_exclaimation} expr
+	| {int} int_lit
+	| {float64} float64_lit
+	| {rune} rune_lit
+	| {string} string_lit
+	| {id} id
+	| {cast} type:var_type [expr]:expr
+	| {append} [slice]:id [expr]:expr
+	| {func} [name]:id [expr]:expr*
+
+var_type =
+	  {int} int
+	| {float64} float64
+	| {rune} rune
+	| {string} string
+	| {id} id
+	| {array} [size]:int_list [type]:var_type
+	| {slice} var_type
