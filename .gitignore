@@ -12,3 +12,6 @@ src/golite/parser/
 
 # SableCC 3 Source Code
 src/sablecc-3.7
+
+#Ethan's ignore folder
+./ignore_these/
