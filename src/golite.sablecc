@@ -42,7 +42,7 @@ Helpers
     alpha_num = alpha | digit ;
 
 Tokens
-    /* Go keywords. */
+    //* Go keywords. *//
     break = 'break' ;
     case = 'case' ;
     chan = 'chan' ;
@@ -69,7 +69,7 @@ Tokens
     type = 'type' ;
     var = 'var' ;
 
-    /* GoLite keywords. */
+    //* GoLite keywords. *//
     int = 'int' ;
     float64 = 'float64' ;
     bool = 'bool' ;
@@ -79,50 +79,65 @@ Tokens
     println = 'println' ;
     append = 'append' ;
 
-    /*  Operators. */
+    //*  Operators. *//
+    // Arithmetic.
     plus = '+' ;
     minus = '-' ;
     star = '*' ;
     slash = '/' ;
     perc = '%' ;
+    // Bitwise.
     amp = '&' ;
     pipe = '|' ;
     carot = '^';
     lshift = '<<' ;
     rshift = '>>' ;
     amp_carot = '&^' ;
+    // Arithmetic operator assignment.
     plus_assign = '+=' ;
     minus_assign = '-=' ;
     star_assign = '*=' ;
     slash_assign = '/=' ;
     perc_assign = '%=' ;
+    // Bitwise operator assignment.
     and_assign = '&=' ;
     pipe_assign = '|=' ;
     carot_assign = '^=' ;
     lshift_assign = '<<=' ;
     rshift_assign = '>>=' ;
     amp_carot_assign = '&^=' ;
+    // Logical.
     amp_amp = '&&' ;
     pipe_pipe = '||' ;
+    not = '!' ;
+    // Receive.
     arrow = '<-' ;
+    // Increment.
     plus_plus = '++' ;
+    // Decrement.
     minus_minus = '--' ;
+    // Comparison
     equals = '==' ;
+    not_equals = '!=' ;
     lt = '<' ;
     gt = '>' ;
-    assign = '=' ;
-    not = '!' ;
-    not_equals = '!=' ;
     lte = '<=' ;
     gte = '>=' ;
+    // Assignment.
+    assign = '=' ;
     short_assign = ':=' ;
+    // Ellipsis (Variadic).
     ellipsis = '...' ;
+    // Parentheses.
     lparen = '(' ;
     rparen = ')' ;
+    // Square brackets.
     lsquare = '[' ;
     rsquare = ']' ;
+    // Braces.
     lbrace = '{' ;
     rbrace = '}' ;
+    // Other.
     comma = ',' ;
     semi = ';' ;
     dot = '.' ;
@@ -138,7 +153,7 @@ Tokens
     // Alternative form for handling multi-line comments:
     // comment = '//' not_eol* | '/*' '*'* [all - '*']+ '*'+ ([all - ['*' + '/']] [all - '*']* '*'+)* '/' ;
 
-    /* Literals. */
+    //* Literals. *//
 
     // Boolean.
     bool_lit = 'true' | 'false' ;
@@ -160,7 +175,7 @@ Tokens
     // Raw string.
     raw_string_lit = bquote [all - bquote]* bquote ;
 
-    /* Identifiers. */
+    //* Identifiers. *//
     id = alpha alpha_num* ;
 
 Ignored Tokens
