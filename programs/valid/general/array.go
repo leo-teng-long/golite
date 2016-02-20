@@ -3,7 +3,7 @@
 package main
 
 func main() {
-	var s [5]string
+	var s[5] string
 	s[0] = "Hello"
 	s[1] = "World"
 	s[2] = "I'm"

@@ -131,6 +131,10 @@ Tokens
     // comment = '//' not_eol* | '/*' '*'* [all - '*']+ '*'+ ([all - ['*' + '/']] [all - '*']* '*'+)* '/' ;
 
     /* Literals. */
+
+    // Boolean.
+    bool_lit = 'true' | 'false' ;
+
     // Integer.
     int_lit = '0' | pos_digit digit* ;
     oct_lit = '0' oct_digit+ ;
@@ -177,7 +181,7 @@ Productions
 
     top_var_dec =
           {top_var_stmt} var var_dec semi
-        | {top_var_dist_stmt} var lparen var_dist_dec_sub rparen semi ;
+        | {top_var_dist_stmt} var lparen var_dist_dec_sub* rparen semi ;
 
     var_dist_dec_sub = {var_dist_dec_sub} var_dec semi ;
 
@@ -200,7 +204,7 @@ Productions
 
     top_struct_dec = {top_struct_stmt} struct_dec semi ;
 
-    struct_dec = {struct_dec} id struct lbrace struct_dec_sub* rbrace ;
+    struct_dec = {struct_dec} type id struct lbrace struct_dec_sub* rbrace ;
 
     struct_dec_sub = {struct_dec_sub} id_list val_type semi ;
 
@@ -224,6 +228,7 @@ Productions
           {simple_stmt} simple_stmt
         | {var_dec_stmt} top_var_dec
         | {type_dec_stmt} top_type_dec
+        | {struct_stmt} top_struct_dec
         | {print_stmt} print lparen expr_list rparen semi
         | {println_stmt} println lparen expr_list rparen semi
         | {return_stmt} return_stmt
@@ -244,8 +249,8 @@ Productions
         | {decr} id minus_minus ;
 
     assign_stmt =
-          {reg_assign_stmt} id_list assign expr_list
-        | {op_assign_smt} id op_assign expr ; 
+          {reg_assign_stmt} assignable_list assign expr_list
+        | {op_assign_smt} assignable op_assign expr ; 
 
     short_dec = {short_dec} id_list short_assign expr_list ;
 
@@ -267,17 +272,27 @@ Productions
         | {return_with_exp} return expr semi ;
 
     if_sent =
-          {if} if expr block
-        | {if_else} if expr [first]:block else [second]:block
-        | {if_elif} if expr block else if_sent ;
+          {if} if condition block
+        | {if_else} if condition [first]:block else [second]:block
+        | {if_elif} if condition block else if_sent ;
+
+    // TODO: Verify
+    condition = 
+          {condition_expr} expr
+        | {condition_init_expr} simple_stmt expr ;
 
     // TODO: Verify.
     switch_sent =
-          {switch_simple_expr} switch simple_stmt expr block
-        | {switch_simple} switch simple_stmt block
-        | {switch_expr} switch expr block
-        | {switch_empty} switch block ;
+          {switch_simple_expr} switch simple_stmt expr lbrace case_block* rbrace
+        | {switch_simple} switch simple_stmt lbrace case_block* rbrace
+        | {switch_expr} switch expr lbrace case_block* rbrace
+        | {switch_empty} switch lbrace case_block* rbrace ;
 
+    case_block =
+          {case} case expr_list colon stmt*
+        | {default} default colon stmt* ;
+
+    // TODO: Verify
     loop =
           {for_loop} for short_dec [first]:semi expr [second]:semi incr_decr block
         | {while_loop} for expr block
@@ -293,20 +308,24 @@ Productions
 
     /* Types */
 
-    // TODO: Can array/slice types be non-primitive?
     val_type =
-          {int} int
+          {reg_type} reg_type
+        | {array} lsquare array_index rsquare val_type
+        | {slice} lsquare rsquare val_type ;
+
+    reg_type = 
+          {bool} bool
+        | {int} int
         | {float} float64
         | {string} string
         | {rune} rune
-        | {id} id
-        | {array} lsquare int_lit rbrace val_type
-        | {slice} lsquare rsquare val_type ;
+        | {id} id ;
 
     /* Expressions */
 
     expr_list =
-          {expr} expr
+          {empty_expr}
+        | {expr} expr
         | {cst_exprs} expr comma expr_list ;
 
     expr =
@@ -353,7 +372,9 @@ Productions
     atom =
           {lit} lit
         | {id} id
+        | {field} field
         | {func_expr} func_expr
+        | {array_elem} id lsquare array_index rsquare
         | {paren} lparen expr rparen ;
 
     func_expr = 
@@ -366,10 +387,26 @@ Productions
     /* Literals */
 
     lit =
-          {int_lit} int_lit
+          {bool_lit} bool_lit
+        | {int_lit} int_lit
         | {oct_lit} oct_lit
         | {hex_lit} hex_lit
         | {float_lit} float_lit
         | {rune_lit} rune_lit
         | {interpreted_string_lit} interpreted_string_lit
         | {raw_string_lit} raw_string_lit ;
+
+    assignable_list =
+          {assignable} assignable
+        | {assignables} assignable comma assignable_list ;
+
+    assignable = 
+          {id} id
+        | {field} field
+        | {array_elem} id lsquare array_index rsquare ;
+
+    array_index =
+          {int_lit_index} int_lit
+        | {id_index} id ;
+
+    field = {field} [first]:id dot [second]:id ;

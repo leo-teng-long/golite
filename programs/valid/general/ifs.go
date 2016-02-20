@@ -5,6 +5,7 @@ package main
 func main() {
 	x := true
 	y := false
+
 	if x {
 		//Do nothing
 	}

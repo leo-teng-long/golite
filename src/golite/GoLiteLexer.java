@@ -52,6 +52,7 @@ public class GoLiteLexer extends Lexer {
                 this.lastToken instanceof TRsquare ||
                 this.lastToken instanceof TRbrace ||
                 // Literals.
+                this.lastToken instanceof TBoolLit ||
                 this.lastToken instanceof TIntLit ||
                 this.lastToken instanceof TOctLit ||
                 this.lastToken instanceof THexLit ||

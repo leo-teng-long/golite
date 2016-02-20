@@ -2,6 +2,8 @@
 
 package main
 
+type ()
+
 type ( t1 int
 	t2 float64
 )

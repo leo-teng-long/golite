@@ -2,6 +2,8 @@
 
 package main
 
+var ()
+
 var ( a rune
     b string = "String"
 )
