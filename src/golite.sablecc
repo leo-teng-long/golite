@@ -9,15 +9,21 @@ Helpers
     lf = 10 ;
     cr = 13 ;
 
+    // All but End-of-line characters.
     not_eol = [all - [cr + lf]] ;
 
+    // All but '*'.
     not_star = [all - '*'] ;
+    // All but '*' and '/'.
     not_star_slash = [all - ['*' + '/']] ;
 
-    // Digits.
+    // Digit.
     digit = ['0' .. '9'] ;
+    // Positive (i.e. non-zero) digit.
     pos_digit = ['1' .. '9'] ;
+    // Octal digit.
     oct_digit = ['0' .. '7'] ;
+    // Hexidecimal digit.
     hex_digit = digit | ['A' .. 'F'] | ['a' .. 'f'] ;
 
     // Quotes.
@@ -30,7 +36,9 @@ Helpers
     escape_squote = '\' ''';
     escape_dquote = '\"';
 
+    // Alphabet characters (plus underscore).
     alpha = ['A' .. 'Z'] | ['a' .. 'z'] | '_' ;
+    // Alphanumeric characters (plus underscore).
     alpha_num = alpha | digit ;
 
 Tokens
