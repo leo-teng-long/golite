@@ -163,244 +163,148 @@ Productions
 
     /* Program */
     
-    prog = {prog} pack_dec top_dec* ;
+    prog {-> prog} = {prog} expr_list {-> New prog.program([expr_list.expr])} ;
 
-    /* Package declaration */
-
-    pack_dec = {pack} package id semi ;
-    
-    /* Top-level declarations */
-
-    top_dec =
-          {top_var_dec} top_var_dec
-        | {top_type_dec} top_type_dec
-        | {func_dec} func_dec ;
-
-    /* Variable declarations */
-
-    top_var_dec =
-          {top_var_stmt} var var_dec semi
-        | {top_var_dist_stmt} var lparen var_dist_dec_sub* rparen semi ;
-
-    var_dist_dec_sub = {var_dist_dec_sub} var_dec semi ;
-
-    var_dec =
-          {var_dec} id_list val_type
-        | {var_dec_init} id_list assign expr_list
-        | {var_dec_typed_init} id_list val_type assign expr_list ;
-    
-    /* Type declarations */
-
-    top_type_dec =
-          {top_type_stmt} type type_dec semi
-        | {top_type_dist_stmt} type lparen type_dist_dec_sub* rparen semi ;
-
-    type_dist_dec_sub = {type_dist_dec_sub} type_dec semi ;
-
-    type_dec =
-          {type_dec} id val_type
-        | {struct_dec} id struct lbrace struct_dec_sub* rbrace;
-
-    struct_dec_sub = {struct_dec_sub} id_list val_type semi ;
-
-    /* Function declaration */
-
-    func_dec =
-          {func_dec_args_rettype} func id lparen args rparen val_type lbrace stmt* rbrace semi
-        | {func_dec_args_no_rettype} func id lparen args rparen lbrace stmt* rbrace semi
-        | {func_dec_no_args_rettype} func id lparen rparen val_type lbrace stmt* rbrace semi
-        | {func_dec_no_args_no_rettype} func id lparen rparen lbrace stmt* rbrace semi ; 
-    
-    args = {func_args} arg_non_tail* arg_of_type ;
-
-    arg_non_tail = {func_arg_non_tail} arg_of_type comma ;
-
-    arg_of_type = {arg_of_type} id_list val_type ;
-
-    /* Statements */
-
-    stmt =
-          {simple_stmt} simple_stmt
-        | {var_dec_stmt} top_var_dec
-        | {type_dec_stmt} top_type_dec
-        | {print_stmt} print lparen expr_list rparen semi
-        | {println_stmt} println lparen expr_list rparen semi
-        | {return_stmt} return_stmt
-        | {if_stmt} if_sent semi
-        | {switch_stmt} switch_sent semi
-        | {loop_stmt} loop semi
-        | {break_stmt} break semi
-        | {continue_stmt} continue semi ;
-
-    simple_stmt =
-          {expr_stmt} expr semi
-        | {incr_decr_stmt} incr_decr semi
-        | {assign_stmt} assign_stmt semi
-        | {short_dec_stmt} short_dec semi ;
-
-    incr_decr =
-          {incr} id plus_plus
-        | {decr} id minus_minus ;
-
-    assign_stmt =
-          {reg_assign_stmt} assignable_list assign expr_list
-        | {op_assign_smt} assignable op_assign expr ; 
-
-    short_dec = {short_dec} id_list short_assign expr_list ;
-
-    op_assign =
-          {plus_assign} plus_assign
-        | {minus_assign} minus_assign
-        | {star_assign} star_assign
-        | {slash_assign} slash_assign
-        | {perc_assign} perc_assign
-        | {and_assign} and_assign
-        | {pipe_assign} pipe_assign
-        | {carot_assign} carot_assign
-        | {lshift_assign} lshift_assign
-        | {rshift_assign} rshift_assign
-        | {amp_carot_assign} amp_carot_assign ;
-
-    return_stmt = 
-          {return} return semi
-        | {return_with_exp} return expr semi ;
-
-    if_sent =
-          {if} if condition block
-        | {if_else} if condition [first]:block else [second]:block
-        | {if_elif} if condition block else if_sent ;
-
-    // TODO: Verify
-    condition = 
-          {condition_expr} expr
-        | {condition_init_expr} simple_stmt expr ;
-
-    // TODO: Verify.
-    switch_sent =
-          {switch_simple_expr} switch simple_stmt expr lbrace case_block* rbrace
-        | {switch_simple} switch simple_stmt lbrace case_block* rbrace
-        | {switch_expr} switch expr lbrace case_block* rbrace
-        | {switch_empty} switch lbrace case_block* rbrace ;
-
-    case_block =
-          {case} case expr_list colon stmt*
-        | {default} default colon stmt* ;
-
-    // TODO: Verify
-    loop =
-          {for_loop} for short_dec [first]:semi expr [second]:semi incr_decr block
-        | {while_loop} for expr block
-        | {inf_loop} for block ;
-
-    block = {block} lbrace stmt* rbrace ;
-
-    /* Identifiers */
-
-    id_list =
-          {id} id
-        | {cst_ids} id comma id_list ;
-
-    /* Types */
-
-    val_type =
-          {reg_type} reg_type
-        | {array} lsquare array_index rsquare val_type
-        | {slice} lsquare rsquare val_type ;
-
-    reg_type = 
-          {bool} bool
-        | {int} int
-        | {float} float64
-        | {string} string
-        | {rune} rune
-        | {id} id ;
-
-    /* Expressions */
-
-    expr_list =
+    expr_list {-> expr*} =
           {empty_expr}
+            {-> []}
         | {expr} expr
-        | {cst_exprs} expr comma expr_list ;
+            {-> [expr.expr]}
+        | {cst_exprs} expr comma expr_list 
+            {-> [expr.expr, expr_list.expr]} ;
 
-    expr =
+    expr {-> expr} =
           {conjunction} conjunction
-        | {cst_or}      expr pipe_pipe conjunction ;
+            {-> conjunction.expr}
+        | {cst_or}      expr pipe_pipe conjunction 
+            {-> New expr.or(expr.expr, conjunction.expr)} ;
 
-    conjunction =
+    conjunction {-> expr} =
           {clause} clause
-        | {cst_and} conjunction amp_amp clause ;
+            {-> clause.expr}
+        | {cst_and} conjunction amp_amp clause 
+            {-> New expr.and(conjunction.expr, clause.expr)} ;
 
-    clause =
+    clause {-> expr} =
           {sub_expr} sub_expr
+            {-> sub_expr.expr}
         | {cst_eq} clause equals sub_expr
+            {-> New expr.eq(clause.expr, sub_expr.expr)}
         | {cst_neq} clause not_equals sub_expr
+            {-> New expr.neq(clause.expr, sub_expr.expr)}
         | {cst_lt} clause lt sub_expr
+            {-> New expr.lt(clause.expr, sub_expr.expr)}
         | {cst_lte} clause lte sub_expr
+            {-> New expr.lte(clause.expr, sub_expr.expr)}
         | {cst_gt} clause gt sub_expr
-        | {cst_gte} clause gte sub_expr ;
+            {-> New expr.gt(clause.expr, sub_expr.expr)}
+        | {cst_gte} clause gte sub_expr 
+            {-> New expr.gte(clause.expr, sub_expr.expr)} ;
 
-    sub_expr =
+    sub_expr {-> expr} =
           {factor} factor
+            {-> factor.expr}
         | {cst_plus} sub_expr plus factor
+            {-> New expr.add(sub_expr.expr, factor.expr)}
         | {cst_minus} sub_expr minus factor
+            {-> New expr.subtract(sub_expr.expr, factor.expr)}
         | {cst_bit_or} sub_expr pipe factor
-        | {cst_bit_xor} sub_expr carot factor ;
+            {-> New expr.bit_or(sub_expr.expr, factor.expr)}
+        | {cst_bit_xor} sub_expr carot factor 
+            {-> New expr.bit_xor(sub_expr.expr, factor.expr)} ;
 
-    factor =
+    factor {-> expr} =
           {term} term
+            {-> term.expr}
         | {cst_mult} factor star term
+            {-> New expr.mult(factor.expr, term.expr)}
         | {cst_div} factor slash term
+            {-> New expr.div(factor.expr, term.expr)}
         | {cst_mod} factor perc term
+            {-> New expr.mod(factor.expr, term.expr)}
         | {cst_lshift} factor lshift term
+            {-> New expr.lshift(factor.expr, term.expr)}
         | {cst_rshift} factor rshift term
+            {-> New expr.rshift(factor.expr, term.expr)}
         | {cst_bit_and} factor amp term
-        | {cst_bit_clear} factor amp_carot term ;
+            {-> New expr.bit_and(factor.expr, term.expr)}
+        | {cst_bit_clear} factor amp_carot term 
+            {-> New expr.bit_clear(factor.expr, term.expr)} ;
 
-    term =
+    term {-> expr} =
           {atom} atom
+            {-> atom.expr}
         | {cst_pos} plus atom
+            {-> New expr.unary_pos(atom.expr)}
         | {cst_neg} minus atom
+            {-> New expr.unary_neg(atom.expr)}
         | {cst_not} not atom
-        | {cst_bit_comp} carot atom ;
+            {-> New expr.unary_not(atom.expr)}
+        | {cst_bit_comp} carot atom 
+            {-> New expr.unary_bit_comp(atom.expr)} ;
 
-    atom =
+    atom {-> expr} =
           {lit} lit
+            {-> lit.expr}
         | {id} id
-        | {field} field
-        | {func_expr} func_expr
-        | {array_elem} id lsquare array_index rsquare
-        | {paren} lparen expr rparen ;
+            {-> New expr.id(id)} 
+        | {paren} lparen expr rparen 
+           {-> expr.expr};
 
-    func_expr = 
-          {append} append lparen expr_list rparen  
-        | {int} int lparen expr_list rparen
-        | {float64} float64 lparen expr_list rparen
-        | {rune} rune lparen expr_list rparen
-        | {id} id lparen expr_list rparen ;
+    lit {-> expr} =
+      {bool_lit} bool_lit 
+        {-> New expr.bool_lit(bool_lit)}
+    | {int_lit} int_lit 
+        {-> New expr.int_lit(int_lit)}
+    | {oct_lit} oct_lit 
+        {-> New expr.oct_lit(oct_lit)}
+    | {hex_lit} hex_lit 
+        {-> New expr.hex_lit(hex_lit)}
+    | {float_lit} float_lit 
+        {-> New expr.float_lit(float_lit)}
+    | {rune_lit} rune_lit 
+        {-> New expr.rune_lit(rune_lit)}
+    | {interpreted_string_lit} interpreted_string_lit 
+        {-> New expr.interpreted_string_lit(interpreted_string_lit)}
+    | {raw_string_lit} raw_string_lit 
+        {-> New expr.raw_string_lit(raw_string_lit)};
 
-    /* Literals */
+        //TODO: Finish all the expressions in atom (e.g., function expression, etc)
 
-    lit =
-          {bool_lit} bool_lit
+Abstract Syntax Tree
+    prog = 
+        {program}  expr* ;
+
+    expr = 
+          {id} id 
+        | {bool_lit} bool_lit
         | {int_lit} int_lit
         | {oct_lit} oct_lit
-        | {hex_lit} hex_lit
+        | {hex_lit} hex_lit 
         | {float_lit} float_lit
-        | {rune_lit} rune_lit
-        | {interpreted_string_lit} interpreted_string_lit
-        | {raw_string_lit} raw_string_lit ;
-
-    assignable_list =
-          {assignable} assignable
-        | {assignables} assignable comma assignable_list ;
-
-    assignable = 
-          {id} id
-        | {field} field
-        | {array_elem} id lsquare array_index rsquare ;
-
-    array_index =
-          {int_lit_index} int_lit
-        | {id_index} id ;
-
-    field = {field} [first]:id dot [second]:id ;
+        | {rune_lit} rune_lit 
+        | {interpreted_string_lit} interpreted_string_lit 
+        | {raw_string_lit} raw_string_lit
+        | {unary_neg} expr
+        | {unary_pos} expr
+        | {unary_bit_comp} expr
+        | {unary_not} expr 
+        | {mult} [left]:expr [right]:expr
+        | {div} [left]:expr [right]:expr
+        | {mod} [left]:expr [right]:expr
+        | {lshift} [left]:expr [right]:expr
+        | {rshift} [left]:expr [right]:expr
+        | {bit_and} [left]:expr [right]:expr
+        | {bit_clear} [left]:expr [right]:expr 
+        | {add} [left]:expr [right]:expr
+        | {subtract} [left]:expr [right]:expr
+        | {bit_or} [left]:expr [right]:expr
+        | {bit_xor} [left]:expr [right]:expr 
+        | {eq} [left]:expr [right]:expr
+        | {neq} [left]:expr [right]:expr
+        | {lt} [left]:expr [right]:expr
+        | {gt} [left]:expr [right]:expr
+        | {lte} [left]:expr [right]:expr
+        | {gte} [left]:expr [right]:expr 
+        | {and} [left]:expr [right]:expr
+        | {or} [left]:expr [right]:expr ;
