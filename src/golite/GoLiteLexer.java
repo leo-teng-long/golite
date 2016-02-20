@@ -16,12 +16,25 @@ import golite.node.*;
 public class GoLiteLexer extends Lexer {
     /** Tracks the last token seen. */
     private Token lastToken = null;
+    /** Tracks the last "effective" token, i.e. a non-ignored token. */
+    private Token lastEffectiveToken = null;
 
     /**
      * @param in - GoLite program reader
      */
     public GoLiteLexer(PushbackReader in) {
         super(in);
+    }
+
+    /**
+     * Checks if the given token is "effective" or not (i.e. is a non-ignored
+     * token).
+     *
+     * @param t - Token
+     * @return True if the token is effective, false otherwise
+     */
+    private boolean isEffectiveToken(Token t) {
+        return !(t instanceof TBlank || t instanceof TComment || t instanceof TEol);
     }
 
     /**
@@ -33,41 +46,44 @@ public class GoLiteLexer extends Lexer {
     private boolean requiresSemi() {
         return
             (this.token instanceof TEol || this.token instanceof EOF) &&
-            (this.lastToken instanceof TId ||
+            (this.lastEffectiveToken instanceof TId ||
                 // Keywords.
-                this.lastToken instanceof TBreak ||
-                this.lastToken instanceof TContinue ||
-                this.lastToken instanceof TFallthrough ||
-                this.lastToken instanceof TReturn ||
+                this.lastEffectiveToken instanceof TBreak ||
+                this.lastEffectiveToken instanceof TContinue ||
+                this.lastEffectiveToken instanceof TFallthrough ||
+                this.lastEffectiveToken instanceof TReturn ||
                 // Types.
-                this.lastToken instanceof TInt ||
-                this.lastToken instanceof TFloat64 ||
-                this.lastToken instanceof TBool ||
-                this.lastToken instanceof TRune ||
-                this.lastToken instanceof TString ||
+                this.lastEffectiveToken instanceof TInt ||
+                this.lastEffectiveToken instanceof TFloat64 ||
+                this.lastEffectiveToken instanceof TBool ||
+                this.lastEffectiveToken instanceof TRune ||
+                this.lastEffectiveToken instanceof TString ||
                 // Operators.
-                this.lastToken instanceof TPlusPlus ||
-                this.lastToken instanceof TMinusMinus ||
-                this.lastToken instanceof TRparen ||
-                this.lastToken instanceof TRsquare ||
-                this.lastToken instanceof TRbrace ||
+                this.lastEffectiveToken instanceof TPlusPlus ||
+                this.lastEffectiveToken instanceof TMinusMinus ||
+                this.lastEffectiveToken instanceof TRparen ||
+                this.lastEffectiveToken instanceof TRsquare ||
+                this.lastEffectiveToken instanceof TRbrace ||
                 // Literals.
-                this.lastToken instanceof TBoolLit ||
-                this.lastToken instanceof TIntLit ||
-                this.lastToken instanceof TOctLit ||
-                this.lastToken instanceof THexLit ||
-                this.lastToken instanceof TFloatLit ||
-                this.lastToken instanceof TRuneLit ||
-                this.lastToken instanceof TInterpretedStringLit ||
-                this.lastToken instanceof TRawStringLit);
+                this.lastEffectiveToken instanceof TBoolLit ||
+                this.lastEffectiveToken instanceof TIntLit ||
+                this.lastEffectiveToken instanceof TOctLit ||
+                this.lastEffectiveToken instanceof THexLit ||
+                this.lastEffectiveToken instanceof TFloatLit ||
+                this.lastEffectiveToken instanceof TRuneLit ||
+                this.lastEffectiveToken instanceof TInterpretedStringLit ||
+                this.lastEffectiveToken instanceof TRawStringLit);
     }
 
     /**
      * Updates the scanning stream.
      */
     protected void filter() {
-        if (requiresSemi())
+        if (this.requiresSemi())
             this.token = new TSemi();
+
+        if (this.isEffectiveToken(this.token))
+            this.lastEffectiveToken = this.token;
 
         this.lastToken = this.token;
     }
