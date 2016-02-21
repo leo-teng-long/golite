@@ -260,7 +260,11 @@ Productions
         | {println} println lparen expr_list rparen semi
             {-> New stmt.println([expr_list.expr])}
         | {return} return_stmt
-            {-> return_stmt.stmt} ;
+            {-> return_stmt.stmt}
+        | {break} break semi
+            {-> New stmt.break()}
+        | {continue} continue semi
+            {-> New stmt.continue()} ;
 
     simple_stmt {-> stmt} =
           {expr} expr semi
@@ -524,7 +528,9 @@ Abstract Syntax Tree
         | {types} type_spec+
         | {print} expr*
         | {println} expr*
-        | {return} expr? ;
+        | {return} expr?
+        | {break}
+        | {continue} ;
 
     type_expr =
           {bool}
