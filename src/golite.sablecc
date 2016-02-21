@@ -233,10 +233,10 @@ Productions
     //* Function declaration. *//
 
     func_dec {-> top_dec} =
-          {with_rettype} func id lparen args rparen type_expr lbrace stmt* rbrace semi
-            {-> New top_dec.func(id, [args.arg_group], type_expr, [stmt])}
-        | {with_no_rettype} func id lparen args rparen lbrace stmt* rbrace semi
-            {-> New top_dec.func(id, [args.arg_group], Null, [stmt])} ;
+          {with_rettype} func id lparen args rparen type_expr block semi
+            {-> New top_dec.func(id, [args.arg_group], type_expr, [block.stmt])}
+        | {with_no_rettype} func id lparen args rparen block semi
+            {-> New top_dec.func(id, [args.arg_group], Null, [block.stmt])} ;
     
     args {-> arg_group*} =
           {none} {-> []}
@@ -247,6 +247,8 @@ Productions
     arg_group {-> arg_group} = id_list type_expr {-> New arg_group.arg([id_list.id], type_expr)} ;
 
     //* Statement. *//
+
+    block {-> stmt*} = lbrace stmt* rbrace {-> [stmt]} ;
 
     stmt {-> stmt} =
           {simple} simple_stmt
