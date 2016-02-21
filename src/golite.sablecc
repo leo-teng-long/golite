@@ -184,9 +184,19 @@ Ignored Tokens
 Productions
     // TODO: Fix variable naming.
 
-    /* Program */
+    //* Program. *//
     
     prog {-> prog} = {prog} expr_list {-> New prog.program([expr_list.expr])} ;
+
+    convertible_prim_type {-> type_expr} = 
+          {int} int
+            {-> New type_expr.int()}
+        | {float} float64
+            {-> New type_expr.float()}
+        | {rune} rune
+            {-> New type_expr.rune()} ;
+
+    //* Expressions. *//
 
     expr_list {-> expr*} =
           {empty_expr}
@@ -273,8 +283,18 @@ Productions
             {-> New expr.id(id)} 
         | {field} atom dot id
             {-> New expr.field(atom.expr, id)}
+        | {func_call} func_call
+            {-> func_call.expr}
         | {paren} lparen expr rparen 
            {-> expr.expr};
+
+    func_call {-> expr} = 
+          {append} append lparen id comma expr rparen
+            {-> New expr.append(id, expr)}
+        | {prim_type_cast} convertible_prim_type lparen expr rparen
+            {-> New expr.prim_type_cast(convertible_prim_type.type_expr, expr)}
+        | {custom_func_call} id lparen expr_list rparen
+            {-> New expr.func_call(id, [expr_list.expr])};
 
     lit {-> expr} =
       {bool_lit} bool_lit 
@@ -298,6 +318,11 @@ Abstract Syntax Tree
     prog = 
         {program}  expr* ;
 
+    type_expr =
+          {int}
+        | {float}
+        | {rune} ;
+
     expr =  
           {bool_lit} bool_lit
         | {int_lit} int_lit
@@ -309,6 +334,9 @@ Abstract Syntax Tree
         | {raw_string_lit} raw_string_lit
         | {id} id
         | {field} [object]:expr [property]:id
+        | {append} id expr
+        | {prim_type_cast} type_expr expr
+        | {func_call} id expr*
 
         | {unary_neg} expr
         | {unary_pos} expr
