@@ -271,6 +271,8 @@ Productions
             {-> lit.expr}
         | {id} id
             {-> New expr.id(id)} 
+        | {field} atom dot id
+            {-> New expr.field(atom.expr, id)}
         | {paren} lparen expr rparen 
            {-> expr.expr};
 
@@ -292,15 +294,12 @@ Productions
     | {raw_string_lit} raw_string_lit 
         {-> New expr.raw_string_lit(raw_string_lit)};
 
-        //TODO: Finish all the expressions in atom (e.g., function expression, etc)
-
 Abstract Syntax Tree
     prog = 
         {program}  expr* ;
 
-    expr = 
-          {id} id 
-        | {bool_lit} bool_lit
+    expr =  
+          {bool_lit} bool_lit
         | {int_lit} int_lit
         | {oct_lit} oct_lit
         | {hex_lit} hex_lit 
@@ -308,6 +307,9 @@ Abstract Syntax Tree
         | {rune_lit} rune_lit 
         | {interpreted_string_lit} interpreted_string_lit 
         | {raw_string_lit} raw_string_lit
+        | {id} id
+        | {field} [object]:expr [property]:id
+
         | {unary_neg} expr
         | {unary_pos} expr
         | {unary_bit_comp} expr
