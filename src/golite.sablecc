@@ -184,7 +184,7 @@ Ignored Tokens
 Productions
     //* Program. *//
     
-    prog {-> prog} = pack_dec expr_list {-> New prog.prog(pack_dec.id, [expr_list.expr])} ;
+    prog {-> prog} = pack_dec top_dec* {-> New prog.prog(pack_dec.id, [top_dec])} ;
 
     //* Package declaration. *//
 
@@ -391,7 +391,7 @@ Productions
             {-> New expr.raw_string_lit(raw_string_lit)};
 
 Abstract Syntax Tree
-    prog = {prog} id expr* ;
+    prog = {prog} id top_dec* ;
 
     top_dec =
           {vars} var_spec*
