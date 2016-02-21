@@ -186,6 +186,14 @@ Productions
     
     prog {-> prog} = {prog} expr_list {-> New prog.program([expr_list.expr])} ;
 
+    //* Identifiers *//
+
+    id_list {-> id*} =
+          {id} id
+            {-> [id]}
+        | {ids} id comma id_list
+            {-> [id, id_list.id]} ;
+
     //* Types *//
 
     type_expr {-> type_expr} =
@@ -221,7 +229,7 @@ Productions
             {-> []}
         | {expr} expr
             {-> [expr.expr]}
-        | {cst_exprs} expr comma expr_list 
+        | {exprs} expr comma expr_list 
             {-> [expr.expr, expr_list.expr]} ;
 
     expr {-> expr} =
@@ -298,7 +306,7 @@ Productions
           {lit} lit
             {-> lit.expr}
         | {id} id
-            {-> New expr.id(id)} 
+            {-> New expr.variable(id)} 
         | {field} atom dot id
             {-> New expr.field(atom.expr, id)}
         | {func_call} func_call
@@ -357,7 +365,7 @@ Abstract Syntax Tree
         | {rune_lit} rune_lit 
         | {interpreted_string_lit} interpreted_string_lit 
         | {raw_string_lit} raw_string_lit
-        | {id} id
+        | {variable} id
         | {field} expr id
         | {append} id expr
         | {prim_type_cast} type_expr expr
