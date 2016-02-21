@@ -194,7 +194,10 @@ Productions
 
     top_dec {-> top_dec} =
           {var_dec} var_dec
-            {-> var_dec.top_dec} ;
+            {-> var_dec.top_dec}
+        | {type_dec} type_dec
+            {-> type_dec.top_dec} ;
+        /* | {func_dec} func_dec ; */
 
     //* Variable declaration. *//
 
@@ -208,11 +211,23 @@ Productions
 
     var_spec {-> var_spec} =
           {typed} id_list type_expr
-            {-> New var_spec.spec([id_list.id], type_expr.type_expr, [])}
+            {-> New var_spec.spec([id_list.id], type_expr, [])}
         | {init} id_list assign expr_list
             {-> New var_spec.spec([id_list.id], Null, [expr_list.expr])}
         | {typed_init} id_list type_expr assign expr_list
-            {-> New var_spec.spec([id_list.id], type_expr.type_expr, [expr_list.expr])};
+            {-> New var_spec.spec([id_list.id], type_expr, [expr_list.expr])};
+
+    //* Type declaration. *//
+
+    type_dec {-> top_dec} =
+          {sing} type type_spec semi
+            {-> New top_dec.types([type_spec])}
+        | {dist} type lparen type_spec_stmt* rparen semi
+            {-> New top_dec.types([type_spec_stmt.type_spec])} ;
+
+    type_spec_stmt {-> type_spec} = type_spec semi {-> type_spec} ;
+
+    type_spec {-> type_spec} = id type_expr {-> New type_spec.spec([id], type_expr)} ;
 
     //* Identifiers *//
 
@@ -232,7 +247,9 @@ Productions
         | {array} lsquare expr rsquare type_expr
             {-> New type_expr.array(expr.expr, type_expr.type_expr)}
         | {slice} lsquare rsquare type_expr
-            {-> New type_expr.slice(type_expr.type_expr)};
+            {-> New type_expr.slice(type_expr.type_expr)}
+        | {struct} struct lbrace struct_sub_stmt* rbrace
+            {-> New type_expr.struct([struct_sub_stmt.type_spec])};
 
     prim_type {-> type_expr} = 
           {castable} castable_prim_type
@@ -249,6 +266,9 @@ Productions
             {-> New type_expr.float()}
         | {rune} rune
             {-> New type_expr.rune()} ;
+
+    struct_sub_stmt {-> type_spec} = id_list type_expr semi
+        {-> New type_spec.spec([id_list.id], type_expr)} ;
 
     //* Expressions. *//
 
@@ -374,9 +394,12 @@ Abstract Syntax Tree
     prog = {prog} id expr* ;
 
     top_dec =
-        {vars} var_spec* ;
+          {vars} var_spec*
+        | {types} type_spec* ;
 
     var_spec = {spec} id+ type_expr? expr* ;
+
+    type_spec = {spec} id+ type_expr ;
 
     type_expr =
           {bool}
@@ -386,7 +409,8 @@ Abstract Syntax Tree
         | {string}
         | {custom} id
         | {array} expr type_expr
-        | {slice} type_expr ;
+        | {slice} type_expr
+        | {struct} type_spec* ;
 
     expr =  
           {bool_lit} bool_lit
