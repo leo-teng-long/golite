@@ -194,19 +194,19 @@ Productions
 
     top_dec {-> top_dec} =
           {var_dec} var_dec
-            {-> var_dec.top_dec}
+            {-> New top_dec.vars([var_dec.var_spec])}
         | {type_dec} type_dec
-            {-> type_dec.top_dec}
+            {-> New top_dec.types([type_dec.type_spec])}
         | {func_dec} func_dec
             {-> func_dec.top_dec} ;
 
     //* Variable declaration. *//
 
-    var_dec {-> top_dec} =
+    var_dec {-> var_spec*} =
           {sing} var var_spec semi
-            {-> New top_dec.vars([var_spec])}
+            {-> [var_spec]}
         | {dist} var lparen var_spec_stmt* rparen semi
-            {-> New top_dec.vars([var_spec_stmt.var_spec])} ;
+            {-> [var_spec_stmt.var_spec]} ;
 
     var_spec_stmt {-> var_spec} = var_spec semi {-> var_spec} ;
 
@@ -220,11 +220,11 @@ Productions
 
     //* Type declaration. *//
 
-    type_dec {-> top_dec} =
+    type_dec {-> type_spec*} =
           {sing} type type_spec semi
-            {-> New top_dec.types([type_spec])}
+            {-> [type_spec]}
         | {dist} type lparen type_spec_stmt* rparen semi
-            {-> New top_dec.types([type_spec_stmt.type_spec])} ;
+            {-> [type_spec_stmt.type_spec]} ;
 
     type_spec_stmt {-> type_spec} = type_spec semi {-> type_spec} ;
 
@@ -233,10 +233,10 @@ Productions
     //* Function declaration. *//
 
     func_dec {-> top_dec} =
-          {with_rettype} func id lparen args rparen type_expr lbrace expr_list rbrace semi
-            {-> New top_dec.func(id, [args.arg_group], type_expr, [expr_list.expr])}
-        | {with_no_rettype} func id lparen args rparen lbrace expr_list rbrace semi
-            {-> New top_dec.func(id, [args.arg_group], Null, [expr_list.expr])} ;
+          {with_rettype} func id lparen args rparen type_expr lbrace stmt* rbrace semi
+            {-> New top_dec.func(id, [args.arg_group], type_expr, [stmt])}
+        | {with_no_rettype} func id lparen args rparen lbrace stmt* rbrace semi
+            {-> New top_dec.func(id, [args.arg_group], Null, [stmt])} ;
     
     args {-> arg_group*} =
           {none} {-> []}
@@ -245,6 +245,14 @@ Productions
     arg_before {-> arg_group} = arg_group comma {-> arg_group} ;
 
     arg_group {-> arg_group} = id_list type_expr {-> New arg_group.arg([id_list.id], type_expr)} ;
+
+    //* Statement. *//
+
+    stmt {-> stmt} =
+          {var_dec} var_dec
+            {-> New stmt.vars([var_dec.var_spec])}
+        | {type_dec} type_dec
+            {-> New stmt.types([type_dec.type_spec])} ;
 
     //* Identifiers *//
 
@@ -413,13 +421,17 @@ Abstract Syntax Tree
     top_dec =
           {vars} var_spec*
         | {types} type_spec*
-        | {func} id arg_group* type_expr? expr* ;
+        | {func} id arg_group* type_expr? stmt* ;
 
     var_spec = {spec} id+ type_expr? expr* ;
 
     type_spec = {spec} id+ type_expr ;
 
     arg_group = {arg} id+ type_expr ;
+
+    stmt =
+          {vars} var_spec*
+        | {types} type_spec* ;
 
     type_expr =
           {bool}
