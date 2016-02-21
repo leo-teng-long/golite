@@ -249,7 +249,9 @@ Productions
     //* Statement. *//
 
     stmt {-> stmt} =
-          {var_dec} var_dec
+          {simple} simple_stmt
+            {-> simple_stmt.stmt}
+        | {var_dec} var_dec
             {-> New stmt.vars([var_dec.var_spec])}
         | {type_dec} type_dec
             {-> New stmt.types([type_dec.type_spec])}
@@ -257,6 +259,64 @@ Productions
             {-> New stmt.print([expr_list.expr])}
         | {println} println lparen expr_list rparen semi
             {-> New stmt.println([expr_list.expr])} ;
+
+    simple_stmt {-> stmt} =
+          {expr} expr semi
+            {-> New stmt.expr(expr)}
+        | {incr} expr plus_plus semi
+            {-> New stmt.incr(expr)}
+        | {decr} expr minus_minus semi
+            {-> New stmt.decr(expr)}
+        | {assign} assignment semi
+            {-> assignment.stmt}
+        | {short_assign} short_assignment semi
+            {-> short_assignment.stmt} ;
+
+    assignment {-> stmt} =
+          {assign} assignable_list assign expr_list
+            {-> New stmt.assign([assignable_list.expr], [expr_list.expr])}
+        | {plus_assign} assignable plus_assign expr
+            {-> New stmt.plus_assign(assignable.expr, expr)}
+        | {minus_assign} assignable minus_assign expr
+            {-> New stmt.minus_assign(assignable.expr, expr)}
+        | {star_assign} assignable star_assign expr
+            {-> New stmt.star_assign(assignable.expr, expr)}
+        | {slash_assign} assignable slash_assign expr
+            {-> New stmt.slash_assign(assignable.expr, expr)}
+        | {perc_assign} assignable perc_assign expr
+            {-> New stmt.perc_assign(assignable.expr, expr)}
+        | {and_assign} assignable and_assign expr
+            {-> New stmt.and_assign(assignable.expr, expr)}
+        | {pipe_assign} assignable pipe_assign expr
+            {-> New stmt.pipe_assign(assignable.expr, expr)}
+        | {carot_assign} assignable carot_assign expr
+            {-> New stmt.carot_assign(assignable.expr, expr)}
+        | {lshift_assign} assignable lshift_assign expr
+            {-> New stmt.lshift_assign(assignable.expr, expr)}
+        | {rshift_assign} assignable rshift_assign expr
+            {-> New stmt.rshift_assign(assignable.expr, expr)}
+        | {amp_carot_assign} assignable amp_carot_assign expr
+            {-> New stmt.amp_carot_assign(assignable.expr, expr)} ;
+
+    assignable_list {-> expr*} =
+          {assignable} assignable
+            {-> [assignable.expr]}
+        | {assignables} assignable comma assignable_list
+            {-> [assignable.expr, assignable_list.expr]} ;
+
+    assignable {-> expr} = 
+          {id} id
+            {-> New expr.variable(id)}
+        | {field} field
+            {-> field.expr}
+        | {array_elem} array_elem
+            {-> array_elem.expr} ;
+
+    field {-> expr} = atom dot id {-> New expr.field(atom.expr, id)} ;
+
+    array_elem {-> expr} = id lsquare expr rsquare {-> New expr.array_elem(id, expr)} ;
+
+    short_assignment {-> stmt} = id_list short_assign expr_list {-> New stmt.short_assign([id_list.id], [expr_list.expr])};
 
     //* Identifiers *//
 
@@ -384,10 +444,12 @@ Productions
             {-> lit.expr}
         | {id} id
             {-> New expr.variable(id)} 
-        | {field} atom dot id
-            {-> New expr.field(atom.expr, id)}
+        | {field} field
+            {-> field.expr}
         | {func_call} func_call
             {-> func_call.expr}
+        | {array_elem} array_elem
+            {-> array_elem.expr}
         | {paren} lparen expr rparen 
            {-> expr.expr};
 
@@ -434,8 +496,24 @@ Abstract Syntax Tree
     arg_group = {arg} id+ type_expr ;
 
     stmt =
-          {vars} var_spec*
-        | {types} type_spec*
+          {expr} expr
+        | {incr} expr
+        | {decr} expr
+        | {assign} [lhs]:expr+ [rhs]:expr+
+        | {plus_assign} [lhs]: expr [rhs]:expr
+        | {minus_assign} [lhs]: expr [rhs]:expr
+        | {star_assign} [lhs]: expr [rhs]:expr
+        | {slash_assign} [lhs]: expr [rhs]:expr
+        | {perc_assign} [lhs]: expr [rhs]:expr
+        | {and_assign} [lhs]: expr [rhs]:expr
+        | {pipe_assign} [lhs]: expr [rhs]:expr
+        | {carot_assign} [lhs]: expr [rhs]:expr
+        | {lshift_assign} [lhs]: expr [rhs]:expr
+        | {rshift_assign} [lhs]: expr [rhs]:expr
+        | {amp_carot_assign} [lhs]: expr [rhs]:expr
+        | {short_assign} id+ expr+
+        | {vars} var_spec+
+        | {types} type_spec+
         | {print} expr*
         | {println} expr* ;
 
@@ -461,6 +539,7 @@ Abstract Syntax Tree
         | {raw_string_lit} raw_string_lit
         | {variable} id
         | {field} expr id
+        | {array_elem} id expr
         | {append} id expr
         | {prim_type_cast} type_expr expr
         | {func_call} id expr*
