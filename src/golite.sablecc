@@ -186,8 +186,28 @@ Productions
     
     prog {-> prog} = {prog} expr_list {-> New prog.program([expr_list.expr])} ;
 
-    convertible_prim_type {-> type_expr} = 
-          {int} int
+    //* Types *//
+
+    type_expr {-> type_expr} =
+          {prim_type} prim_type
+            {-> prim_type.type_expr}
+        | {custom_type} id
+            {-> New type_expr.custom(id)}
+        | {array} lsquare expr rsquare type_expr
+            {-> New type_expr.array(expr.expr, type_expr.type_expr)}
+        | {slice} lsquare rsquare type_expr
+            {-> New type_expr.slice(type_expr.type_expr)};
+
+    prim_type {-> type_expr} = 
+          {castable} castable_prim_type
+            {-> castable_prim_type.type_expr}
+        | {string} string
+            {-> New type_expr.string()} ;
+
+    castable_prim_type {-> type_expr} = 
+          {bool} bool
+            {-> New type_expr.bool()}
+        | {int} int
             {-> New type_expr.int()}
         | {float} float64
             {-> New type_expr.float()}
@@ -289,39 +309,44 @@ Productions
     func_call {-> expr} = 
           {append} append lparen id comma expr rparen
             {-> New expr.append(id, expr)}
-        | {prim_type_cast} convertible_prim_type lparen expr rparen
-            {-> New expr.prim_type_cast(convertible_prim_type.type_expr, expr)}
+        | {prim_type_cast} castable_prim_type lparen expr rparen
+            {-> New expr.prim_type_cast(castable_prim_type.type_expr, expr)}
         | {custom_func_call} id lparen expr_list rparen
             {-> New expr.func_call(id, [expr_list.expr])};
 
     //* Literals. *//
 
     lit {-> expr} =
-      {bool_lit} bool_lit 
-        {-> New expr.bool_lit(bool_lit)}
-    | {int_lit} int_lit 
-        {-> New expr.int_lit(int_lit)}
-    | {oct_lit} oct_lit 
-        {-> New expr.oct_lit(oct_lit)}
-    | {hex_lit} hex_lit 
-        {-> New expr.hex_lit(hex_lit)}
-    | {float_lit} float_lit 
-        {-> New expr.float_lit(float_lit)}
-    | {rune_lit} rune_lit 
-        {-> New expr.rune_lit(rune_lit)}
-    | {interpreted_string_lit} interpreted_string_lit 
-        {-> New expr.interpreted_string_lit(interpreted_string_lit)}
-    | {raw_string_lit} raw_string_lit 
-        {-> New expr.raw_string_lit(raw_string_lit)};
+          {bool_lit} bool_lit 
+            {-> New expr.bool_lit(bool_lit)}
+        | {int_lit} int_lit 
+            {-> New expr.int_lit(int_lit)}
+        | {oct_lit} oct_lit 
+            {-> New expr.oct_lit(oct_lit)}
+        | {hex_lit} hex_lit 
+            {-> New expr.hex_lit(hex_lit)}
+        | {float_lit} float_lit 
+            {-> New expr.float_lit(float_lit)}
+        | {rune_lit} rune_lit 
+            {-> New expr.rune_lit(rune_lit)}
+        | {interpreted_string_lit} interpreted_string_lit 
+            {-> New expr.interpreted_string_lit(interpreted_string_lit)}
+        | {raw_string_lit} raw_string_lit 
+            {-> New expr.raw_string_lit(raw_string_lit)};
 
 Abstract Syntax Tree
     prog = 
         {program}  expr* ;
 
     type_expr =
-          {int}
+          {bool}
+        | {int}
         | {float}
-        | {rune} ;
+        | {rune}
+        | {string}
+        | {custom} id
+        | {array} expr type_expr
+        | {slice} type_expr ;
 
     expr =  
           {bool_lit} bool_lit
