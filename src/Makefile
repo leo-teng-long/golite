@@ -5,6 +5,9 @@ build: clean
 	java -jar ./sablecc-3.7/lib/sablecc.jar golite.sablecc -d .
 	javac golite/*.java golite/lexer/*.java golite/parser/*.java golite/node/*.java golite/analysis/*.java
 
+buildsrc:
+	rm -rf golite/*.class
+	javac golite/*.java
+
 clean:
 	rm -rf golite/*.class golite/lexer golite/parser golite/node golite/analysis
-
