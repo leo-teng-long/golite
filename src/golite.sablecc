@@ -184,7 +184,11 @@ Ignored Tokens
 Productions
     //* Program. *//
     
-    prog {-> prog} = {prog} expr_list {-> New prog.program([expr_list.expr])} ;
+    prog {-> prog} = {prog} pack_dec expr_list {-> New prog.program(pack_dec.id, [expr_list.expr])} ;
+
+    //* Package declaration *//
+
+    pack_dec {-> id} = {pack} package id semi {-> id};
 
     //* Identifiers *//
 
@@ -344,7 +348,7 @@ Productions
 
 Abstract Syntax Tree
     prog = 
-        {program}  expr* ;
+        {program} id expr* ;
 
     type_expr =
           {bool}
