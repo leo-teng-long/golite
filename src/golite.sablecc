@@ -182,8 +182,6 @@ Ignored Tokens
     blank, eol, comment ;
 
 Productions
-    // TODO: Fix variable naming.
-
     //* Program. *//
     
     prog {-> prog} = {prog} expr_list {-> New prog.program([expr_list.expr])} ;
@@ -209,72 +207,72 @@ Productions
     expr {-> expr} =
           {conjunction} conjunction
             {-> conjunction.expr}
-        | {cst_or}      expr pipe_pipe conjunction 
+        | {or} expr pipe_pipe conjunction 
             {-> New expr.or(expr.expr, conjunction.expr)} ;
 
     conjunction {-> expr} =
           {clause} clause
             {-> clause.expr}
-        | {cst_and} conjunction amp_amp clause 
+        | {and} conjunction amp_amp clause 
             {-> New expr.and(conjunction.expr, clause.expr)} ;
 
     clause {-> expr} =
           {sub_expr} sub_expr
             {-> sub_expr.expr}
-        | {cst_eq} clause equals sub_expr
+        | {eq} clause equals sub_expr
             {-> New expr.eq(clause.expr, sub_expr.expr)}
-        | {cst_neq} clause not_equals sub_expr
+        | {neq} clause not_equals sub_expr
             {-> New expr.neq(clause.expr, sub_expr.expr)}
-        | {cst_lt} clause lt sub_expr
+        | {lt} clause lt sub_expr
             {-> New expr.lt(clause.expr, sub_expr.expr)}
-        | {cst_lte} clause lte sub_expr
+        | {lte} clause lte sub_expr
             {-> New expr.lte(clause.expr, sub_expr.expr)}
-        | {cst_gt} clause gt sub_expr
+        | {gt} clause gt sub_expr
             {-> New expr.gt(clause.expr, sub_expr.expr)}
-        | {cst_gte} clause gte sub_expr 
+        | {gte} clause gte sub_expr 
             {-> New expr.gte(clause.expr, sub_expr.expr)} ;
 
     sub_expr {-> expr} =
           {factor} factor
             {-> factor.expr}
-        | {cst_plus} sub_expr plus factor
+        | {plus} sub_expr plus factor
             {-> New expr.add(sub_expr.expr, factor.expr)}
-        | {cst_minus} sub_expr minus factor
+        | {minus} sub_expr minus factor
             {-> New expr.subtract(sub_expr.expr, factor.expr)}
-        | {cst_bit_or} sub_expr pipe factor
+        | {bit_or} sub_expr pipe factor
             {-> New expr.bit_or(sub_expr.expr, factor.expr)}
-        | {cst_bit_xor} sub_expr carot factor 
+        | {bit_xor} sub_expr carot factor 
             {-> New expr.bit_xor(sub_expr.expr, factor.expr)} ;
 
     factor {-> expr} =
           {term} term
             {-> term.expr}
-        | {cst_mult} factor star term
+        | {mult} factor star term
             {-> New expr.mult(factor.expr, term.expr)}
-        | {cst_div} factor slash term
+        | {div} factor slash term
             {-> New expr.div(factor.expr, term.expr)}
-        | {cst_mod} factor perc term
+        | {mod} factor perc term
             {-> New expr.mod(factor.expr, term.expr)}
-        | {cst_lshift} factor lshift term
-            {-> New expr.lshift(factor.expr, term.expr)}
-        | {cst_rshift} factor rshift term
-            {-> New expr.rshift(factor.expr, term.expr)}
-        | {cst_bit_and} factor amp term
+        | {bit_lshift} factor lshift term
+            {-> New expr.bit_lshift(factor.expr, term.expr)}
+        | {bit_rshift} factor rshift term
+            {-> New expr.bit_rshift(factor.expr, term.expr)}
+        | {bit_and} factor amp term
             {-> New expr.bit_and(factor.expr, term.expr)}
-        | {cst_bit_clear} factor amp_carot term 
+        | {bit_clear} factor amp_carot term 
             {-> New expr.bit_clear(factor.expr, term.expr)} ;
 
     term {-> expr} =
           {atom} atom
             {-> atom.expr}
-        | {cst_pos} plus atom
-            {-> New expr.unary_pos(atom.expr)}
-        | {cst_neg} minus atom
-            {-> New expr.unary_neg(atom.expr)}
-        | {cst_not} not atom
-            {-> New expr.unary_not(atom.expr)}
-        | {cst_bit_comp} carot atom 
-            {-> New expr.unary_bit_comp(atom.expr)} ;
+        | {pos} plus atom
+            {-> New expr.pos(atom.expr)}
+        | {neg} minus atom
+            {-> New expr.neg(atom.expr)}
+        | {not} not atom
+            {-> New expr.not(atom.expr)}
+        | {bit_comp} carot atom 
+            {-> New expr.bit_comp(atom.expr)} ;
 
     atom {-> expr} =
           {lit} lit
@@ -295,6 +293,8 @@ Productions
             {-> New expr.prim_type_cast(convertible_prim_type.type_expr, expr)}
         | {custom_func_call} id lparen expr_list rparen
             {-> New expr.func_call(id, [expr_list.expr])};
+
+    //* Literals. *//
 
     lit {-> expr} =
       {bool_lit} bool_lit 
@@ -333,31 +333,30 @@ Abstract Syntax Tree
         | {interpreted_string_lit} interpreted_string_lit 
         | {raw_string_lit} raw_string_lit
         | {id} id
-        | {field} [object]:expr [property]:id
+        | {field} expr id
         | {append} id expr
         | {prim_type_cast} type_expr expr
         | {func_call} id expr*
-
-        | {unary_neg} expr
-        | {unary_pos} expr
-        | {unary_bit_comp} expr
-        | {unary_not} expr 
+        | {neg} expr
+        | {pos} expr
+        | {bit_comp} expr
+        | {not} expr
         | {mult} [left]:expr [right]:expr
         | {div} [left]:expr [right]:expr
         | {mod} [left]:expr [right]:expr
-        | {lshift} [left]:expr [right]:expr
-        | {rshift} [left]:expr [right]:expr
+        | {bit_lshift} [left]:expr [right]:expr
+        | {bit_rshift} [left]:expr [right]:expr
         | {bit_and} [left]:expr [right]:expr
-        | {bit_clear} [left]:expr [right]:expr 
+        | {bit_clear} [left]:expr [right]:expr
         | {add} [left]:expr [right]:expr
         | {subtract} [left]:expr [right]:expr
         | {bit_or} [left]:expr [right]:expr
-        | {bit_xor} [left]:expr [right]:expr 
+        | {bit_xor} [left]:expr [right]:expr
         | {eq} [left]:expr [right]:expr
         | {neq} [left]:expr [right]:expr
         | {lt} [left]:expr [right]:expr
         | {gt} [left]:expr [right]:expr
         | {lte} [left]:expr [right]:expr
-        | {gte} [left]:expr [right]:expr 
+        | {gte} [left]:expr [right]:expr
         | {and} [left]:expr [right]:expr
         | {or} [left]:expr [right]:expr ;
