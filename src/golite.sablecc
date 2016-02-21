@@ -540,18 +540,30 @@ Productions
             {-> New expr.raw_string_lit(raw_string_lit)};
 
 Abstract Syntax Tree
+    //* Program. *//
+
     prog = {prog} id top_dec* ;
+
+    //* Top-level declaration. *//
 
     top_dec =
           {vars} var_spec*
         | {types} type_spec*
         | {func} id arg_group* type_expr? stmt* ;
 
+    //* Variable specification. *//
+
     var_spec = {spec} id+ type_expr? expr* ;
+
+    //* Type specification. *//
 
     type_spec = {spec} id+ type_expr ;
 
+    //* Argument grouping. *//
+
     arg_group = {arg} id+ type_expr ;
+
+    //* Statement *//
 
     stmt =
           {expr} expr
@@ -589,6 +601,8 @@ Abstract Syntax Tree
           {exprs} expr+
         | {default} ;
 
+    //* Type "expression". *//
+
     type_expr =
           {bool}
         | {int}
@@ -600,7 +614,10 @@ Abstract Syntax Tree
         | {slice} type_expr
         | {struct} type_spec* ;
 
-    expr =  
+    //* Expression. *//
+
+    expr =
+        // Literals.  
           {bool_lit} bool_lit
         | {int_lit} int_lit
         | {oct_lit} oct_lit
@@ -609,16 +626,24 @@ Abstract Syntax Tree
         | {rune_lit} rune_lit 
         | {interpreted_string_lit} interpreted_string_lit 
         | {raw_string_lit} raw_string_lit
+        // Variable.
         | {variable} id
+        // Struct field/property.
         | {field} expr id
+        // Array element.
         | {array_elem} id expr
+        // Append function.
         | {append} id expr
+        // Type cast.
         | {prim_type_cast} type_expr expr
+        // Function call.
         | {func_call} id expr*
+        // Unary operators.
         | {neg} expr
         | {pos} expr
         | {bit_comp} expr
         | {not} expr
+        // Binary operators.
         | {mult} [left]:expr [right]:expr
         | {div} [left]:expr [right]:expr
         | {mod} [left]:expr [right]:expr
