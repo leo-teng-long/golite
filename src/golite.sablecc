@@ -263,6 +263,8 @@ Productions
             {-> New stmt.println([expr_list.expr])}
         | {return} return_stmt
             {-> return_stmt.stmt}
+        | {if_else} if_else semi
+            {-> if_else.stmt}
         | {break} break semi
             {-> New stmt.break()}
         | {continue} continue semi
@@ -331,6 +333,20 @@ Productions
             {-> New stmt.return(Null)}
         | {expr} return expr semi
             {-> New stmt.return(expr)} ;
+
+    if_else {-> stmt} =
+          {if} if condition block
+            {-> New stmt.if_else(condition, [block.stmt], [])}
+        | {if_else} if condition [if_block]:block else [else_block]:block
+            {-> New stmt.if_else(condition, [if_block.stmt], [else_block.stmt])}
+        | {if_elif} if condition block else if_else
+            {-> New stmt.if_else(condition, [block.stmt], [if_else.stmt])} ;
+
+    condition {-> condition} = 
+          {expr} expr
+            {-> New condition.condition(Null, expr)}
+        | {stmt_expr} simple_stmt expr
+            {-> New condition.condition(simple_stmt.stmt, expr)} ;
 
     //* Identifiers *//
 
@@ -531,8 +547,11 @@ Abstract Syntax Tree
         | {print} expr*
         | {println} expr*
         | {return} expr?
+        | {if_else} condition [if_block]:stmt* [else_block]:stmt*
         | {break}
         | {continue} ;
+
+    condition = {condition} stmt? expr ;
 
     type_expr =
           {bool}
