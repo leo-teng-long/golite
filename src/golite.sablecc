@@ -265,6 +265,8 @@ Productions
             {-> return_stmt.stmt}
         | {if_else} if_else semi
             {-> if_else.stmt}
+        | {switch} switcheroo semi
+            {-> switcheroo.stmt}
         | {break} break semi
             {-> New stmt.break()}
         | {continue} continue semi
@@ -347,6 +349,22 @@ Productions
             {-> New condition.condition(Null, expr)}
         | {stmt_expr} simple_stmt expr
             {-> New condition.condition(simple_stmt.stmt, expr)} ;
+
+    switcheroo {-> stmt} =
+          {stmt_expr} switch simple_stmt expr lbrace case_block* rbrace
+            {-> New stmt.switch(simple_stmt.stmt, expr, [case_block])}
+        | {stmt} switch simple_stmt lbrace case_block* rbrace
+            {-> New stmt.switch(simple_stmt.stmt, Null, [case_block])}
+        | {expr} switch expr lbrace case_block* rbrace
+            {-> New stmt.switch(Null, expr, [case_block])}
+        | {nothing} switch lbrace case_block* rbrace
+            {-> New stmt.switch(Null, Null, [case_block])} ;
+
+    case_block {-> case_block} =
+          {case} case expr_list colon stmt*
+            {-> New case_block.block(New case_condition.exprs([expr_list.expr]), [stmt])}
+        | {default} default colon stmt*
+            {-> New case_block.block(New case_condition.default(), [stmt])} ;
 
     //* Identifiers *//
 
@@ -548,10 +566,18 @@ Abstract Syntax Tree
         | {println} expr*
         | {return} expr?
         | {if_else} condition [if_block]:stmt* [else_block]:stmt*
+        | {switch} stmt? expr? case_block*
         | {break}
         | {continue} ;
 
     condition = {condition} stmt? expr ;
+
+    case_block = {block} case_condition stmt* ;
+
+    case_condition =
+          {exprs} expr+
+        | {default} ;
+
 
     type_expr =
           {bool}
