@@ -251,8 +251,8 @@ Productions
     block {-> stmt*} = lbrace stmt* rbrace {-> [stmt]} ;
 
     stmt {-> stmt} =
-          {simple} simple_stmt
-            {-> simple_stmt.stmt}
+          {simple} simple_sub semi
+            {-> simple_sub.stmt}
         | {var_dec} var_dec
             {-> New stmt.vars([var_dec.var_spec])}
         | {type_dec} type_dec
@@ -267,21 +267,23 @@ Productions
             {-> if_else.stmt}
         | {switch} switcheroo semi
             {-> switcheroo.stmt}
+        | {loop} loop semi
+            {-> loop.stmt}
         | {break} break semi
             {-> New stmt.break()}
         | {continue} continue semi
             {-> New stmt.continue()} ;
 
-    simple_stmt {-> stmt} =
-          {expr} expr semi
+    simple_sub {-> stmt} =
+          {expr} expr
             {-> New stmt.expr(expr)}
-        | {incr} expr plus_plus semi
+        | {incr} expr plus_plus
             {-> New stmt.incr(expr)}
-        | {decr} expr minus_minus semi
+        | {decr} expr minus_minus
             {-> New stmt.decr(expr)}
-        | {assign} assignment semi
+        | {assign} assignment
             {-> assignment.stmt}
-        | {short_assign} short_assignment semi
+        | {short_assign} short_assignment
             {-> short_assignment.stmt} ;
 
     assignment {-> stmt} =
@@ -347,14 +349,14 @@ Productions
     condition {-> condition} = 
           {expr} expr
             {-> New condition.condition(Null, expr)}
-        | {stmt_expr} simple_stmt expr
-            {-> New condition.condition(simple_stmt.stmt, expr)} ;
+        | {stmt_expr} simple_sub semi expr
+            {-> New condition.condition(simple_sub.stmt, expr)} ;
 
     switcheroo {-> stmt} =
-          {stmt_expr} switch simple_stmt expr lbrace case_block* rbrace
-            {-> New stmt.switch(simple_stmt.stmt, expr, [case_block])}
-        | {stmt} switch simple_stmt lbrace case_block* rbrace
-            {-> New stmt.switch(simple_stmt.stmt, Null, [case_block])}
+          {stmt_expr} switch simple_sub semi expr lbrace case_block* rbrace
+            {-> New stmt.switch(simple_sub.stmt, expr, [case_block])}
+        | {stmt} switch simple_sub semi lbrace case_block* rbrace
+            {-> New stmt.switch(simple_sub.stmt, Null, [case_block])}
         | {expr} switch expr lbrace case_block* rbrace
             {-> New stmt.switch(Null, expr, [case_block])}
         | {nothing} switch lbrace case_block* rbrace
@@ -365,6 +367,14 @@ Productions
             {-> New case_block.block(New case_condition.exprs([expr_list.expr]), [stmt])}
         | {default} default colon stmt*
             {-> New case_block.block(New case_condition.default(), [stmt])} ;
+
+    loop {-> stmt} =
+          {for} for [init]:simple_sub [first]:semi expr [second]:semi [end]:simple_sub block
+            {-> New stmt.loop(init.stmt, expr, end.stmt, [block.stmt])}
+        | {while_loop} for expr block
+            {-> New stmt.loop(Null, expr, Null, [block.stmt])}
+        | {inf_loop} for block
+            {-> New stmt.loop(Null, Null, Null, [block.stmt])} ;
 
     //* Identifiers *//
 
@@ -567,6 +577,7 @@ Abstract Syntax Tree
         | {return} expr?
         | {if_else} condition [if_block]:stmt* [else_block]:stmt*
         | {switch} stmt? expr? case_block*
+        | {loop} [init]:stmt? expr? [end]:stmt? [block]:stmt*
         | {break}
         | {continue} ;
 
@@ -577,7 +588,6 @@ Abstract Syntax Tree
     case_condition =
           {exprs} expr+
         | {default} ;
-
 
     type_expr =
           {bool}
