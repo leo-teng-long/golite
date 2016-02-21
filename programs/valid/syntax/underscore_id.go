@@ -5,5 +5,13 @@ package main
 var _ int
 
 func main() {
-	// Do nothing.
+	a := 1
+	_ = 1
+
+	_ += 1
+
+	b := _
+	_ >>= _
+
+	_
 }
