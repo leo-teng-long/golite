@@ -258,7 +258,9 @@ Productions
         | {print} print lparen expr_list rparen semi
             {-> New stmt.print([expr_list.expr])}
         | {println} println lparen expr_list rparen semi
-            {-> New stmt.println([expr_list.expr])} ;
+            {-> New stmt.println([expr_list.expr])}
+        | {return} return_stmt
+            {-> return_stmt.stmt} ;
 
     simple_stmt {-> stmt} =
           {expr} expr semi
@@ -317,6 +319,12 @@ Productions
     array_elem {-> expr} = id lsquare expr rsquare {-> New expr.array_elem(id, expr)} ;
 
     short_assignment {-> stmt} = id_list short_assign expr_list {-> New stmt.short_assign([id_list.id], [expr_list.expr])};
+
+    return_stmt {-> stmt} = 
+          {void} return semi
+            {-> New stmt.return(Null)}
+        | {expr} return expr semi
+            {-> New stmt.return(expr)} ;
 
     //* Identifiers *//
 
@@ -515,7 +523,8 @@ Abstract Syntax Tree
         | {vars} var_spec+
         | {types} type_spec+
         | {print} expr*
-        | {println} expr* ;
+        | {println} expr*
+        | {return} expr? ;
 
     type_expr =
           {bool}
