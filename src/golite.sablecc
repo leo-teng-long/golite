@@ -252,7 +252,11 @@ Productions
           {var_dec} var_dec
             {-> New stmt.vars([var_dec.var_spec])}
         | {type_dec} type_dec
-            {-> New stmt.types([type_dec.type_spec])} ;
+            {-> New stmt.types([type_dec.type_spec])}
+        | {print} print lparen expr_list rparen semi
+            {-> New stmt.print([expr_list.expr])}
+        | {println} println lparen expr_list rparen semi
+            {-> New stmt.println([expr_list.expr])} ;
 
     //* Identifiers *//
 
@@ -431,7 +435,9 @@ Abstract Syntax Tree
 
     stmt =
           {vars} var_spec*
-        | {types} type_spec* ;
+        | {types} type_spec*
+        | {print} expr*
+        | {println} expr* ;
 
     type_expr =
           {bool}
