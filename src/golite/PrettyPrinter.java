@@ -176,10 +176,14 @@ public class PrettyPrinter extends DepthFirstAdapter {
     buffer.append("[]");
   }
 
+  /**************************************************
+   * Literals                                       *
+   **************************************************/
+
   /**
    * @Override public void outABoolLitExpr(ABoolLitExpr node)
    *
-   * Pretty print bool literal
+   * Pretty print bool literals
    */
   public void outABoolLitExpr(ABoolLitExpr node) {
     buffer.append(node.getBoolLit().getText());
@@ -188,7 +192,7 @@ public class PrettyPrinter extends DepthFirstAdapter {
   /**
    * @Override public void outAIntLitExpr(AIntLitExpr node)
    *
-   * Pretty print int literal
+   * Pretty print int literals
    */
   public void outAIntLitExpr(AIntLitExpr node) {
     buffer.append(node.getIntLit().getText());
@@ -197,7 +201,7 @@ public class PrettyPrinter extends DepthFirstAdapter {
   /**
    * @Override public void outAOctLitExpr(AOctLitExpr node)
    *
-   * Pretty print oct literal
+   * Pretty print oct literals
    */
   public void outAOctLitExpr(AOctLitExpr node) {
     buffer.append(node.getOctLit().getText());
@@ -206,7 +210,7 @@ public class PrettyPrinter extends DepthFirstAdapter {
   /**
    * @Override public void outAHexLitExpr(AHexLitExpr node)
    *
-   * Pretty print hex literal
+   * Pretty print hex literals
    */
   public void outAHexLitExpr(AHexLitExpr node) {
     buffer.append(node.getHexLit().getText());
@@ -215,7 +219,7 @@ public class PrettyPrinter extends DepthFirstAdapter {
   /**
    * @Override public void outAFloatLitExpr(AFloatLitExpr node)
    *
-   * Pretty print float literal
+   * Pretty print float literals
    */
   public void outAFloatLitExpr(AFloatLitExpr node) {
     buffer.append(node.getFloatLit().getText());
@@ -224,7 +228,7 @@ public class PrettyPrinter extends DepthFirstAdapter {
   /**
    * @Override public void outARuneLitExpr(ARuneLitExpr node)
    *
-   * Pretty print run literal
+   * Pretty print run literals
    */
   public void outARuneLitExpr(ARuneLitExpr node) {
     buffer.append(node.getRuneLit().getText());
@@ -233,7 +237,7 @@ public class PrettyPrinter extends DepthFirstAdapter {
   /**
    * @Override public void outAInterpretedStringLitExpr(AInterpretedStringLitExpr node)
    *
-   * Pretty print interpreted string literal
+   * Pretty print interpreted string literals
    */
   public void outAInterpretedStringLitExpr(AInterpretedStringLitExpr node) {
     buffer.append(node.getInterpretedStringLit().getText());
@@ -242,20 +246,122 @@ public class PrettyPrinter extends DepthFirstAdapter {
   /**
    * @Override public void outARawStringLitExpr(ARawStringLitExpr node)
    *
-   * Pretty print raw string literal
+   * Pretty print raw string literals
    */
   public void outARawStringLitExpr(ARawStringLitExpr node) {
     buffer.append(node.getRawStringLit().getText());
   }
 
+  /**************************************************
+   * Identifiers                                    *
+   **************************************************/
+
   /**
    * @Override public void outAVariableExpr(AVariableExpr node)
    *
-   * Pretty print variable
+   * Pretty print variables
    */
   public void outAVariableExpr(AVariableExpr node) {
     buffer.append(node.getId().getText());
   }
+
+  /**************************************************
+   * Struct fields                                  *
+   **************************************************/
+
+  // ......
+
+  /**************************************************
+   * Array/slice elements                           *
+   **************************************************/
+
+  // ......
+
+  /**************************************************
+   * Append function                                *
+   **************************************************/
+
+  // ......
+
+  /**************************************************
+   * Type casting                                   *
+   **************************************************/
+
+  // ......
+
+  /**************************************************
+   * Function calls                                 *
+   **************************************************/
+
+  // ......
+
+  /**************************************************
+   * Unary operators                                *
+   **************************************************/
+
+  /**
+   * @Override public void inANegExpr(ANegExpr node)
+   * @Override public void outANegExpr(ANegExpr node)
+   *
+   * Pretty print negate ('-') operator
+   */
+  public void inANegExpr(ANegExpr node) {
+    addLeftParen();
+    buffer.append('-');
+  }
+
+  public void outANegExpr(ANegExpr node) {
+    addRightParen();
+  }
+
+  /**
+   * @Override public void inAPosExpr(APosExpr node)
+   * @Override public void outAPosExpr(APosExpr node)
+   *
+   * Pretty print unary plus ('+') operator
+   */
+  public void inAPosExpr(APosExpr node) {
+    addLeftParen();
+    buffer.append('+');
+  }
+
+  public void outAPosExpr(APosExpr node) {
+    addRightParen();
+  }
+
+  /**
+   * @Override public void inABitCompExpr(ABitCompExpr node)
+   * @Override public void outABitCompExpr(ABitCompExpr node)
+   *
+   * Pretty print bit complement ('^') operator
+   */
+  public void inABitCompExpr(ABitCompExpr node) {
+    addLeftParen();
+    buffer.append('^');
+  }
+
+  public void outABitCompExpr(ABitCompExpr node) {
+    addRightParen();
+  }
+
+  /**
+   * @Override public void inANotExpr(ANotExpr node)
+   * @Override public void outANotExpr(ANotExpr node)
+   *
+   * Pretty print not ('!') operator
+   */
+  public void inANotExpr(ANotExpr node) {
+    addLeftParen();
+    buffer.append('!');
+  }
+
+  public void outANotExpr(ANotExpr node) {
+    addRightParen();
+  }
+
+  /**************************************************
+   * Private methods                                *
+   **************************************************/
 
   /**
    * @Private method
@@ -279,4 +385,57 @@ public class PrettyPrinter extends DepthFirstAdapter {
     }
   }
 
+  /**
+   * @Private method
+   *
+   * Add '('
+   */
+  private void addLeftParen() {
+    buffer.append('(');
+  }
+
+  /**
+   * @Private method
+   *
+   * Add ')'
+   */
+  private void addRightParen() {
+    buffer.append(')');
+  }
+
+  /**
+   * @Private method
+   *
+   * Add '['
+   */
+  private void addLeftBracket() {
+    buffer.append('[');
+  }
+
+  /**
+   * @Private method
+   *
+   * Add ']'
+   */
+  private void addRightBracket() {
+    buffer.append(']');
+  }
+
+  /**
+   * @Private method
+   *
+   * Add '{'
+   */
+  private void addLeftBrace() {
+    buffer.append('{');
+  }
+
+  /**
+   * @Private method
+   *
+   * Add '}'
+   */
+  private void addRightBrace() {
+    buffer.append('}');
+  }
 }
