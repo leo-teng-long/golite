@@ -104,76 +104,91 @@ public class PrettyPrinter extends DepthFirstAdapter {
     outASpecVarSpec(node);
   }
 
+  /**************************************************
+   * Types                                          *
+   **************************************************/
+
   /**
    * @Override public void outABoolTypeExpr(ABoolTypeExpr node)
    *
-   * Pretty print "bool" variable type
+   * Pretty print 'bool' type
    */
   public void outABoolTypeExpr(ABoolTypeExpr node) {
-    buffer.append("bool");
+    buffer.append(node.getBool().getText());
   }
 
   /**
    * @Override public void outAIntTypeExpr(AIntTypeExpr node)
    *
-   * Pretty print "int" variable type
+   * Pretty print 'int' type
    */
   public void outAIntTypeExpr(AIntTypeExpr node) {
-    buffer.append("int");
+    buffer.append(node.getInt().getText());
   }
 
   /**
    * @Override public void outAFloatTypeExpr(AFloatTypeExpr node)
    *
-   * Pretty print "float64" variable type
+   * Pretty print 'float64' type
    */
   public void outAFloatTypeExpr(AFloatTypeExpr node) {
-    buffer.append("float64");
+    buffer.append(node.getFloat64().getText());
   }
 
   /**
    * @Override public void outARuneTypeExpr(ARuneTypeExpr node)
    *
-   * Pretty print "rune" variable type
+   * Pretty print 'rune' type
    */
   public void outARuneTypeExpr(ARuneTypeExpr node) {
-    buffer.append("rune");
+    buffer.append(node.getRune().getText());
   }
 
   /**
    * @Override public void outAStringTypeExpr(AStringTypeExpr node)
    *
-   * Pretty print "string" variable type
+   * Pretty print 'string' type
    */
   public void outAStringTypeExpr(AStringTypeExpr node) {
-    buffer.append("string");
+    buffer.append(node.getString().getText());
   }
 
   /**
    * @Override public void outACustomTypeExpr(ACustomTypeExpr node)
    *
-   * Pretty print custom (id) variable type
+   * Pretty print custom (struct or alias) type
    */
   public void outACustomTypeExpr(ACustomTypeExpr node) {
     buffer.append(node.getId().getText());
   }
 
   /**
-   * @Override public void inAArrayTypeExpr(AArrayTypeExpr node)
+   * @Override public void caseAArrayTypeExpr(AArrayTypeExpr node)
    *
-   * Pretty print array variable type
+   * Pretty print array type
    */
-  public void inAArrayTypeExpr(AArrayTypeExpr node) {
-    buffer.append('[' + node.getExpr().toString() + ']');
+  public void caseAArrayTypeExpr(AArrayTypeExpr node) {
+    addLeftBracket();
+    if (node.getExpr() != null) {
+      node.getExpr().apply(this);
+    }
+    addRightBracket();
+    if (node.getTypeExpr() != null) {
+      node.getTypeExpr().apply(this);
+    }
   }
 
   /**
-   * @Override public void inASliceTypeExpr(ASliceTypeExpr node)
+   * @Override public void caseASliceTypeExpr(ASliceTypeExpr node)
    *
-   * Pretty print slice variable type
+   * Pretty print slice type
    */
-  public void inASliceTypeExpr(ASliceTypeExpr node) {
-    buffer.append("[]");
+  public void caseASliceTypeExpr(ASliceTypeExpr node) {
+    addLeftBracket();
+    addRightBracket();
+    if (node.getTypeExpr() != null) {
+      node.getTypeExpr().apply(this);
+    }
   }
 
   /**************************************************

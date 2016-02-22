@@ -3,7 +3,7 @@ Package golite ;
 Helpers
     // All ASCII characters.
     all = [0 .. 127] ;
-    
+
     // Special whitespace characters.
     tab = 9 ;
     lf = 10 ;
@@ -183,7 +183,7 @@ Ignored Tokens
 
 Productions
     //* Program. *//
-    
+
     prog {-> prog} = pack_dec top_dec* {-> New prog.prog(pack_dec.id, [top_dec])} ;
 
     //* Package declaration. *//
@@ -237,7 +237,7 @@ Productions
             {-> New top_dec.func(id, [args.arg_group], type_expr, [block.stmt])}
         | {with_no_rettype} func id lparen args rparen block semi
             {-> New top_dec.func(id, [args.arg_group], Null, [block.stmt])} ;
-    
+
     args {-> arg_group*} =
           {none} {-> []}
         | {args} arg_before* arg_group {-> [arg_before.arg_group, arg_group]} ;
@@ -318,7 +318,7 @@ Productions
         | {assignables} assignable comma assignable_list
             {-> [assignable.expr, assignable_list.expr]} ;
 
-    assignable {-> expr} = 
+    assignable {-> expr} =
           {id} id
             {-> New expr.variable(id)}
         | {field} field
@@ -332,7 +332,7 @@ Productions
 
     short_assignment {-> stmt} = id_list short_assign expr_list {-> New stmt.short_assign([id_list.id], [expr_list.expr])};
 
-    return_stmt {-> stmt} = 
+    return_stmt {-> stmt} =
           {void} return semi
             {-> New stmt.return(Null)}
         | {expr} return expr semi
@@ -346,7 +346,7 @@ Productions
         | {if_elif} if condition block else if_else
             {-> New stmt.if_else(condition, [block.stmt], [if_else.stmt])} ;
 
-    condition {-> condition} = 
+    condition {-> condition} =
           {expr} expr
             {-> New condition.condition(Null, expr)}
         | {stmt_expr} simple_sub semi expr
@@ -398,21 +398,21 @@ Productions
         | {struct} struct lbrace struct_sub_stmt* rbrace
             {-> New type_expr.struct([struct_sub_stmt.type_spec])};
 
-    prim_type {-> type_expr} = 
+    prim_type {-> type_expr} =
           {castable} castable_prim_type
             {-> castable_prim_type.type_expr}
         | {string} string
-            {-> New type_expr.string()} ;
+            {-> New type_expr.string(string)} ;
 
-    castable_prim_type {-> type_expr} = 
+    castable_prim_type {-> type_expr} =
           {bool} bool
-            {-> New type_expr.bool()}
+            {-> New type_expr.bool(bool)}
         | {int} int
-            {-> New type_expr.int()}
+            {-> New type_expr.int(int)}
         | {float} float64
-            {-> New type_expr.float()}
+            {-> New type_expr.float(float64)}
         | {rune} rune
-            {-> New type_expr.rune()} ;
+            {-> New type_expr.rune(rune)} ;
 
     struct_sub_stmt {-> type_spec} = id_list type_expr semi
         {-> New type_spec.spec([id_list.id], type_expr)} ;
@@ -424,19 +424,19 @@ Productions
             {-> []}
         | {expr} expr
             {-> [expr.expr]}
-        | {exprs} expr comma expr_list 
+        | {exprs} expr comma expr_list
             {-> [expr.expr, expr_list.expr]} ;
 
     expr {-> expr} =
           {conjunction} conjunction
             {-> conjunction.expr}
-        | {or} expr pipe_pipe conjunction 
+        | {or} expr pipe_pipe conjunction
             {-> New expr.or(expr.expr, conjunction.expr)} ;
 
     conjunction {-> expr} =
           {clause} clause
             {-> clause.expr}
-        | {and} conjunction amp_amp clause 
+        | {and} conjunction amp_amp clause
             {-> New expr.and(conjunction.expr, clause.expr)} ;
 
     clause {-> expr} =
@@ -452,7 +452,7 @@ Productions
             {-> New expr.lte(clause.expr, sub_expr.expr)}
         | {gt} clause gt sub_expr
             {-> New expr.gt(clause.expr, sub_expr.expr)}
-        | {gte} clause gte sub_expr 
+        | {gte} clause gte sub_expr
             {-> New expr.gte(clause.expr, sub_expr.expr)} ;
 
     sub_expr {-> expr} =
@@ -464,7 +464,7 @@ Productions
             {-> New expr.subtract(sub_expr.expr, factor.expr)}
         | {bit_or} sub_expr pipe factor
             {-> New expr.bit_or(sub_expr.expr, factor.expr)}
-        | {bit_xor} sub_expr carot factor 
+        | {bit_xor} sub_expr carot factor
             {-> New expr.bit_xor(sub_expr.expr, factor.expr)} ;
 
     factor {-> expr} =
@@ -482,7 +482,7 @@ Productions
             {-> New expr.bit_rshift(factor.expr, term.expr)}
         | {bit_and} factor amp term
             {-> New expr.bit_and(factor.expr, term.expr)}
-        | {bit_clear} factor amp_carot term 
+        | {bit_clear} factor amp_carot term
             {-> New expr.bit_clear(factor.expr, term.expr)} ;
 
     term {-> expr} =
@@ -494,24 +494,24 @@ Productions
             {-> New expr.neg(atom.expr)}
         | {not} not atom
             {-> New expr.not(atom.expr)}
-        | {bit_comp} carot atom 
+        | {bit_comp} carot atom
             {-> New expr.bit_comp(atom.expr)} ;
 
     atom {-> expr} =
           {lit} lit
             {-> lit.expr}
         | {id} id
-            {-> New expr.variable(id)} 
+            {-> New expr.variable(id)}
         | {field} field
             {-> field.expr}
         | {func_call} func_call
             {-> func_call.expr}
         | {array_elem} array_elem
             {-> array_elem.expr}
-        | {paren} lparen expr rparen 
+        | {paren} lparen expr rparen
            {-> expr.expr};
 
-    func_call {-> expr} = 
+    func_call {-> expr} =
           {append} append lparen id comma expr rparen
             {-> New expr.append(id, expr)}
         | {prim_type_cast} castable_prim_type lparen expr rparen
@@ -522,21 +522,21 @@ Productions
     //* Literals. *//
 
     lit {-> expr} =
-          {bool_lit} bool_lit 
+          {bool_lit} bool_lit
             {-> New expr.bool_lit(bool_lit)}
-        | {int_lit} int_lit 
+        | {int_lit} int_lit
             {-> New expr.int_lit(int_lit)}
-        | {oct_lit} oct_lit 
+        | {oct_lit} oct_lit
             {-> New expr.oct_lit(oct_lit)}
-        | {hex_lit} hex_lit 
+        | {hex_lit} hex_lit
             {-> New expr.hex_lit(hex_lit)}
-        | {float_lit} float_lit 
+        | {float_lit} float_lit
             {-> New expr.float_lit(float_lit)}
-        | {rune_lit} rune_lit 
+        | {rune_lit} rune_lit
             {-> New expr.rune_lit(rune_lit)}
-        | {interpreted_string_lit} interpreted_string_lit 
+        | {interpreted_string_lit} interpreted_string_lit
             {-> New expr.interpreted_string_lit(interpreted_string_lit)}
-        | {raw_string_lit} raw_string_lit 
+        | {raw_string_lit} raw_string_lit
             {-> New expr.raw_string_lit(raw_string_lit)};
 
 Abstract Syntax Tree
@@ -604,11 +604,11 @@ Abstract Syntax Tree
     //* Type "expression". *//
 
     type_expr =
-          {bool}
-        | {int}
-        | {float}
-        | {rune}
-        | {string}
+          {bool} bool
+        | {int} int
+        | {float} float64
+        | {rune} rune
+        | {string} string
         | {custom} id
         | {array} expr type_expr
         | {slice} type_expr
@@ -617,14 +617,14 @@ Abstract Syntax Tree
     //* Expression. *//
 
     expr =
-        // Literals.  
+        // Literals.
           {bool_lit} bool_lit
         | {int_lit} int_lit
         | {oct_lit} oct_lit
-        | {hex_lit} hex_lit 
+        | {hex_lit} hex_lit
         | {float_lit} float_lit
-        | {rune_lit} rune_lit 
-        | {interpreted_string_lit} interpreted_string_lit 
+        | {rune_lit} rune_lit
+        | {interpreted_string_lit} interpreted_string_lit
         | {raw_string_lit} raw_string_lit
         // Variable.
         | {variable} id
