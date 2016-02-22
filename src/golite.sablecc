@@ -513,8 +513,8 @@ Productions
     func_call {-> expr} =
           {append} append lparen id comma expr rparen
             {-> New expr.append(id, expr)}
-        | {prim_type_cast} castable_prim_type lparen expr rparen
-            {-> New expr.prim_type_cast(castable_prim_type.type_expr, expr)}
+        | {type_cast} castable_prim_type lparen expr rparen
+            {-> New expr.type_cast(castable_prim_type.type_expr, expr)}
         | {custom_func_call} id lparen expr_list rparen
             {-> New expr.func_call(id, [expr_list.expr])};
 
@@ -631,7 +631,7 @@ Abstract Syntax Tree
         // Append function.
         | {append} id expr
         // Type cast.
-        | {prim_type_cast} type_expr expr
+        | {type_cast} type_expr expr
         // Function call.
         | {func_call} id expr*
         // Unary operators.
