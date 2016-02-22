@@ -580,6 +580,106 @@ public class PrettyPrinter extends DepthFirstAdapter {
   }
 
   /**************************************************
+   * Function Calls                                 *
+   **************************************************/
+
+  /**
+   * @Override public void caseAFuncCallExpr(AFuncCallExpr node)
+   *
+   * Pretty print function calls
+   */
+  public void caseAFuncCallExpr(AFuncCallExpr node) {
+    if (node.getId() != null) {
+      buffer.append(node.getId().getText());
+    }
+    addLeftParen();
+    List<PExpr> copy = new ArrayList<PExpr>(node.getExpr());
+    for (PExpr e : copy) {
+      e.apply(this);
+      addComma();
+    }
+    deleteLastChar();
+    addRightParen();
+  }
+
+  /**************************************************
+   * Append & Type Casting                          *
+   **************************************************/
+
+  /**
+   * @Override public void caseAAppendExpr(AAppendExpr node)
+   *
+   * Pretty print append function
+   */
+  public void caseAAppendExpr(AAppendExpr node) {
+    buffer.append("append");
+    addLeftParen();
+    if (node.getId() != null) {
+      buffer.append(node.getId().getText());
+    }
+    addComma();
+    if (node.getExpr() != null) {
+      node.getExpr().apply(this);
+    }
+    addRightParen();
+  }
+
+  /**
+   * @Override public void caseAPrimTypeCastExpr(APrimTypeCastExpr node)
+   *
+   * Pretty print type casting
+   */
+  public void caseAPrimTypeCastExpr(APrimTypeCastExpr node) {
+    if (node.getTypeExpr() != null) {
+      node.getTypeExpr().apply(this);
+    }
+    addLeftParen();
+    if (node.getExpr() != null) {
+      node.getExpr().apply(this);
+    }
+    addRightParen();
+  }
+
+  /**************************************************
+   * Struct Fileds                                  *
+   **************************************************/
+
+  /**
+   * @Override public void caseAFieldExpr(AFieldExpr node)
+   *
+   * Pretty print struct field
+   */
+  public void caseAFieldExpr(AFieldExpr node) {
+    if (node.getExpr() != null) {
+      node.getExpr().apply(this);
+    }
+    addDot();
+    if (node.getId() != null) {
+      buffer.append(node.getId().getText());
+    }
+  }
+
+  /**************************************************
+   * Array/Slice Elements                           *
+   **************************************************/
+
+  /**
+   * @Override public void caseAArrayElemExpr(AArrayElemExpr node)
+   *
+   * Pretty print array/slice elements
+   */
+  public void caseAArrayElemExpr(AArrayElemExpr node) {
+    if (node.getId() != null) {
+      buffer.append(node.getId().getText());
+    }
+    addLeftBracket();
+    if (node.getExpr() != null) {
+      node.getExpr().apply(this);
+    }
+    addRightBracket();
+  }
+
+  /**************************************************
    * Identifiers                                    *
    **************************************************/
 
@@ -746,6 +846,33 @@ public class PrettyPrinter extends DepthFirstAdapter {
    */
   private void addRightBrace() {
     buffer.append('}');
+  }
+
+  /**
+   * @Private method
+   *
+   * Add ','
+   */
+  private void addComma() {
+    buffer.append(',');
+  }
+
+  /**
+   * @Private method
+   *
+   * Add '.'
+   */
+  private void addDot() {
+    buffer.append('.');
+  }
+
+  /**
+   * @Private method
+   *
+   * Delete the last charcater in the buffer
+   */
+  private void deleteLastChar() {
+    buffer.deleteCharAt(buffer.length() - 1);
   }
 
 }
