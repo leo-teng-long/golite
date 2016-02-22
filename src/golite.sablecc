@@ -397,13 +397,8 @@ Productions
         | {struct} struct lbrace struct_sub_stmt* rbrace
             {-> New type_expr.struct([struct_sub_stmt.type_spec])};
 
-    prim_type {-> type_expr} =
-          {castable} castable_prim_type
-            {-> castable_prim_type.type_expr}
-        | {string} string
-            {-> New type_expr.string(string)} ;
 
-    castable_prim_type {-> type_expr} =
+    prim_type {-> type_expr} = 
           {bool} bool
             {-> New type_expr.bool(bool)}
         | {int} int
@@ -411,7 +406,9 @@ Productions
         | {float} float64
             {-> New type_expr.float(float64)}
         | {rune} rune
-            {-> New type_expr.rune(rune)} ;
+            {-> New type_expr.rune(rune)}
+        | {string} string
+            {-> New type_expr.string(string)} ;
 
     struct_sub_stmt {-> type_spec} = id_list type_expr semi
         {-> New type_spec.spec([id_list.id], type_expr)} ;
@@ -513,8 +510,8 @@ Productions
     func_call {-> expr} =
           {append} append lparen id comma expr rparen
             {-> New expr.append(id, expr)}
-        | {type_cast} castable_prim_type lparen expr rparen
-            {-> New expr.type_cast(castable_prim_type.type_expr, expr)}
+        | {type_cast} prim_type lparen expr rparen
+            {-> New expr.type_cast(prim_type.type_expr, expr)}
         | {custom_func_call} id lparen expr_list rparen
             {-> New expr.func_call(id, [expr_list.expr])};
 
