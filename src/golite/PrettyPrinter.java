@@ -177,6 +177,422 @@ public class PrettyPrinter extends DepthFirstAdapter {
   }
 
   /**************************************************
+   * Arithmetic Operators                           *
+   **************************************************/
+
+   /**
+    * @Override public void caseAAddExpr(AAddExpr node)
+    *
+    * Pretty print add ('+') operator
+    */
+  public void caseAAddExpr(AAddExpr node) {
+    addLeftParen();
+    if (node.getLeft() != null) {
+      node.getLeft().apply(this);
+    }
+    buffer.append(" + ");
+    if (node.getRight() != null) {
+      node.getRight().apply(this);
+    }
+    addRightParen();
+  }
+
+  /**
+   * @Override public void caseASubtractExpr(ASubtractExpr node)
+   *
+   * Pretty print subtract ('-') operator
+   */
+  public void caseASubtractExpr(ASubtractExpr node) {
+    addLeftParen();
+    if (node.getLeft() != null) {
+      node.getLeft().apply(this);
+    }
+    buffer.append(" - ");
+    if (node.getRight() != null) {
+      node.getRight().apply(this);
+    }
+    addRightParen();
+  }
+
+  /**
+   * @Override public void caseAMultExpr(AMultExpr node)
+   *
+   * Pretty print multiply ('*') operator
+   */
+  public void caseAMultExpr(AMultExpr node) {
+    addLeftParen();
+    if (node.getLeft() != null) {
+      node.getLeft().apply(this);
+    }
+    buffer.append(" * ");
+    if (node.getRight() != null) {
+      node.getRight().apply(this);
+    }
+    addRightParen();
+  }
+
+  /**
+   * @Override public void caseADivExpr(ADivExpr node)
+   *
+   * Pretty print divide ('/') operator
+   */
+  public void caseADivExpr(ADivExpr node) {
+    addLeftParen();
+    if (node.getLeft() != null) {
+      node.getLeft().apply(this);
+    }
+    buffer.append(" / ");
+    if (node.getRight() != null) {
+      node.getRight().apply(this);
+    }
+    addRightParen();
+  }
+
+  /**
+   * @Override public void caseAModExpr(AModExpr node)
+   *
+   * Pretty print module ('%') operator
+   */
+  public void caseAModExpr(AModExpr node) {
+    addLeftParen();
+    if (node.getLeft() != null) {
+      node.getLeft().apply(this);
+    }
+    buffer.append(" % ");
+    if (node.getRight() != null) {
+      node.getRight().apply(this);
+    }
+    addRightParen();
+  }
+
+  /**************************************************
+   * Bit Operators                                  *
+   **************************************************/
+
+  /**
+   * @Override public void caseABitAndExpr(ABitAndExpr node)
+   *
+   * Pretty print bit and ('&') operator
+   */
+  public void caseABitAndExpr(ABitAndExpr node) {
+    addLeftParen();
+    if (node.getLeft() != null) {
+      node.getLeft().apply(this);
+    }
+    buffer.append(" & ");
+    if (node.getRight() != null) {
+      node.getRight().apply(this);
+    }
+    addRightParen();
+  }
+
+  /**
+   * @Override public void caseABitOrExpr(ABitOrExpr node)
+   *
+   * Pretty print bit or ('|') operator
+   */
+  public void caseABitOrExpr(ABitOrExpr node) {
+    addLeftParen();
+    if (node.getLeft() != null) {
+      node.getLeft().apply(this);
+    }
+    buffer.append(" | ");
+    if (node.getRight() != null) {
+      node.getRight().apply(this);
+    }
+    addRightParen();
+  }
+
+  /**
+   * @Override public void caseABitXorExpr(ABitXorExpr node)
+   *
+   * Pretty print bit xor ('^') operator
+   */
+  public void caseABitXorExpr(ABitXorExpr node) {
+    addLeftParen();
+    if (node.getLeft() != null) {
+      node.getLeft().apply(this);
+    }
+    buffer.append(" ^ ");
+    if (node.getRight() != null) {
+      node.getRight().apply(this);
+    }
+    addRightParen();
+  }
+
+  /**
+   * @Override public void caseABitClearExpr(ABitClearExpr node)
+   *
+   * Pretty print bit clear ('&^') operator
+   */
+  public void caseABitClearExpr(ABitClearExpr node) {
+    addLeftParen();
+    if (node.getLeft() != null) {
+      node.getLeft().apply(this);
+    }
+    buffer.append(" &^ ");
+    if (node.getRight() != null) {
+      node.getRight().apply(this);
+    }
+    addRightParen();
+  }
+
+  /**
+   * @Override public void caseABitLshiftExpr(ABitLshiftExpr node)
+   *
+   * Pretty print bit left shift ('<<') operator
+   */
+  public void caseABitLshiftExpr(ABitLshiftExpr node) {
+    addLeftParen();
+    if (node.getLeft() != null) {
+      node.getLeft().apply(this);
+    }
+    buffer.append(" << ");
+    if (node.getRight() != null) {
+      node.getRight().apply(this);
+    }
+    addRightParen();
+  }
+
+  /**
+   * @Override public void caseABitRshiftExpr(ABitRshiftExpr node)
+   *
+   * Pretty print bit right shift ('>>') operator
+   */
+  public void caseABitRshiftExpr(ABitRshiftExpr node) {
+    addLeftParen();
+    if (node.getLeft() != null) {
+      node.getLeft().apply(this);
+    }
+    buffer.append(" >> ");
+    if (node.getRight() != null) {
+      node.getRight().apply(this);
+    }
+    addRightParen();
+  }
+
+  /**************************************************
+   * Unary Operators                                *
+   **************************************************/
+
+  /**
+   * @Override public void inAPosExpr(APosExpr node)
+   * @Override public void outAPosExpr(APosExpr node)
+   *
+   * Pretty print unary plus ('+') operator
+   */
+  public void inAPosExpr(APosExpr node) {
+    addLeftParen();
+    buffer.append('+');
+  }
+
+  public void outAPosExpr(APosExpr node) {
+    addRightParen();
+  }
+
+  /**
+   * @Override public void inANegExpr(ANegExpr node)
+   * @Override public void outANegExpr(ANegExpr node)
+   *
+   * Pretty print unary minus ('-') operator
+   */
+  public void inANegExpr(ANegExpr node) {
+    addLeftParen();
+    buffer.append('-');
+  }
+
+  public void outANegExpr(ANegExpr node) {
+    addRightParen();
+  }
+
+  /**
+   * @Override public void inABitCompExpr(ABitCompExpr node)
+   * @Override public void outABitCompExpr(ABitCompExpr node)
+   *
+   * Pretty print bit complement ('^') operator
+   */
+  public void inABitCompExpr(ABitCompExpr node) {
+    addLeftParen();
+    buffer.append('^');
+  }
+
+  public void outABitCompExpr(ABitCompExpr node) {
+    addRightParen();
+  }
+
+  /**
+   * @Override public void inANotExpr(ANotExpr node)
+   * @Override public void outANotExpr(ANotExpr node)
+   *
+   * Pretty print negate ('!') operator
+   */
+  public void inANotExpr(ANotExpr node) {
+    addLeftParen();
+    buffer.append('!');
+  }
+
+  public void outANotExpr(ANotExpr node) {
+    addRightParen();
+  }
+
+  /**************************************************
+   * Relational Operators                           *
+   **************************************************/
+
+  /**
+   * @Override public void caseAEqExpr(AEqExpr node)
+   *
+   * Pretty print equal ('==') operator
+   */
+  public void caseAEqExpr(AEqExpr node) {
+    addLeftParen();
+    if (node.getLeft() != null) {
+      node.getLeft().apply(this);
+    }
+    buffer.append(" == ");
+    if (node.getRight() != null) {
+      node.getRight().apply(this);
+    }
+    addRightParen();
+  }
+
+  /**
+   * @Override public void caseANeqExpr(ANeqExpr node)
+   *
+   * Pretty print not equal ('!=') operator
+   */
+  public void caseANeqExpr(ANeqExpr node) {
+    addLeftParen();
+    if (node.getLeft() != null) {
+      node.getLeft().apply(this);
+    }
+    buffer.append(" != ");
+    if (node.getRight() != null) {
+      node.getRight().apply(this);
+    }
+    addRightParen();
+  }
+
+  /**
+   * @Override public void caseALtExpr(ALtExpr node)
+   *
+   * Pretty print less than ('<') operator
+   */
+  public void caseALtExpr(ALtExpr node) {
+    addLeftParen();
+    if (node.getLeft() != null) {
+      node.getLeft().apply(this);
+    }
+    buffer.append(" < ");
+    if (node.getRight() != null) {
+      node.getRight().apply(this);
+    }
+    addRightParen();
+  }
+
+  /**
+   * @Override public void caseALteExpr(ALteExpr node)
+   *
+   * Pretty print less than or equal to ('<=') operator
+   */
+  public void caseALteExpr(ALteExpr node) {
+    addLeftParen();
+    if (node.getLeft() != null) {
+      node.getLeft().apply(this);
+    }
+    buffer.append(" <= ");
+    if (node.getRight() != null) {
+      node.getRight().apply(this);
+    }
+    addRightParen();
+  }
+
+  /**
+   * @Override public void caseAGtExpr(AGtExpr node)
+   *
+   * Pretty print greater than ('>') operator
+   */
+  public void caseAGtExpr(AGtExpr node) {
+    addLeftParen();
+    if (node.getLeft() != null) {
+      node.getLeft().apply(this);
+    }
+    buffer.append(" > ");
+    if (node.getRight() != null) {
+      node.getRight().apply(this);
+    }
+    addRightParen();
+  }
+
+  /**
+   * @Override public void caseAGteExpr(AGteExpr node)
+   *
+   * Pretty print greater than or equal to ('>=') operator
+   */
+  public void caseAGteExpr(AGteExpr node) {
+    addLeftParen();
+    if (node.getLeft() != null) {
+      node.getLeft().apply(this);
+    }
+    buffer.append(" >= ");
+    if (node.getRight() != null) {
+      node.getRight().apply(this);
+    }
+    addRightParen();
+  }
+
+  /**************************************************
+   * Conditional Operators                          *
+   **************************************************/
+
+  /**
+   * @Override public void caseAAndExpr(AAndExpr node)
+   *
+   * Pretty print AND ('&&') operator
+   */
+  public void caseAAndExpr(AAndExpr node) {
+    addLeftParen();
+    if (node.getLeft() != null) {
+      node.getLeft().apply(this);
+    }
+    buffer.append(" && ");
+    if (node.getRight() != null) {
+      node.getRight().apply(this);
+    }
+    addRightParen();
+  }
+
+  /**
+   * @Override public void caseAOrExpr(AOrExpr node)
+   *
+   * Pretty print OR ('||') operator
+   */
+  public void caseAOrExpr(AOrExpr node) {
+    addLeftParen();
+    if (node.getLeft() != null) {
+      node.getLeft().apply(this);
+    }
+    buffer.append(" || ");
+    if (node.getRight() != null) {
+      node.getRight().apply(this);
+    }
+    addRightParen();
+  }
+
+  /**************************************************
+   * Identifiers                                    *
+   **************************************************/
+
+  /**
+   * @Override public void outAVariableExpr(AVariableExpr node)
+   *
+   * Pretty print variables
+   */
+  public void outAVariableExpr(AVariableExpr node) {
+    buffer.append(node.getId().getText());
+  }
+
+  /**************************************************
    * Literals                                       *
    **************************************************/
 
@@ -250,113 +666,6 @@ public class PrettyPrinter extends DepthFirstAdapter {
    */
   public void outARawStringLitExpr(ARawStringLitExpr node) {
     buffer.append(node.getRawStringLit().getText());
-  }
-
-  /**************************************************
-   * Identifiers                                    *
-   **************************************************/
-
-  /**
-   * @Override public void outAVariableExpr(AVariableExpr node)
-   *
-   * Pretty print variables
-   */
-  public void outAVariableExpr(AVariableExpr node) {
-    buffer.append(node.getId().getText());
-  }
-
-  /**************************************************
-   * Struct fields                                  *
-   **************************************************/
-
-  // ......
-
-  /**************************************************
-   * Array/slice elements                           *
-   **************************************************/
-
-  // ......
-
-  /**************************************************
-   * Append function                                *
-   **************************************************/
-
-  // ......
-
-  /**************************************************
-   * Type casting                                   *
-   **************************************************/
-
-  // ......
-
-  /**************************************************
-   * Function calls                                 *
-   **************************************************/
-
-  // ......
-
-  /**************************************************
-   * Unary operators                                *
-   **************************************************/
-
-  /**
-   * @Override public void inANegExpr(ANegExpr node)
-   * @Override public void outANegExpr(ANegExpr node)
-   *
-   * Pretty print negate ('-') operator
-   */
-  public void inANegExpr(ANegExpr node) {
-    addLeftParen();
-    buffer.append('-');
-  }
-
-  public void outANegExpr(ANegExpr node) {
-    addRightParen();
-  }
-
-  /**
-   * @Override public void inAPosExpr(APosExpr node)
-   * @Override public void outAPosExpr(APosExpr node)
-   *
-   * Pretty print unary plus ('+') operator
-   */
-  public void inAPosExpr(APosExpr node) {
-    addLeftParen();
-    buffer.append('+');
-  }
-
-  public void outAPosExpr(APosExpr node) {
-    addRightParen();
-  }
-
-  /**
-   * @Override public void inABitCompExpr(ABitCompExpr node)
-   * @Override public void outABitCompExpr(ABitCompExpr node)
-   *
-   * Pretty print bit complement ('^') operator
-   */
-  public void inABitCompExpr(ABitCompExpr node) {
-    addLeftParen();
-    buffer.append('^');
-  }
-
-  public void outABitCompExpr(ABitCompExpr node) {
-    addRightParen();
-  }
-
-  /**
-   * @Override public void inANotExpr(ANotExpr node)
-   * @Override public void outANotExpr(ANotExpr node)
-   *
-   * Pretty print not ('!') operator
-   */
-  public void inANotExpr(ANotExpr node) {
-    addLeftParen();
-    buffer.append('!');
-  }
-
-  public void outANotExpr(ANotExpr node) {
-    addRightParen();
   }
 
   /**************************************************
@@ -438,4 +747,5 @@ public class PrettyPrinter extends DepthFirstAdapter {
   private void addRightBrace() {
     buffer.append('}');
   }
+
 }
