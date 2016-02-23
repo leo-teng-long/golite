@@ -29,79 +29,128 @@ public class PrettyPrinter extends DepthFirstAdapter {
     this.numTabs = 0;
   }
 
-  /**
-   * @Override public void inAProgProg(AProgProg node)
-   *
-   * Pretty print package declaration
-   */
-  public void inAProgProg(AProgProg node) {
-    addTabs();
-    buffer.append("package " + node.getId().getText());
-    addNewLines(1);
-  }
+  /**************************************************
+   * Loop Statements                                *
+   **************************************************/
 
   /**
-   * @Override public void inAVarsTopDec(AVarsTopDec node)
-   * @Override public void outAVarsTopDec(AVarsTopDec node)
+   * @Override public void caseALoopStmt(ALoopStmt node)
    *
-   * Pretty print long variable declaration
+   * Pretty print infinite / while / for loop statement
    */
-  public void inAVarsTopDec(AVarsTopDec node) {
+  public void caseALoopStmt(ALoopStmt node) {
     addTabs();
-    buffer.append("var ");
-    if (node.getVarSpec().size() > 1) {
-      buffer.append('(');
-      addNewLines(1);
-      numTabs++;
+    buffer.append("for");
+    if (node.getInit() != null) {
+      addSpace();
+      node.getInit().apply(this);
+      addSemi();
     }
-  }
-
-  public void outAVarsTopDec(AVarsTopDec node) {
-    if (node.getVarSpec().size() > 1) {
+    if (node.getExpr() != null) {
+      addSpace();
+      node.getExpr().apply(this);
+      addSemi();
+    }
+    if (node.getEnd() != null) {
+      addSpace();
+      node.getEnd().apply(this);
+    }
+    addSpace();
+    {
+      numTabs++;
+      addLeftBrace();
+      List<PStmt> copy = new ArrayList<PStmt>(node.getBlock());
+      for (PStmt e : copy) {
+        e.apply(this);
+      }
       numTabs--;
       addTabs();
-      buffer.append(')');
+      addRightBrace();
     }
-    addNewLines(1);
   }
+
+  /**************************************************
+   * If-Else Statements                             *
+   **************************************************/
+
+  // ......
+
+  /**************************************************
+   * Short & Long Declaration Statements            *
+   **************************************************/
 
   /**
-   * @Override public void inASpecVarSpec(ASpecVarSpec node)
-   * @Override public void outASpecVarSpec(ASpecVarSpec node)
-   * @Override public void caseASpecVarSpec(ASpecVarSpec node)
+   * @Override public void caseAShortAssignStmt(AShortAssignStmt node)
    *
-   * Pretty print variable declaration statement
+   * Pretty print short assign (':=') statement
    */
-  public void inASpecVarSpec(ASpecVarSpec node) {
+  public void caseAShortAssignStmt(AShortAssignStmt node) {
     addTabs();
-  }
-
-  public void outASpecVarSpec(ASpecVarSpec node) {
-    addNewLines(1);
-  }
-
-  public void caseASpecVarSpec(ASpecVarSpec node) {
-    inASpecVarSpec(node);
     {
       List<TId> copy = new ArrayList<TId>(node.getId());
       for (TId e : copy) {
-        buffer.append(e.getText() + ',');
+        buffer.append(e.getText());
+        addComma();
       }
-      buffer.deleteCharAt(buffer.length() - 1);
+      if (copy.size() > 0) {
+        deleteLastChar();
+      }
     }
-    if (node.getTypeExpr() != null)
-    {
-      node.getTypeExpr().apply(this);
-    }
+    buffer.append(" := ");
     {
       List<PExpr> copy = new ArrayList<PExpr>(node.getExpr());
       for (PExpr e : copy) {
         e.apply(this);
-        buffer.append(',');
+        addComma();
       }
-      buffer.deleteCharAt(buffer.length() - 1);
+      if (copy.size() > 0) {
+        deleteLastChar();
+      }
     }
-    outASpecVarSpec(node);
+    addNewLines(1);
+  }
+
+  /**
+   * @Override public void ......
+   *
+   * Pretty print long declaration statement
+   */
+
+  // ......
+
+  /**************************************************
+   * Assignment Statement                           *
+   **************************************************/
+
+  /**
+   * @Override public void caseAAssignStmt(AAssignStmt node)
+   *
+   * Pretty print assign statement
+   */
+  public void caseAAssignStmt(AAssignStmt node) {
+    addTabs();
+    {
+      List<PExpr> copy = new ArrayList<PExpr>(node.getLhs());
+      for (PExpr e : copy) {
+        e.apply(this);
+        addComma();
+      }
+      if (copy.size() > 0) {
+        deleteLastChar();
+      }
+    }
+    buffer.append(" = ");
+    {
+      List<PExpr> copy = new ArrayList<PExpr>(node.getRhs());
+      for (PExpr e : copy) {
+        e.apply(this);
+        addComma();
+      }
+      if (copy.size() > 0) {
+        deleteLastChar();
+      }
+    }
+    addNewLines(1);
   }
 
   /**************************************************
@@ -353,13 +402,15 @@ public class PrettyPrinter extends DepthFirstAdapter {
     addTabs();
     buffer.append("print");
     addLeftParen();
-    List<PExpr> copy = new ArrayList<PExpr>(node.getExpr());
-    for (PExpr e : copy) {
-      e.apply(this);
-      addComma();
-    }
-    if (copy.size() > 0) {
-      deleteLastChar();
+    {
+      List<PExpr> copy = new ArrayList<PExpr>(node.getExpr());
+      for (PExpr e : copy) {
+        e.apply(this);
+        addComma();
+      }
+      if (copy.size() > 0) {
+        deleteLastChar();
+      }
     }
     addRightParen();
     addNewLines(1);
@@ -374,13 +425,15 @@ public class PrettyPrinter extends DepthFirstAdapter {
     addTabs();
     buffer.append("println");
     addLeftParen();
-    List<PExpr> copy = new ArrayList<PExpr>(node.getExpr());
-    for (PExpr e : copy) {
-      e.apply(this);
-      addComma();
-    }
-    if (copy.size() > 0) {
-      deleteLastChar();
+    {
+      List<PExpr> copy = new ArrayList<PExpr>(node.getExpr());
+      for (PExpr e : copy) {
+        e.apply(this);
+        addComma();
+      }
+      if (copy.size() > 0) {
+        deleteLastChar();
+      }
     }
     addRightParen();
     addNewLines(1);
@@ -931,13 +984,15 @@ public class PrettyPrinter extends DepthFirstAdapter {
       buffer.append(node.getId().getText());
     }
     addLeftParen();
-    List<PExpr> copy = new ArrayList<PExpr>(node.getExpr());
-    for (PExpr e : copy) {
-      e.apply(this);
-      addComma();
-    }
-    if (copy.size() > 0) {
-      deleteLastChar();
+    {
+      List<PExpr> copy = new ArrayList<PExpr>(node.getExpr());
+      for (PExpr e : copy) {
+        e.apply(this);
+        addComma();
+      }
+      if (copy.size() > 0) {
+        deleteLastChar();
+      }
     }
     addRightParen();
   }
@@ -1204,6 +1259,15 @@ public class PrettyPrinter extends DepthFirstAdapter {
    */
   private void addComma() {
     buffer.append(',');
+  }
+
+  /**
+   * @Private method
+   *
+   * Add ';'
+   */
+  private void addSemi() {
+    buffer.append(';');
   }
 
   /**
