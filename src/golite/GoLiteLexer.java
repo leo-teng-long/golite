@@ -65,7 +65,6 @@ public class GoLiteLexer extends Lexer {
                 this.lastEffectiveToken instanceof TRsquare ||
                 this.lastEffectiveToken instanceof TRbrace ||
                 // Literals.
-                this.lastEffectiveToken instanceof TBoolLit ||
                 this.lastEffectiveToken instanceof TIntLit ||
                 this.lastEffectiveToken instanceof TOctLit ||
                 this.lastEffectiveToken instanceof THexLit ||

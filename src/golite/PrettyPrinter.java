@@ -1092,15 +1092,6 @@ public class PrettyPrinter extends DepthFirstAdapter {
    **************************************************/
 
   /**
-   * @Override public void outABoolLitExpr(ABoolLitExpr node)
-   *
-   * Pretty print bool literals
-   */
-  public void outABoolLitExpr(ABoolLitExpr node) {
-    buffer.append(node.getBoolLit().getText());
-  }
-
-  /**
    * @Override public void outAIntLitExpr(AIntLitExpr node)
    *
    * Pretty print int literals
