@@ -368,12 +368,24 @@ Productions
             {-> New case_block.block(New case_condition.default(), [stmt])} ;
 
     loop {-> stmt} =
-          {for} for [init]:simple_sub [first]:semi expr [second]:semi [end]:simple_sub block
-            {-> New stmt.loop(init.stmt, expr, end.stmt, [block.stmt])}
+          {for} for [init]:loop_sub [first]:semi loop_cond [second]:semi [end]:loop_sub block
+            {-> New stmt.loop(init.stmt, loop_cond.expr, end.stmt, [block.stmt])}
         | {while_loop} for expr block
             {-> New stmt.loop(Null, expr, Null, [block.stmt])}
         | {inf_loop} for block
             {-> New stmt.loop(Null, Null, Null, [block.stmt])} ;
+
+    loop_sub {-> stmt} =
+          {empty}
+            {-> New stmt.empty()}
+        | {sub} simple_sub
+            {-> simple_sub.stmt} ;
+
+    loop_cond {-> expr} =
+          {empty}
+            {-> New expr.empty()}
+        | {cond} expr
+            {-> expr} ;
 
     //* Identifiers *//
 
@@ -560,7 +572,8 @@ Abstract Syntax Tree
     //* Statement *//
 
     stmt =
-          {expr} expr
+          {empty}
+        | {expr} expr
         | {incr} expr
         | {decr} expr
         | {assign} [lhs]:expr+ [rhs]:expr+
@@ -611,8 +624,9 @@ Abstract Syntax Tree
     //* Expression. *//
 
     expr =
+          {empty}
         // Literals.
-          {int_lit} int_lit
+        | {int_lit} int_lit
         | {oct_lit} oct_lit
         | {hex_lit} hex_lit
         | {float_lit} float_lit
