@@ -1,8 +1,9 @@
+/* Three-part loop missing the second part. */
+
 package main
 
 func main() {
-  // Error: only support 3-part loop, missing 2nd part
-  for i := 0; ; i++ {
+	for i := 0 ; ; i++ {
 
-  }
+	}
 }
