@@ -409,7 +409,6 @@ Productions
         | {struct} struct lbrace struct_sub_stmt* rbrace
             {-> New type_expr.struct([struct_sub_stmt.type_spec])};
 
-
     prim_type {-> type_expr} = 
           {bool} bool
             {-> New type_expr.bool(bool)}
@@ -522,6 +521,7 @@ Productions
     func_call {-> expr} =
           {append} append lparen id comma expr rparen
             {-> New expr.append(id, expr)}
+        // Verification of the target type will be done in weeding phase.
         | {type_cast} prim_type lparen expr rparen
             {-> New expr.type_cast(prim_type.type_expr, expr)}
         | {custom_func_call} id lparen expr_list rparen
