@@ -73,7 +73,23 @@ public class PrettyPrinter extends DepthFirstAdapter {
    * If-Else Statements                             *
    **************************************************/
 
-  // ......
+  /**
+   * @Override public void caseAIfElseStmt(AIfElseStmt node)
+   *
+   * Pretty print if-else statement
+   */
+  public void caseAIfElseStmt(AIfElseStmt node) {
+    // ......
+  }
+
+  /**
+   * @Override public void caseAElifElseif(AElifElseif node)
+   *
+   * Pretty print else-if statement
+   */
+  public void caseAElifElseif(AElifElseif node) {
+    // ......
+  }
 
   /**************************************************
    * Short & Long Declaration Statements            *

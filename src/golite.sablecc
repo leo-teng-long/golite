@@ -339,12 +339,14 @@ Productions
             {-> New stmt.return(expr)} ;
 
     if_else {-> stmt} =
-          {if} if condition block
-            {-> New stmt.if_else(condition, [block.stmt], [])}
-        | {if_else} if condition [if_block]:block else [else_block]:block
-            {-> New stmt.if_else(condition, [if_block.stmt], [else_block.stmt])}
-        | {if_elif} if condition block else if_else
-            {-> New stmt.if_else(condition, [block.stmt], [if_else.stmt])} ;
+          {if} if condition block elseif*
+            {-> New stmt.if_else(condition, [block.stmt], [elseif], [])}
+        | {if_else} if condition [if_block]:block elseif* else [else_block]:block
+            {-> New stmt.if_else(condition, [if_block.stmt], [elseif], [else_block.stmt])} ;
+
+    elseif {-> elseif} =
+          {elif} else if condition block
+            {-> New elseif.elif(condition, [block.stmt])} ;
 
     condition {-> condition} =
           {expr} expr
@@ -587,13 +589,15 @@ Abstract Syntax Tree
         | {print} expr*
         | {println} expr*
         | {return} expr?
-        | {if_else} condition [if_block]:stmt* [else_block]:stmt*
+        | {if_else} condition [if_block]:stmt* [elseif]:elseif* [else_block]:stmt*
         | {switch} stmt? expr? case_block*
         | {loop} [init]:stmt? expr? [end]:stmt? [block]:stmt*
         | {break}
         | {continue} ;
 
     condition = {condition} stmt? expr ;
+
+    elseif = {elif} condition stmt*;
 
     case_block = {block} case_condition stmt* ;
 
