@@ -251,9 +251,9 @@ Productions
           {simple} simple_sub semi
             {-> simple_sub.stmt}
         | {var_dec} var_dec
-            {-> New stmt.vars([var_dec.var_spec])}
+            {-> New stmt.var_dec([var_dec.var_spec])}
         | {type_dec} type_dec
-            {-> New stmt.types([type_dec.type_spec])}
+            {-> New stmt.type_dec([type_dec.type_spec])}
         | {print} print lparen expr_list rparen semi
             {-> New stmt.print([expr_list.expr])}
         | {println} println lparen expr_list rparen semi
@@ -338,14 +338,14 @@ Productions
             {-> New stmt.return(expr)} ;
 
     if_else {-> stmt} =
-          {if} if condition block elseif*
-            {-> New stmt.if_else(condition, [block.stmt], [elseif], [])}
-        | {if_else} if condition [if_block]:block elseif* else [else_block]:block
-            {-> New stmt.if_else(condition, [if_block.stmt], [elseif], [else_block.stmt])} ;
+          {if} if expr block elseif*
+            {-> New stmt.if_else(expr, [block.stmt], [elseif], [])}
+        | {if_else} if expr [if_block]:block elseif* else [else_block]:block
+            {-> New stmt.if_else(expr, [if_block.stmt], [elseif], [else_block.stmt])} ;
 
     elseif {-> elseif} =
-          {elif} else if condition block
-            {-> New elseif.elif(condition, [block.stmt])} ;
+          {elif} else if expr block
+            {-> New elseif.elif(expr, [block.stmt])} ;
 
     condition {-> condition} =
           {expr} expr
@@ -377,11 +377,11 @@ Productions
 
     loop {-> stmt} =
           {for} for [init]:opt_sub [first]:semi loop_cond [second]:semi [end]:opt_sub block
-            {-> New stmt.loop(init.stmt, loop_cond.expr, end.stmt, [block.stmt])}
+            {-> New stmt.for_loop(init.stmt, loop_cond.expr, end.stmt, [block.stmt])}
         | {while_loop} for expr block
-            {-> New stmt.loop(Null, expr, Null, [block.stmt])}
+            {-> New stmt.while_loop(expr, [block.stmt])}
         | {inf_loop} for block
-            {-> New stmt.loop(Null, Null, Null, [block.stmt])} ;
+            {-> New stmt.while_loop(Null, [block.stmt])} ;
 
     loop_cond {-> expr} =
           {empty}
@@ -575,9 +575,9 @@ Abstract Syntax Tree
 
     stmt =
           {empty}
-        | {expr} expr
-        | {incr} expr
-        | {decr} expr
+        | {var_dec} var_spec+
+        | {short_assign} id+ expr+
+        | {type_dec} type_spec+
         | {assign} [lhs]:expr+ [rhs]:expr+
         | {plus_assign} [lhs]: expr [rhs]:expr
         | {minus_assign} [lhs]: expr [rhs]:expr
@@ -587,24 +587,25 @@ Abstract Syntax Tree
         | {and_assign} [lhs]: expr [rhs]:expr
         | {pipe_assign} [lhs]: expr [rhs]:expr
         | {carot_assign} [lhs]: expr [rhs]:expr
+        | {amp_carot_assign} [lhs]: expr [rhs]:expr
         | {lshift_assign} [lhs]: expr [rhs]:expr
         | {rshift_assign} [lhs]: expr [rhs]:expr
-        | {amp_carot_assign} [lhs]: expr [rhs]:expr
-        | {short_assign} id+ expr+
-        | {vars} var_spec+
-        | {types} type_spec+
+        | {incr} expr
+        | {decr} expr
+        | {expr} expr
         | {print} expr*
         | {println} expr*
-        | {return} expr?
-        | {if_else} condition [if_block]:stmt* [elseif]:elseif* [else_block]:stmt*
-        | {switch} stmt? expr? case_block*
-        | {loop} [init]:stmt? expr? [end]:stmt? [block]:stmt*
+        | {continue}
         | {break}
-        | {continue} ;
+        | {return} expr?
+        | {if_else} expr [if_block]:stmt* [elseif]:elseif* [else_block]:stmt*
+        | {switch} stmt? expr? case_block*
+        | {for_loop} [init]:stmt expr [end]:stmt [block]:stmt*
+        | {while_loop} expr? [block]:stmt* ;
 
     condition = {condition} stmt? expr ;
 
-    elseif = {elif} condition stmt*;
+    elseif = {elif} expr [block]:stmt*;
 
     case_block = {block} case_condition stmt* ;
 
@@ -624,7 +625,7 @@ Abstract Syntax Tree
         | {array} expr type_expr
         | {slice} type_expr
         | {struct} type_spec* ;
-        
+
     //* Expression. *//
 
     expr =
