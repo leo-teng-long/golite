@@ -411,7 +411,7 @@ Productions
         | {struct} struct lbrace struct_sub_stmt* rbrace
             {-> New type_expr.struct([struct_sub_stmt.type_spec])};
 
-    prim_type {-> type_expr} = 
+    prim_type {-> type_expr} =
           {bool} bool
             {-> New type_expr.bool(bool)}
         | {int} int
@@ -624,53 +624,44 @@ Abstract Syntax Tree
         | {array} expr type_expr
         | {slice} type_expr
         | {struct} type_spec* ;
-
+        
     //* Expression. *//
 
     expr =
           {empty}
-        // Literals.
+        | {add} [left]:expr [right]:expr
+        | {subtract} [left]:expr [right]:expr
+        | {mult} [left]:expr [right]:expr
+        | {div} [left]:expr [right]:expr
+        | {mod} [left]:expr [right]:expr
+        | {bit_and} [left]:expr [right]:expr
+        | {bit_or} [left]:expr [right]:expr
+        | {bit_xor} [left]:expr [right]:expr
+        | {bit_clear} [left]:expr [right]:expr
+        | {bit_lshift} [left]:expr [right]:expr
+        | {bit_rshift} [left]:expr [right]:expr
+        | {pos} expr
+        | {neg} expr
+        | {bit_comp} expr
+        | {not} expr
+        | {eq} [left]:expr [right]:expr
+        | {neq} [left]:expr [right]:expr
+        | {lt} [left]:expr [right]:expr
+        | {lte} [left]:expr [right]:expr
+        | {gt} [left]:expr [right]:expr
+        | {gte} [left]:expr [right]:expr
+        | {and} [left]:expr [right]:expr
+        | {or} [left]:expr [right]:expr
+        | {func_call} id expr*
+        | {append} id expr
+        | {type_cast} type_expr expr
+        | {array_elem} [array]:expr [index]:expr
+        | {field} expr id
+        | {variable} id
         | {int_lit} int_lit
         | {oct_lit} oct_lit
         | {hex_lit} hex_lit
         | {float_lit} float_lit
         | {rune_lit} rune_lit
         | {interpreted_string_lit} interpreted_string_lit
-        | {raw_string_lit} raw_string_lit
-        // Variable.
-        | {variable} id
-        // Struct field/property.
-        | {field} expr id
-        // Array element.
-        | {array_elem} [array]:expr [index]:expr
-        // Append function.
-        | {append} id expr
-        // Type cast.
-        | {type_cast} type_expr expr
-        // Function call.
-        | {func_call} id expr*
-        // Unary operators.
-        | {neg} expr
-        | {pos} expr
-        | {bit_comp} expr
-        | {not} expr
-        // Binary operators.
-        | {mult} [left]:expr [right]:expr
-        | {div} [left]:expr [right]:expr
-        | {mod} [left]:expr [right]:expr
-        | {bit_lshift} [left]:expr [right]:expr
-        | {bit_rshift} [left]:expr [right]:expr
-        | {bit_and} [left]:expr [right]:expr
-        | {bit_clear} [left]:expr [right]:expr
-        | {add} [left]:expr [right]:expr
-        | {subtract} [left]:expr [right]:expr
-        | {bit_or} [left]:expr [right]:expr
-        | {bit_xor} [left]:expr [right]:expr
-        | {eq} [left]:expr [right]:expr
-        | {neq} [left]:expr [right]:expr
-        | {lt} [left]:expr [right]:expr
-        | {gt} [left]:expr [right]:expr
-        | {lte} [left]:expr [right]:expr
-        | {gte} [left]:expr [right]:expr
-        | {and} [left]:expr [right]:expr
-        | {or} [left]:expr [right]:expr ;
+        | {raw_string_lit} raw_string_lit ;

@@ -783,62 +783,58 @@ public class PrettyPrinter extends DepthFirstAdapter {
    **************************************************/
 
   /**
-   * @Override public void inAPosExpr(APosExpr node)
-   * @Override public void outAPosExpr(APosExpr node)
+   * @Override public void caseAPosExpr(APosExpr node)
    *
    * Pretty print unary plus ('+') operator
    */
-  public void inAPosExpr(APosExpr node) {
+  public void caseAPosExpr(APosExpr node) {
     addLeftParen();
     buffer.append('+');
-  }
-
-  public void outAPosExpr(APosExpr node) {
+    if (node.getExpr() != null) {
+      node.getExpr().apply(this);
+    }
     addRightParen();
   }
 
   /**
-   * @Override public void inANegExpr(ANegExpr node)
-   * @Override public void outANegExpr(ANegExpr node)
+   * @Override public void caseANegExpr(ANegExpr node)
    *
    * Pretty print unary minus ('-') operator
    */
-  public void inANegExpr(ANegExpr node) {
+  public void caseANegExpr(ANegExpr node) {
     addLeftParen();
     buffer.append('-');
-  }
-
-  public void outANegExpr(ANegExpr node) {
+    if (node.getExpr() != null) {
+      node.getExpr().apply(this);
+    }
     addRightParen();
   }
 
   /**
-   * @Override public void inABitCompExpr(ABitCompExpr node)
-   * @Override public void outABitCompExpr(ABitCompExpr node)
+   * @Override public void caseABitCompExpr(ABitCompExpr node)
    *
    * Pretty print bit complement ('^') operator
    */
-  public void inABitCompExpr(ABitCompExpr node) {
+  public void caseABitCompExpr(ABitCompExpr node) {
     addLeftParen();
     buffer.append('^');
-  }
-
-  public void outABitCompExpr(ABitCompExpr node) {
+    if (node.getExpr() != null) {
+      node.getExpr().apply(this);
+    }
     addRightParen();
   }
 
   /**
-   * @Override public void inANotExpr(ANotExpr node)
-   * @Override public void outANotExpr(ANotExpr node)
+   * @Override public void caseANotExpr(ANotExpr node)
    *
    * Pretty print negate ('!') operator
    */
-  public void inANotExpr(ANotExpr node) {
+  public void caseANotExpr(ANotExpr node) {
     addLeftParen();
     buffer.append('!');
-  }
-
-  public void outANotExpr(ANotExpr node) {
+    if (node.getExpr() != null) {
+      node.getExpr().apply(this);
+    }
     addRightParen();
   }
 
@@ -1036,11 +1032,11 @@ public class PrettyPrinter extends DepthFirstAdapter {
   }
 
   /**
-   * @Override public void caseAPrimTypeCastExpr(APrimTypeCastExpr node)
+   * @Override public void caseATypeCastExpr(ATypeCastExpr node)
    *
-   * Pretty print type casting
+   * Pretty print type casting expression
    */
-  public void caseAPrimTypeCastExpr(APrimTypeCastExpr node) {
+  public void caseATypeCastExpr(ATypeCastExpr node) {
     if (node.getTypeExpr() != null) {
       node.getTypeExpr().apply(this);
     }
@@ -1052,13 +1048,29 @@ public class PrettyPrinter extends DepthFirstAdapter {
   }
 
   /**************************************************
-   * Struct Fileds                                  *
+   * Array, Slice & Struct                          *
    **************************************************/
+
+  /**
+   * @Override public void caseAArrayElemExpr(AArrayElemExpr node)
+   *
+   * Pretty print array/slice elements
+   */
+  public void caseAArrayElemExpr(AArrayElemExpr node) {
+    if (node.getArray() != null) {
+      node.getArray().apply(this);
+    }
+    addLeftBracket();
+    if (node.getIndex() != null) {
+      node.getIndex().apply(this);
+    }
+    addRightBracket();
+  }
 
   /**
    * @Override public void caseAFieldExpr(AFieldExpr node)
    *
-   * Pretty print struct field
+   * Pretty print struct fields
    */
   public void caseAFieldExpr(AFieldExpr node) {
     if (node.getExpr() != null) {
@@ -1068,26 +1080,6 @@ public class PrettyPrinter extends DepthFirstAdapter {
     if (node.getId() != null) {
       buffer.append(node.getId().getText());
     }
-  }
-
-  /**************************************************
-   * Array/Slice Elements                           *
-   **************************************************/
-
-  /**
-   * @Override public void caseAArrayElemExpr(AArrayElemExpr node)
-   *
-   * Pretty print array/slice elements
-   */
-  public void caseAArrayElemExpr(AArrayElemExpr node) {
-    if (node.getId() != null) {
-      buffer.append(node.getId().getText());
-    }
-    addLeftBracket();
-    if (node.getExpr() != null) {
-      node.getExpr().apply(this);
-    }
-    addRightBracket();
   }
 
   /**************************************************
