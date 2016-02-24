@@ -323,11 +323,11 @@ Productions
         | {array_elem} array_elem
             {-> array_elem.expr} ;
 
+    // Weeding will verify the "dotting" is conducted on a "dottable".
     field {-> expr} = atom dot id {-> New expr.field(atom.expr, id)} ;
 
-    array_elem {-> expr} = id array_index+ {-> New expr.array_elem(id, [array_index.expr])} ;
-
-    array_index {-> expr} = lsquare expr rsquare {-> New expr.array_index(expr)} ;
+    // Weeding will verify the array access is conducted on a "Array accessible".
+    array_elem {-> expr} = atom lsquare expr rsquare {-> New expr.array_elem(atom.expr, expr)} ;
 
     short_assignment {-> stmt} = id_list short_assign expr_list {-> New stmt.short_assign([id_list.id], [expr_list.expr])};
 
@@ -627,9 +627,7 @@ Abstract Syntax Tree
         // Struct field/property.
         | {field} expr id
         // Array element.
-        | {array_elem} id expr+
-        // Index access.
-        | {array_index} expr
+        | {array_elem} [array]:expr [index]:expr
         // Append function.
         | {append} id expr
         // Type cast.
