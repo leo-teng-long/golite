@@ -155,9 +155,6 @@ Tokens
 
     //* Literals. *//
 
-    // Boolean.
-    bool_lit = 'true' | 'false' ;
-
     // Integer.
     int_lit = '0' | pos_digit digit* ;
     oct_lit = '0' oct_digit+ ;
@@ -524,9 +521,7 @@ Productions
     //* Literals. *//
 
     lit {-> expr} =
-          {bool_lit} bool_lit
-            {-> New expr.bool_lit(bool_lit)}
-        | {int_lit} int_lit
+          {int_lit} int_lit
             {-> New expr.int_lit(int_lit)}
         | {oct_lit} oct_lit
             {-> New expr.oct_lit(oct_lit)}
@@ -622,8 +617,7 @@ Abstract Syntax Tree
 
     expr =
         // Literals.
-          {bool_lit} bool_lit
-        | {int_lit} int_lit
+          {int_lit} int_lit
         | {oct_lit} oct_lit
         | {hex_lit} hex_lit
         | {float_lit} float_lit
