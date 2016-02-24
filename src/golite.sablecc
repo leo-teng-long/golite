@@ -323,9 +323,11 @@ Productions
         | {array_elem} array_elem
             {-> array_elem.expr} ;
 
+    // Weeding will verify the "dotting" is conducted on a "dottable".
     field {-> expr} = atom dot id {-> New expr.field(atom.expr, id)} ;
 
-    array_elem {-> expr} = id lsquare expr rsquare {-> New expr.array_elem(id, expr)} ;
+    // Weeding will verify the array access is conducted on a "Array accessible".
+    array_elem {-> expr} = atom lsquare expr rsquare {-> New expr.array_elem(atom.expr, expr)} ;
 
     short_assignment {-> stmt} = id_list short_assign expr_list {-> New stmt.short_assign([id_list.id], [expr_list.expr])};
 
@@ -348,8 +350,14 @@ Productions
     condition {-> condition} =
           {expr} expr
             {-> New condition.condition(Null, expr)}
-        | {stmt_expr} simple_sub semi expr
-            {-> New condition.condition(simple_sub.stmt, expr)} ;
+        | {stmt_expr} opt_sub semi expr
+            {-> New condition.condition(opt_sub.stmt, expr)} ;
+
+    opt_sub {-> stmt} =
+          {empty}
+            {-> New stmt.empty()}
+        | {sub} simple_sub
+            {-> simple_sub.stmt} ;
 
     switcheroo {-> stmt} =
           {stmt_expr} switch simple_sub semi expr lbrace case_block* rbrace
@@ -368,12 +376,18 @@ Productions
             {-> New case_block.block(New case_condition.default(), [stmt])} ;
 
     loop {-> stmt} =
-          {for} for [init]:simple_sub [first]:semi expr [second]:semi [end]:simple_sub block
-            {-> New stmt.loop(init.stmt, expr, end.stmt, [block.stmt])}
+          {for} for [init]:opt_sub [first]:semi loop_cond [second]:semi [end]:opt_sub block
+            {-> New stmt.loop(init.stmt, loop_cond.expr, end.stmt, [block.stmt])}
         | {while_loop} for expr block
             {-> New stmt.loop(Null, expr, Null, [block.stmt])}
         | {inf_loop} for block
             {-> New stmt.loop(Null, Null, Null, [block.stmt])} ;
+
+    loop_cond {-> expr} =
+          {empty}
+            {-> New expr.empty()}
+        | {cond} expr
+            {-> expr} ;
 
     //* Identifiers *//
 
@@ -397,13 +411,7 @@ Productions
         | {struct} struct lbrace struct_sub_stmt* rbrace
             {-> New type_expr.struct([struct_sub_stmt.type_spec])};
 
-    prim_type {-> type_expr} =
-          {castable} castable_prim_type
-            {-> castable_prim_type.type_expr}
-        | {string} string
-            {-> New type_expr.string(string)} ;
-
-    castable_prim_type {-> type_expr} =
+    prim_type {-> type_expr} = 
           {bool} bool
             {-> New type_expr.bool(bool)}
         | {int} int
@@ -411,7 +419,9 @@ Productions
         | {float} float64
             {-> New type_expr.float(float64)}
         | {rune} rune
-            {-> New type_expr.rune(rune)} ;
+            {-> New type_expr.rune(rune)}
+        | {string} string
+            {-> New type_expr.string(string)} ;
 
     struct_sub_stmt {-> type_spec} = id_list type_expr semi
         {-> New type_spec.spec([id_list.id], type_expr)} ;
@@ -513,8 +523,9 @@ Productions
     func_call {-> expr} =
           {append} append lparen id comma expr rparen
             {-> New expr.append(id, expr)}
-        | {prim_type_cast} castable_prim_type lparen expr rparen
-            {-> New expr.prim_type_cast(castable_prim_type.type_expr, expr)}
+        // Verification of the target type will be done in weeding phase.
+        | {type_cast} prim_type lparen expr rparen
+            {-> New expr.type_cast(prim_type.type_expr, expr)}
         | {custom_func_call} id lparen expr_list rparen
             {-> New expr.func_call(id, [expr_list.expr])};
 
@@ -563,7 +574,8 @@ Abstract Syntax Tree
     //* Statement *//
 
     stmt =
-          {expr} expr
+          {empty}
+        | {expr} expr
         | {incr} expr
         | {decr} expr
         | {assign} [lhs]:expr+ [rhs]:expr+
@@ -616,8 +628,9 @@ Abstract Syntax Tree
     //* Expression. *//
 
     expr =
+          {empty}
         // Literals.
-          {int_lit} int_lit
+        | {int_lit} int_lit
         | {oct_lit} oct_lit
         | {hex_lit} hex_lit
         | {float_lit} float_lit
@@ -629,11 +642,11 @@ Abstract Syntax Tree
         // Struct field/property.
         | {field} expr id
         // Array element.
-        | {array_elem} id expr
+        | {array_elem} [array]:expr [index]:expr
         // Append function.
         | {append} id expr
         // Type cast.
-        | {prim_type_cast} type_expr expr
+        | {type_cast} type_expr expr
         // Function call.
         | {func_call} id expr*
         // Unary operators.
