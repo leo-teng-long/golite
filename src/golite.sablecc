@@ -348,8 +348,14 @@ Productions
     condition {-> condition} =
           {expr} expr
             {-> New condition.condition(Null, expr)}
-        | {stmt_expr} simple_sub semi expr
-            {-> New condition.condition(simple_sub.stmt, expr)} ;
+        | {stmt_expr} opt_sub semi expr
+            {-> New condition.condition(opt_sub.stmt, expr)} ;
+
+    opt_sub {-> stmt} =
+          {empty}
+            {-> New stmt.empty()}
+        | {sub} simple_sub
+            {-> simple_sub.stmt} ;
 
     switcheroo {-> stmt} =
           {stmt_expr} switch simple_sub semi expr lbrace case_block* rbrace
@@ -368,18 +374,12 @@ Productions
             {-> New case_block.block(New case_condition.default(), [stmt])} ;
 
     loop {-> stmt} =
-          {for} for [init]:loop_sub [first]:semi loop_cond [second]:semi [end]:loop_sub block
+          {for} for [init]:opt_sub [first]:semi loop_cond [second]:semi [end]:opt_sub block
             {-> New stmt.loop(init.stmt, loop_cond.expr, end.stmt, [block.stmt])}
         | {while_loop} for expr block
             {-> New stmt.loop(Null, expr, Null, [block.stmt])}
         | {inf_loop} for block
             {-> New stmt.loop(Null, Null, Null, [block.stmt])} ;
-
-    loop_sub {-> stmt} =
-          {empty}
-            {-> New stmt.empty()}
-        | {sub} simple_sub
-            {-> simple_sub.stmt} ;
 
     loop_cond {-> expr} =
           {empty}
