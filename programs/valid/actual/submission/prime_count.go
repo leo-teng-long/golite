@@ -4,30 +4,32 @@
 
 package main
 
-var x float64 = 100
+var x float64 = 10
 var lnx, term float64
 var niter int = 100
 
 func main() {
 	// Approximate lnx using the first 100 terms of the Mercator series by
 	// iterating backwards over the terms.
-	for i := 0; i < niter; i++ {
+	for i := 1; i <= niter; i++ {
 		term = 1.
 
 		// Calculate (x - 1)^i.
 		for j := 0 ; j < i ; j++ {
-			term = term * (x - 1)
+			term *= (x - 1)
 		}
 
 		// (x - 1)^i / i.
-		term = term / i;
+		term = term / float64(i);
 
 		// Substract if its an even numbered term in the sequence, add otherwise
 		if i % 2 == 0 {
-			lnx = lnx - term
+			lnx -= term
 		} else {
-			lnx = lnx + term
+			lnx += term
 		}
+		
+		println(lnx)
 	}
 
 	println(x / lnx)
