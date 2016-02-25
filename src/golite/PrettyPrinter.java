@@ -60,7 +60,7 @@ public class PrettyPrinter extends DepthFirstAdapter {
   public void caseAProgProg(AProgProg node) {
     if (node.getId() != null) {
       buffer.append("package " + node.getId().getText());
-      addNewLines(1);
+      addNewLines(2);
     }
     {
       List<PTopDec> copy = new ArrayList<PTopDec>(node.getTopDec());
@@ -1574,20 +1574,20 @@ public class PrettyPrinter extends DepthFirstAdapter {
   /**
    * @Private method
    *
-   * Formatting statement
+   * Formatting top-level declaration
    */
-  private void prettyPrintStatement(PStmt e) {
+  private void prettyPrintTopDec(PTopDec e) {
     addTabs();
     e.apply(this);
-    addNewLines(1);
+    addNewLines(2);
   }
 
   /**
    * @Private method
    *
-   * Formatting top-level declaration
+   * Formatting statement
    */
-  private void prettyPrintTopDec(PTopDec e) {
+  private void prettyPrintStatement(PStmt e) {
     addTabs();
     e.apply(this);
     addNewLines(1);
