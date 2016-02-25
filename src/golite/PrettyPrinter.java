@@ -30,6 +30,157 @@ public class PrettyPrinter extends DepthFirstAdapter {
   }
 
   /**************************************************
+   * Write printy-print program to file             *
+   **************************************************/
+
+  /**
+   * @Override public void outAProgProg(AProgProg node)
+   *
+   * Write to file
+   */
+  public void outAProgProg(AProgProg node) {
+    try {
+      PrintWriter out = new PrintWriter(new FileWriter(fileName + ".pretty.go"));
+      out.println(buffer.toString());
+      out.close();
+    } catch (Exception ex) {
+      System.out.println("Failure: fail to pretty print");
+    }
+  }
+
+  /**************************************************
+   * Program                                        *
+   **************************************************/
+
+  /**
+   * @Override public void caseAProgProg(AProgProg node)
+   *
+   * Pretty print program
+   */
+  public void caseAProgProg(AProgProg node) {
+    if (node.getId() != null) {
+      buffer.append("package " + node.getId().getText());
+      addNewLines(1);
+    }
+    {
+      List<PTopDec> copy = new ArrayList<PTopDec>(node.getTopDec());
+      for (PTopDec e : copy) {
+        prettyPrintTopDec(e);
+      }
+    }
+    outAProgProg(node);
+  }
+
+  /**************************************************
+   * Function Declarations                          *
+   **************************************************/
+
+  /**
+   * @Override public void caseAFuncTopDec(AFuncTopDec node)
+   *
+   * Pretty print function declaration
+   */
+  public void caseAFuncTopDec(AFuncTopDec node) {
+    buffer.append("func");
+    if (node.getId() != null) {
+      addSpace();
+      buffer.append(node.getId().getText());
+    }
+    addLeftParen();
+    {
+      List<PArgGroup> copy = new ArrayList<PArgGroup>(node.getArgGroup());
+      for (PArgGroup e : copy) {
+        e.apply(this);
+        addComma();
+      }
+      if (copy.size() > 0) {
+        deleteLastChar();
+      }
+    }
+    addRightParen();
+    if (node.getTypeExpr() != null) {
+      addSpace();
+      node.getTypeExpr().apply(this);
+    }
+    {
+      beforeCodeBlock();
+      List<PStmt> copy = new ArrayList<PStmt>(node.getStmt());
+      for (PStmt e : copy) {
+        prettyPrintStatement(e);
+      }
+      afterCodeBlock();
+    }
+  }
+
+  /**************************************************
+   * Variable Declarations                          *
+   **************************************************/
+
+  /**
+   * @Override public void caseASpecVarSpec(ASpecVarSpec node)
+   *
+   * Pretty print top level variable declaration
+   */
+  public void caseASpecVarSpec(ASpecVarSpec node) {
+    buffer.append("var");
+    {
+      addSpace();
+      List<TId> copy = new ArrayList<TId>(node.getId());
+      for (TId e : copy) {
+        buffer.append(e.getText());
+        addComma();
+      }
+      if (copy.size() > 0) {
+        deleteLastChar();
+      }
+    }
+    if (node.getTypeExpr() != null) {
+      addSpace();
+      node.getTypeExpr().apply(this);
+    }
+    if (node.getExpr().size() == 0) {
+      return;
+    }
+    buffer.append(" = ");
+    {
+      List<PExpr> copy = new ArrayList<PExpr>(node.getExpr());
+      for (PExpr e : copy) {
+        e.apply(this);
+        addComma();
+      }
+      if (copy.size() > 0) {
+        deleteLastChar();
+      }
+    }
+  }
+
+  /**************************************************
+   * Argument Groups                                *
+   **************************************************/
+
+  /**
+   * @Override public void caseAArgArgGroup(AArgArgGroup node)
+   *
+   * Pretty print argument group
+   */
+  public void caseAArgArgGroup(AArgArgGroup node) {
+    {
+      List<TId> copy = new ArrayList<TId>(node.getId());
+      for (TId e : copy) {
+        buffer.append(e.getText());
+        addComma();
+      }
+      if (copy.size() > 0) {
+        deleteLastChar();
+      }
+    }
+    addSpace();
+    if (node.getTypeExpr() != null) {
+      node.getTypeExpr().apply(this);
+    }
+  }
+
+  /**************************************************
    * Empty Statements                               *
    **************************************************/
 
@@ -52,7 +203,10 @@ public class PrettyPrinter extends DepthFirstAdapter {
    * Pretty print long variable declaration
    */
   public void caseAVarDecStmt(AVarDecStmt node) {
-    // ......
+    List<PVarSpec> copy = new ArrayList<PVarSpec>(node.getVarSpec());
+    for (PVarSpec e : copy) {
+      e.apply(this);
+    }
   }
 
   /**
@@ -486,7 +640,7 @@ public class PrettyPrinter extends DepthFirstAdapter {
    **************************************************/
 
   /**
-   * @Override public voicd caseAForLoopStmt(AForLoopStmt node)
+   * @Override public void caseAForLoopStmt(AForLoopStmt node)
    *
    * Pretty print for loop
    */
@@ -1423,6 +1577,17 @@ public class PrettyPrinter extends DepthFirstAdapter {
    * Formatting statement
    */
   private void prettyPrintStatement(PStmt e) {
+    addTabs();
+    e.apply(this);
+    addNewLines(1);
+  }
+
+  /**
+   * @Private method
+   *
+   * Formatting top-level declaration
+   */
+  private void prettyPrintTopDec(PTopDec e) {
     addTabs();
     e.apply(this);
     addNewLines(1);
