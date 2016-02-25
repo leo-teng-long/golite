@@ -3,8 +3,9 @@ package golite;
 import golite.parser.*;
 import golite.lexer.*;
 import golite.node.*;
+import golite.PrettyPrinter;
 import java.io.*;
- 
+
 
 /**
  * Main.
@@ -30,6 +31,8 @@ class Main {
             // Print scanner tokens to stdout.
             } else if (args[0].equals("-printTokens"))
                 displayTokens(args[1]);
+            else if (args[0].equals("-pretty"))
+                prettyPrint(args[1]);
             else {
                 printUsage();
             }
@@ -42,7 +45,7 @@ class Main {
      * Prints the command-line usage to stderr.
      */
     public static void printUsage() {
-        System.err.println("Usage: Main -[scan | parse | printTokens] filename");
+        System.err.println("Usage: Main -[scan | parse | pretty | printTokens] filename");
     }
 
     /**
@@ -65,7 +68,7 @@ class Main {
             System.err.println("ERROR: " + le);
             return false;
         }
-        
+
         return true;
     }
 
@@ -88,6 +91,25 @@ class Main {
         }
 
         return true;
+    }
+
+    /**
+     * Pretty print a GoLite program.
+     *
+     * @param inPath - Filepath to GoLite program
+     */
+    public static void prettyPrint(String inPath) throws IOException {
+      try {
+        Lexer lexer = new GoLiteLexer(new PushbackReader(new FileReader(inPath), 1024));
+        Parser parser = new Parser(lexer);
+        Start tree = parser.parse();
+
+        String fileName = inPath.substring(0, inPath.indexOf('.'));
+        PrettyPrinter printer = new PrettyPrinter(fileName);
+        tree.apply(printer);
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
     }
 
     /**
