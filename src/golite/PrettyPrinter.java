@@ -65,7 +65,11 @@ public class PrettyPrinter extends DepthFirstAdapter {
     {
       List<PTopDec> copy = new ArrayList<PTopDec>(node.getTopDec());
       for (PTopDec e : copy) {
-        prettyPrintTopDec(e);
+        if (e instanceof AFuncTopDec) {
+          prettyPrintFuncDec(e);
+        } else {
+          e.apply(this);
+        }
       }
     }
     outAProgProg(node);
@@ -117,6 +121,19 @@ public class PrettyPrinter extends DepthFirstAdapter {
    **************************************************/
 
   /**
+   * @Override public void caseAVarsTopDec(AVarsTopDec node)
+   *
+   * Pretty print top-level variable declarations
+   */
+  public void caseAVarsTopDec(AVarsTopDec node) {
+    List<PVarSpec> copy = new ArrayList<PVarSpec>(node.getVarSpec());
+    for (PVarSpec e : copy) {
+      prettyPrintVarSpec(e);
+    }
+    addNewLines(1);
+  }
+
+  /**
    * @Override public void caseASpecVarSpec(ASpecVarSpec node)
    *
    * Pretty print top level variable declaration
@@ -151,6 +168,43 @@ public class PrettyPrinter extends DepthFirstAdapter {
       if (copy.size() > 0) {
         deleteLastChar();
       }
+    }
+  }
+
+  /**************************************************
+   * Type Declarations                              *
+   **************************************************/
+
+  /**
+   * @Override public void caseATypesTopDec(ATypesTopDec node)
+   *
+   * Pretty print top-level type declarations
+   */
+  public void caseATypesTopDec(ATypesTopDec node) {
+    List<PTypeSpec> copy = new ArrayList<PTypeSpec>(node.getTypeSpec());
+    for (PTypeSpec e : copy) {
+      prettyPrintTypeSpec(e);
+    }
+    addNewLines(1);
+  }
+
+  /**
+   * @Override public void caseASpecTypeSpec(ASpecTypeSpec node)
+   *
+   * Pretty print top level type declaration
+   */
+  public void caseASpecTypeSpec(ASpecTypeSpec node) {
+    buffer.append("type");
+    if (node.getId() != null) {
+      addSpace();
+      buffer.append(node.getId().getText());
+    }
+    if (node.getTypeExpr() != null) {
+      addSpace();
+      if (node.getTypeExpr() instanceof AStructTypeExpr) {
+        buffer.append("struct");
+      }
+      node.getTypeExpr().apply(this);
     }
   }
 
@@ -244,7 +298,10 @@ public class PrettyPrinter extends DepthFirstAdapter {
    * Pretty print type declaration
    */
   public void caseATypeDecStmt(ATypeDecStmt node) {
-    // ......
+    List<PTypeSpec> copy = new ArrayList<PTypeSpec>(node.getTypeSpec());
+    for (PTypeSpec e : copy) {
+      prettyPrintTypeSpec(e);
+    }
   }
 
   /**************************************************
@@ -877,6 +934,20 @@ public class PrettyPrinter extends DepthFirstAdapter {
     if (node.getTypeExpr() != null) {
       node.getTypeExpr().apply(this);
     }
+  }
+
+  /**
+   * @Override public void caseAStructTypeExpr(AStructTypeExpr node)
+   *
+   * Pretty print struct type
+   */
+  public void caseAStructTypeExpr(AStructTypeExpr node) {
+    beforeCodeBlock();
+    List<PArgGroup> copy = new ArrayList<PArgGroup>(node.getArgGroup());
+    for (PArgGroup e : copy) {
+      prettyPrintArgGroup(e);
+    }
+    afterCodeBlock();
   }
 
   /**************************************************
@@ -1691,15 +1762,42 @@ public class PrettyPrinter extends DepthFirstAdapter {
   /**
    * @Private method
    *
-   * Formatting top-level declaration
+   * Formatting top-level function declaration
    */
-  private void prettyPrintTopDec(PTopDec e) {
+  private void prettyPrintFuncDec(PTopDec e) {
     addTabs();
     e.apply(this);
     addNewLines(2);
   }
 
+  /**
+   * @Private method
+   *
+   * Formatting top-level variable declaration
+   */
   private void prettyPrintVarSpec(PVarSpec e) {
+    addTabs();
+    e.apply(this);
+    addNewLines(1);
+  }
+
+  /**
+   * @Private method
+   *
+   * Formatting top-level type declaration
+   */
+  private void prettyPrintTypeSpec(PTypeSpec e) {
+    addTabs();
+    e.apply(this);
+    addNewLines(1);
+  }
+
+  /**
+   * @Private method
+   *
+   * Formatting argument group for struct declaration
+   */
+  public void prettyPrintArgGroup(PArgGroup e) {
     addTabs();
     e.apply(this);
     addNewLines(1);

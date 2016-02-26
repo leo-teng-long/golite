@@ -225,7 +225,7 @@ Productions
 
     type_spec_stmt {-> type_spec} = type_spec semi {-> type_spec} ;
 
-    type_spec {-> type_spec} = id type_expr {-> New type_spec.spec([id], type_expr)} ;
+    type_spec {-> type_spec} = id type_expr {-> New type_spec.spec(id, type_expr)} ;
 
     //* Function declaration. *//
 
@@ -565,7 +565,7 @@ Abstract Syntax Tree
 
     //* Type specification. *//
 
-    type_spec = {spec} id+ type_expr ;
+    type_spec = {spec} id type_expr ;
 
     //* Argument grouping. *//
 
