@@ -205,7 +205,7 @@ public class PrettyPrinter extends DepthFirstAdapter {
   public void caseAVarDecStmt(AVarDecStmt node) {
     List<PVarSpec> copy = new ArrayList<PVarSpec>(node.getVarSpec());
     for (PVarSpec e : copy) {
-      e.apply(this);
+      prettyPrintVarSpec(e);
     }
   }
 
@@ -576,9 +576,9 @@ public class PrettyPrinter extends DepthFirstAdapter {
    */
   public void caseAIfElseStmt(AIfElseStmt node) {
     buffer.append("if");
-    if (node.getExpr() != null) {
+    if (node.getCondition() != null) {
       addSpace();
-      node.getExpr().apply(this);
+      node.getCondition().apply(this);
     }
     {
       beforeCodeBlock();
@@ -615,9 +615,9 @@ public class PrettyPrinter extends DepthFirstAdapter {
    */
   public void caseAElifElseif(AElifElseif node) {
     buffer.append("else if");
-    if (node.getExpr() != null) {
+    if (node.getCondition() != null) {
       addSpace();
-      node.getExpr().apply(this);
+      node.getCondition().apply(this);
     }
     {
       beforeCodeBlock();
@@ -629,11 +629,100 @@ public class PrettyPrinter extends DepthFirstAdapter {
     }
   }
 
+  /**
+   * @Override public void caseAConditionCondition(AConditionCondition node)
+   *
+   * Pretty print condition for if-else
+   */
+  public void caseAConditionCondition(AConditionCondition node) {
+    if (node.getStmt() != null) {
+      node.getStmt().apply(this);
+    }
+    addSemi();
+    addSpace();
+    if (node.getExpr() != null) {
+      node.getExpr().apply(this);
+    }
+  }
+
   /**************************************************
    * Switch Statements                              *
    **************************************************/
 
-  // (to do) ......
+  /**
+   * @Override public void caseASwitchStmt(ASwitchStmt node)
+   *
+   * Pretty print switch statement
+   */
+  public void caseASwitchStmt(ASwitchStmt node) {
+    buffer.append("switch");
+    if (node.getStmt() != null) {
+      addSpace();
+      node.getStmt().apply(this);
+      addSemi();
+    }
+    if (node.getExpr() != null) {
+      addSpace();
+      node.getExpr().apply(this);
+    }
+    {
+      beforeCodeBlock();
+      List<PCaseBlock> copy = new ArrayList<PCaseBlock>(node.getCaseBlock());
+      for (PCaseBlock e : copy) {
+        e.apply(this);
+      }
+      afterCodeBlock();
+    }
+  }
+
+  /**
+   * @Override public void caseABlockCaseBlock(ABlockCaseBlock node)
+   *
+   * Pretty print case block for switch
+   */
+  public void caseABlockCaseBlock(ABlockCaseBlock node) {
+    addTabs();
+    if (node.getCaseCondition() != null) {
+      node.getCaseCondition().apply(this);
+    }
+    {
+      beforeCaseBlock();
+      List<PStmt> copy = new ArrayList<PStmt>(node.getStmt());
+      for (PStmt e : copy) {
+        prettyPrintStatement(e);
+      }
+      afterCaseBlock();
+    }
+  }
+
+  /**
+   * @Override public void caseAExprsCaseCondition(AExprsCaseCondition node)
+   *
+   * Pretty print expression case condition
+   */
+  public void caseAExprsCaseCondition(AExprsCaseCondition node) {
+    buffer.append("case");
+    addSpace();
+    List<PExpr> copy = new ArrayList<PExpr>(node.getExpr());
+    for (PExpr e : copy) {
+      e.apply(this);
+      addComma();
+    }
+    if (copy.size() > 0) {
+      deleteLastChar();
+    }
+    addColon();
+  }
+
+  /**
+   * @Override public void caseADefaultCaseCondition(ADefaultCaseCondition node)
+   *
+   * Pretty print default case condition
+   */
+  public void caseADefaultCaseCondition(ADefaultCaseCondition node) {
+    buffer.append("default");
+    addColon();
+  }
 
   /**************************************************
    * For & While Loop                               *
@@ -1499,6 +1588,15 @@ public class PrettyPrinter extends DepthFirstAdapter {
   /**
    * @Private method
    *
+   * Add ':'
+   */
+  private void addColon() {
+    buffer.append(':');
+  }
+
+  /**
+   * @Private method
+   *
    * Add ';'
    */
   private void addSemi() {
@@ -1550,6 +1648,25 @@ public class PrettyPrinter extends DepthFirstAdapter {
   /**
    * @Private method
    *
+   * Formatting before entering case block
+   */
+  private void beforeCaseBlock() {
+    addNewLines(1);
+    numTabs++;
+  }
+
+  /**
+   * @Private method
+   *
+   * Formatting after exiting case block
+   */
+  private void afterCaseBlock() {
+    numTabs--;
+  }
+
+  /**
+   * @Private method
+   *
    * Formatting before entering declaration block
    */
   private void beforeDecBlock() {
@@ -1582,15 +1699,27 @@ public class PrettyPrinter extends DepthFirstAdapter {
     addNewLines(2);
   }
 
+  private void prettyPrintVarSpec(PVarSpec e) {
+    addTabs();
+    e.apply(this);
+    addNewLines(1);
+  }
+
   /**
    * @Private method
    *
    * Formatting statement
    */
   private void prettyPrintStatement(PStmt e) {
-    addTabs();
-    e.apply(this);
-    addNewLines(1);
+    if (e instanceof AVarDecStmt) {
+      e.apply(this);
+    } else if (e instanceof ATypeDecStmt) {
+      e.apply(this);
+    } else {
+      addTabs();
+      e.apply(this);
+      addNewLines(1);
+    }
   }
 
 }
