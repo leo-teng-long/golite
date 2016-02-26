@@ -225,7 +225,7 @@ Productions
 
     type_spec_stmt {-> type_spec} = type_spec semi {-> type_spec} ;
 
-    type_spec {-> type_spec} = id type_expr {-> New type_spec.spec([id], type_expr)} ;
+    type_spec {-> type_spec} = id type_expr {-> New type_spec.spec(id, type_expr)} ;
 
     //* Function declaration. *//
 
@@ -338,14 +338,14 @@ Productions
             {-> New stmt.return(expr)} ;
 
     if_else {-> stmt} =
-          {if} if expr block elseif*
-            {-> New stmt.if_else(expr, [block.stmt], [elseif], [])}
-        | {if_else} if expr [if_block]:block elseif* else [else_block]:block
-            {-> New stmt.if_else(expr, [if_block.stmt], [elseif], [else_block.stmt])} ;
+          {if} if condition block elseif*
+            {-> New stmt.if_else(condition, [block.stmt], [elseif], [])}
+        | {if_else} if condition [if_block]:block elseif* else [else_block]:block
+            {-> New stmt.if_else(condition, [if_block.stmt], [elseif], [else_block.stmt])} ;
 
     elseif {-> elseif} =
-          {elif} else if expr block
-            {-> New elseif.elif(expr, [block.stmt])} ;
+          {elif} else if condition block
+            {-> New elseif.elif(condition, [block.stmt])} ;
 
     condition {-> condition} =
           {expr} expr
@@ -409,7 +409,7 @@ Productions
         | {slice} lsquare rsquare type_expr
             {-> New type_expr.slice(type_expr.type_expr)}
         | {struct} struct lbrace struct_sub_stmt* rbrace
-            {-> New type_expr.struct([struct_sub_stmt.type_spec])};
+            {-> New type_expr.struct([struct_sub_stmt.arg_group])};
 
     prim_type {-> type_expr} =
           {bool} bool
@@ -423,8 +423,8 @@ Productions
         | {string} string
             {-> New type_expr.string(string)} ;
 
-    struct_sub_stmt {-> type_spec} = id_list type_expr semi
-        {-> New type_spec.spec([id_list.id], type_expr)} ;
+    struct_sub_stmt {-> arg_group} = id_list type_expr semi
+        {-> New arg_group.arg([id_list.id], type_expr)} ;
 
     //* Expressions. *//
 
@@ -565,7 +565,7 @@ Abstract Syntax Tree
 
     //* Type specification. *//
 
-    type_spec = {spec} id+ type_expr ;
+    type_spec = {spec} id type_expr ;
 
     //* Argument grouping. *//
 
@@ -598,14 +598,14 @@ Abstract Syntax Tree
         | {continue}
         | {break}
         | {return} expr?
-        | {if_else} expr [if_block]:stmt* [elseif]:elseif* [else_block]:stmt*
+        | {if_else} condition [if_block]:stmt* [elseif]:elseif* [else_block]:stmt*
         | {switch} stmt? expr? case_block*
         | {for_loop} [init]:stmt expr [end]:stmt [block]:stmt*
         | {while_loop} expr? [block]:stmt* ;
 
-    condition = {condition} stmt? expr ;
+    elseif = {elif} condition [block]:stmt*;
 
-    elseif = {elif} expr [block]:stmt*;
+    condition = {condition} stmt? expr ;
 
     case_block = {block} case_condition stmt* ;
 
@@ -624,7 +624,7 @@ Abstract Syntax Tree
         | {custom} id
         | {array} expr type_expr
         | {slice} type_expr
-        | {struct} type_spec* ;
+        | {struct} arg_group* ;
 
     //* Expression. *//
 

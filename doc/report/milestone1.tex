@@ -1,0 +1,62 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+
+\title{Comp 520: Milestone 1}
+\author{The Heapsters}
+\date{February 2016}
+
+\begin{document}
+
+\maketitle
+
+\section*{Team Organization and Contributions}
+
+\subsection*{General}
+Overall, some team members focused more on implementation and adding to the GitHub repository while others focused on debating the details of our context-free grammar and abstract syntax tree. We had seven group meetings over the course of this milestone which lasted an hour or more (often more than three or four hours). All group members were present during these meetings.
+
+Additionally, some tasks were handled by all members:
+
+\begin{itemize}
+    \item Everyone wrote tests (the number of tests varied by group member)
+    \item Each member had a say in the design of the grammar and abstract syntax tree. Conflicting opinions were frequently worked out until all three members were in agreement.
+    \item In many cases, changes to the grammar, abstract syntax tree, or sablecc document were made as a result of group discussions
+    \item Everyone reviewed this document before it was submitted
+\end{itemize}
+
+
+\subsection*{Leo}
+
+\begin{itemize}
+    \item Defined the context-free grammar with Ethan on a whiteboard
+    \item Wrote the pretty printer
+\end{itemize}
+
+\subsection*{Hardik}
+\begin{itemize}
+    \item Defined the tokens that we wound up using for our sablecc document
+    \item Implemented the context-free grammar in our sablecc document and made changes as necessary
+    \item Implemented the abstract syntax tree in our sablecc document
+    \item Consolidated our tests from individual branches of our GitHub repository and put them into the master branch
+\end{itemize}
+
+
+\subsection*{Ethan}
+
+\begin{itemize}
+    \item Defined the context-free grammar with Leo on a whiteboard
+    \item Wrote this document
+    \item Kept minutes for our meetings
+\end{itemize}
+
+\section*{Design Decisions}
+
+Our group decided to build a GoLite compiler in Java using SableCC 3. We decided on building a GoLite compiler because the specifications were most clearly defined, and built it in Java so we could devote more time to designing the grammar and abstract syntax tree instead of spending this time on the implementation details of writing a compiler in C. We decided to use SableCC 3 since both Ethan and Leo had used it for their previous assignments and found it to be a useful tool for parsing and syntax tree building.
+
+We worked on this milestone iteratively. First, we each wrote at least ten tests for the scanner. Hardik created a token list that we modified as necessary. For the next few meetings we focused on creating a working context-free grammar. Ethan \& Leo came up with one on the board, while Hardik added sections of the grammar to the SableCC file until the entire grammar compiled. After this, the three of us worked together on the abstract syntax tree. Next, we focused on writing more tests while Leo wrote the pretty printer and Ethan wrote the report. On the last few days we met and resolved any outstanding issues.
+
+We did not identify any parsing issues that required deferral to a weeding phase. TODO: Thoughts on this??
+
+Checking whether a typecast is using a valid id is deferred to type checking phase
+
+
+\end{document}
