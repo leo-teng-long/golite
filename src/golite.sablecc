@@ -429,12 +429,11 @@ Productions
     //* Expressions. *//
 
     expr_list {-> expr*} =
-          {empty_expr}
+          {empty}
             {-> []}
-        | {expr} expr
-            {-> [expr.expr]}
-        | {exprs} expr comma expr_list
-            {-> [expr.expr, expr_list.expr]} ;
+        | {exprs} expr_before* expr {-> [expr_before.expr, expr]} ;
+
+    expr_before {-> expr} = expr comma {-> expr} ;
 
     expr {-> expr} =
           {conjunction} conjunction
