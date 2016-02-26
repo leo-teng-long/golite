@@ -94,6 +94,7 @@ public class PrettyPrinter extends DepthFirstAdapter {
     {
       List<PArgGroup> copy = new ArrayList<PArgGroup>(node.getArgGroup());
       for (PArgGroup e : copy) {
+        addSpace();
         e.apply(this);
         addComma();
       }
