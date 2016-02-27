@@ -16,7 +16,7 @@ public class PrettyPrinter extends DepthFirstAdapter {
   /**
    * Class variables
    */
-  private StringBuffer buffer;
+  public StringBuffer buffer;
   private String fileName;
   private int numTabs;
 
@@ -44,7 +44,7 @@ public class PrettyPrinter extends DepthFirstAdapter {
       out.println(buffer.toString());
       out.close();
     } catch (Exception ex) {
-      System.out.println("Failure: fail to pretty print");
+      System.err.println("ERROR: Failed to pretty print");
     }
   }
 
