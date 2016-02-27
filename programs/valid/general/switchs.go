@@ -14,7 +14,19 @@ func main() {
 			// Do something
 	}
 
-	switch food := "dill pickle"; {
+	switch food := "dill pickle"; 
+	{
+		case food == "tomato":
+			// Do something
+		case food == "pepper":
+			// Do something
+		case food == "cucumber":
+			// Do something
+		default:
+			// Do something
+	}
+	switch food := "dill pickle"
+	{
 		case food == "tomato":
 			// Do something
 		case food == "pepper":
@@ -33,6 +45,16 @@ func main() {
 		case "pepper":
 			// Do something
 		case "cucumber":
+			// Do something
+	}
+
+	switch 
+	{
+		case food == "tomato":
+			// Do something
+		case food == "pepper":
+			// Do something
+		case food == "cucumber":
 			// Do something
 	}
 
