@@ -149,7 +149,6 @@ public class PrettyPrinter extends DepthFirstAdapter {
     for (PVarSpec e : copy) {
       prettyPrintVarSpec(e);
     }
-    addNewLines(1);
   }
 
   /**
@@ -1798,7 +1797,7 @@ public class PrettyPrinter extends DepthFirstAdapter {
   private void prettyPrintVarSpec(PVarSpec e) {
     addTabs();
     e.apply(this);
-    addNewLines(1);
+    addNewLines(2);
   }
 
   /**
