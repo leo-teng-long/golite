@@ -30,12 +30,21 @@ public class PrettyPrinter extends DepthFirstAdapter {
   }
 
   /**
+   * PrettyPrinter Constructor
+   */
+  public PrettyPrinter() {
+    this.buffer = new StringBuffer();
+    this.fileName = null;
+    this.numTabs = 0;
+  }
+
+  /**
    * Returns the buffer string.
    * 
    * @return Buffer string
    **/
   public String getBufferString() {
-    return this.buffer;
+    return this.buffer.toString();
   }
 
   /**************************************************
