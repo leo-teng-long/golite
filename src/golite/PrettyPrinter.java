@@ -202,9 +202,9 @@ public class PrettyPrinter extends DepthFirstAdapter {
     }
     if (node.getTypeExpr() != null) {
       addSpace();
-      if (node.getTypeExpr() instanceof AStructTypeExpr) {
+      /*if (node.getTypeExpr() instanceof AStructTypeExpr) {
         buffer.append("struct");
-      }
+      }*/
       node.getTypeExpr().apply(this);
     }
   }
