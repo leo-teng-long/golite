@@ -16,7 +16,7 @@ public class PrettyPrinter extends DepthFirstAdapter {
   /**
    * Class variables
    */
-  public StringBuffer buffer;
+  private StringBuffer buffer;
   private String fileName;
   private int numTabs;
 
@@ -27,6 +27,15 @@ public class PrettyPrinter extends DepthFirstAdapter {
     this.buffer = new StringBuffer();
     this.fileName = fileName;
     this.numTabs = 0;
+  }
+
+  /**
+   * Returns the buffer string.
+   * 
+   * @return Buffer string
+   **/
+  public String getBufferString() {
+    return this.buffer;
   }
 
   /**************************************************
