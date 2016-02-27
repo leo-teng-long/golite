@@ -99,17 +99,17 @@ class Main {
      * @param inPath - Filepath to GoLite program
      */
     public static void prettyPrint(String inPath) throws IOException {
-      try {
-        Lexer lexer = new GoLiteLexer(new PushbackReader(new FileReader(inPath), 1024));
-        Parser parser = new Parser(lexer);
-        Start tree = parser.parse();
+        try {
+            Lexer lexer = new GoLiteLexer(new PushbackReader(new FileReader(inPath), 1024));
+            Parser parser = new Parser(lexer);
+            Start tree = parser.parse();
 
-        String fileName = inPath.substring(0, inPath.indexOf('.'));
-        PrettyPrinter printer = new PrettyPrinter(fileName);
-        tree.apply(printer);
-      } catch (Exception e) {
-        e.printStackTrace();
-      }
+            String fileName = inPath.substring(0, inPath.indexOf('.'));
+            PrettyPrinter printer = new PrettyPrinter(fileName);
+            tree.apply(printer);
+        } catch (Exception e) {
+            System.err.println("ERROR: " + e);
+        }
     }
 
     /**
