@@ -1,11 +1,31 @@
 # COMP 520 Project, Group 5 a.k.a. The Heapsters
 
+## Team Members
+
+* Long, Teng (260616355)
+* Vala, Hardik (260309392)
+* Macdonald, Ethan (260517273)
+
 ## Requirements
 
 * Java SE 7 or higher
-* [sablecc-3.7](http://www.sablecc.org/) in `src` directory
+* [sablecc-3.7](http://www.sablecc.org/) in `./src` directory
 
 ## Milestone #1
+
+### How to Build/Run
+
+* Unzip SableCC 3.7 in `./src` directory
+* `cd src` and then `make build`
+* `java golite/Make -[scan | parse | pretty | printTokens] [filename]`
+
+### Programs for Question 1
+
+Our programs can be found in the `./programs/valid/actual/submission` directory.
+
+### Document for Question 3
+
+Our report can be found at `./doc/milestone1.pdf`.
 
 ### Sources
 

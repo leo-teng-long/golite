@@ -1,7 +1,7 @@
 # Java .class files
 *.class
 
-# Stupid Mac directory utility files
+# Mac utility files
 .DS_Store
 
 # SableCC 3 generated classes
@@ -13,5 +13,5 @@ src/golite/parser/
 # SableCC 3 Source Code
 src/sablecc-3.7
 
-#Ethan's ignore folder
-./ignore_these/
+# Output files
+src/.pretty.go
