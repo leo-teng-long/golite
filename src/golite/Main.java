@@ -104,8 +104,9 @@ class Main {
             Parser parser = new Parser(lexer);
             Start tree = parser.parse();
 
-            String fileName = inPath.substring(0, inPath.indexOf('.'));
-            PrettyPrinter printer = new PrettyPrinter(fileName);
+            String filename = inPath.substring(0, inPath.indexOf('.'));
+            
+            PrettyPrinter printer = new PrettyPrinter(filename);
             tree.apply(printer);
         } catch (Exception e) {
             System.err.println("ERROR: " + e);
