@@ -21,19 +21,23 @@ Additionally, some tasks were handled by all members:
     \item Each member had a say in the design of the grammar and abstract syntax tree. Conflicting opinions were frequently worked out until all three members were in agreement.
     \item In many cases, changes to the grammar, abstract syntax tree, or sablecc document were made as a result of group discussions
     \item Everyone reviewed this document before it was submitted
+    \item Hardik came up with the name. Leo and Ethan approved it.
+    \item Everyone participated in creating the group handshake. Hardik designed it, Leo implemented it, and Ethan critiqued it by shaking his head in disappointment.
 \end{itemize}
 
 
 \subsection*{Leo}
 
 \begin{itemize}
-    \item Defined the context-free grammar with Ethan on a whiteboard
+    \item Designed the context-free grammar with Ethan on a whiteboard
     \item Wrote the pretty printer
+    \item Modified the abstract syntax tree/context-free grammar while writing the pretty printer
 \end{itemize}
 
 \subsection*{Hardik}
 \begin{itemize}
-    \item Defined the tokens that we wound up using for our sablecc document
+    \item Designed the tokens that we wound up using for our sablecc document
+    \item Implemented the lexer for semicolon insertion
     \item Implemented the context-free grammar in our sablecc document and made changes as necessary
     \item Implemented the abstract syntax tree in our sablecc document
     \item Consolidated our tests from individual branches of our GitHub repository and put them into the master branch
@@ -43,7 +47,7 @@ Additionally, some tasks were handled by all members:
 \subsection*{Ethan}
 
 \begin{itemize}
-    \item Defined the context-free grammar with Leo on a whiteboard
+    \item Designed the context-free grammar with Leo on a whiteboard
     \item Wrote this document
     \item Kept minutes for our meetings
 \end{itemize}
@@ -54,9 +58,6 @@ Our group decided to build a GoLite compiler in Java using SableCC 3. We decided
 
 We worked on this milestone iteratively. First, we each wrote at least ten tests for the scanner. Hardik created a token list that we modified as necessary. For the next few meetings we focused on creating a working context-free grammar. Ethan \& Leo came up with one on the board, while Hardik added sections of the grammar to the SableCC file until the entire grammar compiled. After this, the three of us worked together on the abstract syntax tree. Next, we focused on writing more tests while Leo wrote the pretty printer and Ethan wrote the report. On the last few days we met and resolved any outstanding issues.
 
-We did not identify any parsing issues that required deferral to a weeding phase. TODO: Thoughts on this??
-
-Checking whether a typecast is using a valid id is deferred to type checking phase
-
+In order to focus on writing more tests, we decided not to implement any weeding phases until the next milestone. We did, however, include certain constraints within our grammar to reduce the amount of weeding required (e.g., we limited the set of allowed top-level statements). Some issues that we chose not to handle include the removal of quotes/backticks from strings, checking proper usage of breaks and continues, checking that fields and array accesses happen on the correct elements, the removal of string casts, mismatching numbers of ids and values in declaration statements, and distinguishing between function calls and custom type casts. In the weeding phase we may also consider constraining the package declaration to main and checking to make sure one main function exists in each file.
 
 \end{document}
