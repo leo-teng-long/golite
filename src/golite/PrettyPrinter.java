@@ -29,6 +29,24 @@ public class PrettyPrinter extends DepthFirstAdapter {
     this.numTabs = 0;
   }
 
+  /**
+   * PrettyPrinter Constructor
+   */
+  public PrettyPrinter() {
+    this.buffer = new StringBuffer();
+    this.fileName = null;
+    this.numTabs = 0;
+  }
+
+  /**
+   * Returns the buffer string.
+   * 
+   * @return Buffer string
+   **/
+  public String getBufferString() {
+    return this.buffer.toString();
+  }
+
   /**************************************************
    * Write printy-print program to file             *
    **************************************************/
@@ -44,7 +62,7 @@ public class PrettyPrinter extends DepthFirstAdapter {
       out.println(buffer.toString());
       out.close();
     } catch (Exception ex) {
-      System.out.println("Failure: fail to pretty print");
+      System.err.println("ERROR: Failed to pretty print");
     }
   }
 
