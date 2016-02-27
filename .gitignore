@@ -4,6 +4,10 @@
 # Stupid Mac directory utility files
 .DS_Store
 
+# JUnit .jar's
+src/hamcrest-core-1.3.jar
+src/junit-4.12.jar
+
 # SableCC 3 generated classes
 src/golite/analysis/
 src/golite/lexer/
@@ -13,5 +17,5 @@ src/golite/parser/
 # SableCC 3 Source Code
 src/sablecc-3.7
 
-#Ethan's ignore folder
+# Ethan's ignore folder
 ./ignore_these/
