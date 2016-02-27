@@ -943,6 +943,7 @@ public class PrettyPrinter extends DepthFirstAdapter {
    * Pretty print struct type
    */
   public void caseAStructTypeExpr(AStructTypeExpr node) {
+    buffer.append("struct");
     beforeCodeBlock();
     List<PArgGroup> copy = new ArrayList<PArgGroup>(node.getArgGroup());
     for (PArgGroup e : copy) {
