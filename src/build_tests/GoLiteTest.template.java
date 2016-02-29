@@ -8,13 +8,14 @@ import golite.GoLiteLexer;
 import java.io.*;
 
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
 import org.junit.Test;
 
 
 /**
  * GoLite compiler test.
  */
-public class GoLiteTest {
+public class /* INSERT NAME HERE */ {
 
 	/**
      * Parses a GoLite program.

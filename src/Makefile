@@ -2,10 +2,10 @@ run: build
 	./run.sh
 
 run_tests: compile_tests
-	java -cp jars/hamcrest-core-1.3.jar:jars/junit-4.12.jar: org.junit.runner.JUnitCore test.GoLiteTest
+	java -cp jars/hamcrest-core-1.3.jar:jars/junit-4.12.jar: org.junit.runner.JUnitCore test.GoLiteTestSuite
 
 compile_tests: build_tests
-	javac -cp jars/junit-4.12.jar: test/GoLiteTest.java
+	javac -cp jars/junit-4.12.jar: test/*.java
 
 build_tests: build
 	python build_tests/build_tests.py
