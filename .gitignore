@@ -4,9 +4,8 @@
 # Stupid Mac directory utility files
 .DS_Store
 
-# JUnit .jar's
-src/hamcrest-core-1.3.jar
-src/junit-4.12.jar
+# JAR files
+src/jars/*.jar
 
 # SableCC 3 generated classes
 src/golite/analysis/
