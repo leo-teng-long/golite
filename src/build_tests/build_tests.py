@@ -20,6 +20,8 @@ INVALID_PROGS_DIRPATH = os.path.join(PROGS_DIRPATH, "invalid")
 TEST_TEMPALTE_FPATH = os.path.join("build_tests", "GoLiteTest.template.java")
 
 
+# Test directory path.
+OUT_TEST_DIRPATH = "test"
 # Filepath to output test source file.
 OUT_TEST_FPATH = os.path.join("test", "GoLiteTest.java")
 
@@ -56,10 +58,10 @@ def to_test_name(prog_fname):
 	test_name = to_camel_case(prog_fname[:-3]) + "Test"
 
 	if '2d' in test_name:
-		test_name = test_name.replace('2d', 'TwoD')
+		test_name = test_name.replace('2d', 'TwoDim')
 
 	if '3d' in test_name:
-		test_name = test_name.replace('3d', 'ThreeD')
+		test_name = test_name.replace('3d', 'ThreeDim')
 
 	return test_name
 
@@ -96,9 +98,15 @@ def main():
 	with open(TEST_TEMPALTE_FPATH) as fin:
 		test_str = fin.read()
 
+	# Insert source for test methods into template.
 	test_str = test_str.replace("/* INSERT TESTS HERE */", 
 		'\n\n'.join(test_method_strs))
 
+	# Create output test directory if it doesn't already exist.
+	if not os.path.exists(OUT_TEST_DIRPATH):
+		os.makedirs(OUT_TEST_DIRPATH)
+
+	# Output test source.
 	with open(OUT_TEST_FPATH, 'w') as fout:
 		fout.write(test_str)
 
