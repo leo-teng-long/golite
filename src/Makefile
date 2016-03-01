@@ -1,8 +1,6 @@
-run: build
-	./run.sh
-
 run_tests: compile_tests
-	java -cp jars/hamcrest-core-1.3.jar:jars/junit-4.12.jar: org.junit.runner.JUnitCore test.GoLiteTestSuite
+	-java -cp jars/hamcrest-core-1.3.jar:jars/junit-4.12.jar: org.junit.runner.JUnitCore test.GoLiteTestSuite
+	rm -f .pretty.go
 
 compile_tests: build_tests
 	javac -cp jars/junit-4.12.jar: test/*.java
@@ -15,10 +13,6 @@ build: compile_grammar
 
 compile_grammar: clean
 	java -jar ./sablecc-3.7/lib/sablecc.jar golite.sablecc -d .
-
-buildsrc:
-	rm -rf golite/*.class
-	javac golite/*.java
 
 clean:
 	rm -rf golite/*.class golite/lexer golite/parser golite/node golite/analysis
