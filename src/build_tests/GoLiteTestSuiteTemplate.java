@@ -5,7 +5,7 @@ import org.junit.runners.Suite;
 
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
-	/* INSERT TEST CLASSES HERE */
+	<<<INSERT TEST CLASSES HERE>>>
 })
 
 public class GoLiteTestSuite {

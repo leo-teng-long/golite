@@ -1,5 +1,5 @@
 """
-TODO
+Automatic test generator for the GoLite compiler.
 """
 
 import os
@@ -17,9 +17,9 @@ INVALID_PROGS_DIRPATH = os.path.join(PROGS_DIRPATH, os.path.join("invalid",
 	"syntax"))
 
 
-# Filepath to parser test class template.
+# Filepath to test class template.
 TEST_CLASS_TEMPALTE_FPATH = os.path.join("build_tests",
-	"GoLiteParserTestTemplate.java")
+	"GoLiteTestTemplate.java")
 
 # Filepath to test suite class template.
 SUITE_TEMPALTE_FPATH = os.path.join("build_tests",
@@ -37,9 +37,11 @@ OUT_TEST_DIRPATH = "test"
 OUT_SUITE_FPATH = os.path.join(OUT_TEST_DIRPATH, "GoLiteTestSuite.java")
 
 # Output name for test checking valid syntax is correctly parsed.
-OUT_VALID_TEST_NAME = "GoLiteValidSyntaxTest"
+OUT_VALID_PARSE_TNAME = "GoLiteValidSyntaxTest"
 # Output name for test checking invalid syntax is not parsed.
-OUT_INVALID_TEST_NAME = "GoLiteInvalidSyntaxTest"
+OUT_INVALID_PARSE_TNAME = "GoLiteInvalidSyntaxTest"
+# Output name for test checking pretty printing.
+OUT_PRETTY_TNAME = "GoLitePrettyPrintTest"
 
 
 def capitalize(in_str):
@@ -106,39 +108,63 @@ def to_test_name(prog_fname):
 	return test_name
 
 
-def create_test_method_str(prog_fname, prog_fpath, assert_true):
+def create_test_method_str(prog_fname, prog_fpath, tpe):
 	"""
 	Creates the source string for a test method from a corresponding test
 	program.
 
 	@param prog_fname - Input program filename
 	@param prog_fpath - Filepath to program
-	@param assert_true - If true, then assertion must be true, otherwise it must
-		be false
+	@param tpe - 'valid_parse' for testing the correcting parsing of the
+		program, 'invalid_parse' for testing no parse is produced for the
+		program, or 'pretty' for testing the pretty printer on the program
 	@return Corresponding test method source
 	"""
 
 	test_name = to_test_name(prog_fname)
 
-	assert_method_name = ASSERT_TRUE if assert_true else ASSERT_FALSE
+	if tpe == 'valid_parse':
+		assert_method_name = ASSERT_TRUE
+		check_method_name = 'parse'
+	elif tpe == 'invalid_parse':
+		assert_method_name = ASSERT_FALSE
+		check_method_name = 'parse'
+	elif tpe == 'pretty':
+		assert_method_name = ASSERT_TRUE
+		check_method_name = 'checkPrettyInvariant'
+	else:
+		raise ValueError("'tpe' argument must be 'valid_parse', "
+			"'invalid_parse', or 'pretty'.")
 
 	test_method_str = "\t@Test\n"
 	test_method_str += "\tpublic void %s() throws IOException {\n" % test_name
-	test_method_str += "\t\t%s(parse(\"%s\"));\n" % \
-		(assert_method_name, prog_fpath)
+	test_method_str += "\t\t%s(%s(\"%s\"));\n" % \
+		(assert_method_name, check_method_name, prog_fpath)
 	test_method_str += "\t}"
 
 	return test_method_str
 
 
-def create_test(test_name, progs_dirpath, assert_true, out_path):
+def to_template_marker(in_str):
+	"""
+	Returns the given string as a template insertion point.
+
+	@param in_str - Input string
+	@return String as a template insertion point.
+	"""
+
+	return "<<<" + in_str + ">>>"
+
+
+def create_test(test_name, progs_dirpath, tpe, out_path):
 	"""
 	Creates the source string for a test and saves it to file.
 
 	@param test_name - Test name (Becomes the class name of the test)
 	@param progs_dirpath - Directory path to input test programs folder
-	@param assert_true - If true, then assertions must be true, otherwise they
-		must be false
+	@param tpe - 'valid_parse' for testing the correcting parsing of the
+		program, 'invalid_parse' for testing no parse is produced for the
+		program, or 'pretty' for testing the pretty printer on the program
 	@param out_path - Output file to test source file
 	"""
 
@@ -154,16 +180,17 @@ def create_test(test_name, progs_dirpath, assert_true, out_path):
 			test_prog_path = os.path.join(parent, fname)
 
 			test_method_strs.append(create_test_method_str(fname,
-				test_prog_path, assert_true))
+				test_prog_path, tpe))
 
 	# Read the test template source.
 	with open(TEST_CLASS_TEMPALTE_FPATH) as fin:
 		test_str = fin.read()
 
 	# Insert the test name.
-	test_str = test_str.replace("/* INSERT NAME HERE */", test_name)
+	test_str = test_str.replace(to_template_marker("INSERT NAME HERE"),
+		test_name)
 	# Insert the test methods.
-	test_str = test_str.replace("/* INSERT TESTS HERE */",
+	test_str = test_str.replace(to_template_marker("INSERT TESTS HERE"),
 		'\n\n'.join(test_method_strs))
 
 	# Create output test directory if it doesn't already exist.
@@ -180,20 +207,26 @@ def main():
 	test_method_strs = []
 
 	# Create the parser test for syntactically valid programs.
-	create_test(OUT_VALID_TEST_NAME, VALID_PROGS_DIRPATH, True,
-		os.path.join(OUT_TEST_DIRPATH, '%s.java' % OUT_VALID_TEST_NAME))
+	create_test(OUT_VALID_PARSE_TNAME, VALID_PROGS_DIRPATH, 'valid_parse',
+		os.path.join(OUT_TEST_DIRPATH, '%s.java' % OUT_VALID_PARSE_TNAME))
 
 	# Create the parser test for syntactically invalid programs.
-	create_test(OUT_INVALID_TEST_NAME, INVALID_PROGS_DIRPATH, False,
-		os.path.join(OUT_TEST_DIRPATH, '%s.java' % OUT_INVALID_TEST_NAME))
+	create_test(OUT_INVALID_PARSE_TNAME, INVALID_PROGS_DIRPATH, 'invalid_parse',
+		os.path.join(OUT_TEST_DIRPATH, '%s.java' % OUT_INVALID_PARSE_TNAME))
+
+	# Create the pretty printer test.
+	create_test(OUT_PRETTY_TNAME, VALID_PROGS_DIRPATH, 'pretty',
+		os.path.join(OUT_TEST_DIRPATH, '%s.java' % OUT_PRETTY_TNAME))
 
 	# Read in the test suite template.
 	with open(SUITE_TEMPALTE_FPATH) as fin:
 		suite_str = fin.read()
 
 	# Insert the test names into the test suite runner class.
-	suite_str = suite_str.replace("/* INSERT TEST CLASSES HERE */",
-		"%s.class,\n\t%s.class" % (OUT_VALID_TEST_NAME, OUT_INVALID_TEST_NAME))
+	suite_str = suite_str.replace(
+		to_template_marker("INSERT TEST CLASSES HERE"),
+		"%s.class,\n\t%s.class,\n\t%s.class" % (OUT_VALID_PARSE_TNAME,
+			OUT_INVALID_PARSE_TNAME, OUT_PRETTY_TNAME))
 
 	# Save the test suite source to file.
 	with open(OUT_SUITE_FPATH, 'w') as fout:
