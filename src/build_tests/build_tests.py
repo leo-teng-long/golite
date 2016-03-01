@@ -17,12 +17,13 @@ INVALID_PROGS_DIRPATH = os.path.join(PROGS_DIRPATH, os.path.join("invalid",
 	"syntax"))
 
 
-# Filepath to test class template.
+# Filepath to parser test class template.
 TEST_CLASS_TEMPALTE_FPATH = os.path.join("build_tests",
-	"GoLiteTest.template.java")
+	"GoLiteParserTestTemplate.java")
+
 # Filepath to test suite class template.
 SUITE_TEMPALTE_FPATH = os.path.join("build_tests",
-	"GoLiteTestSuite.template.java")
+	"GoLiteTestSuiteTemplate.java")
 
 
 # Assert method names.
@@ -35,9 +36,20 @@ OUT_TEST_DIRPATH = "test"
 # Output test suite source filepath.
 OUT_SUITE_FPATH = os.path.join(OUT_TEST_DIRPATH, "GoLiteTestSuite.java")
 
+# Output name for test checking valid syntax is correctly parsed.
+OUT_VALID_TEST_NAME = "GoLiteValidSyntaxTest"
+# Output name for test checking invalid syntax is not parsed.
+OUT_INVALID_TEST_NAME = "GoLiteInvalidSyntaxTest"
 
-# Capitalizes a given string.
+
 def capitalize(in_str):
+	"""
+	Capitalize a string.
+
+	@param in_str - Input string
+	@return Capitalized version of string
+	"""
+
 	if len(in_str) == 0:
 		return in_str
 	elif len(in_str) == 1:
@@ -46,8 +58,14 @@ def capitalize(in_str):
 		return in_str[0].upper() + in_str[1:]
 
 
-# Uncapitalizes a given string.
 def uncapitalize(in_str):
+	"""
+	Uncapitalize a string.
+
+	@param in_str - Input string
+	@return Uncapitalized version of string
+	"""
+
 	if len(in_str) == 0:
 		return in_str
 	elif len(in_str) == 1:
@@ -56,15 +74,27 @@ def uncapitalize(in_str):
 		return in_str[0].lower() + in_str[1:]
 
 
-# Transforms a lowercase alphanumeric string split on hyphens and underscores to
-# camel case.
 def to_camel_case(in_str):
+	"""
+	Transforms a lowercase alphanumeric string split on hyphens and underscores
+	to camel case.
+
+	@param in_str - Input string
+	@return Camel case version of string
+	"""
+
 	return uncapitalize(''.join(map(capitalize, re.findall(r'[0-9a-zA-Z]+',
 		in_str))))
 
 
-# Takes a test program filename and transforms it into a test method name.
 def to_test_name(prog_fname):
+	"""
+	Takes a test program filename and transforms it into a test method name.
+
+	@param prog_fname - Input program filename
+	@return Corresponding test method name
+	"""
+
 	test_name = to_camel_case(prog_fname[:-3]) + "Test"
 
 	if '2d' in test_name:
@@ -76,10 +106,18 @@ def to_test_name(prog_fname):
 	return test_name
 
 
-# Creates the source string for a test method for a test program, with given
-# filename and filepath.
-# TODO: Document
 def create_test_method_str(prog_fname, prog_fpath, assert_true):
+	"""
+	Creates the source string for a test method from a corresponding test
+	program.
+
+	@param prog_fname - Input program filename
+	@param prog_fpath - Filepath to program
+	@param assert_true - If true, then assertion must be true, otherwise it must
+		be false
+	@return Corresponding test method source
+	"""
+
 	test_name = to_test_name(prog_fname)
 
 	assert_method_name = ASSERT_TRUE if assert_true else ASSERT_FALSE
@@ -93,10 +131,17 @@ def create_test_method_str(prog_fname, prog_fpath, assert_true):
 	return test_method_str
 
 
-# Creates the source string for a test, with given test name and test programs
-# located in the given directory.
-# TODO: Document.
-def create_test_str(test_name, progs_dirpath, assert_true, out_path):
+def create_test(test_name, progs_dirpath, assert_true, out_path):
+	"""
+	Creates the source string for a test and saves it to file.
+
+	@param test_name - Test name (Becomes the class name of the test)
+	@param progs_dirpath - Directory path to input test programs folder
+	@param assert_true - If true, then assertions must be true, otherwise they
+		must be false
+	@param out_path - Output file to test source file
+	"""
+
 	# List of test method strings.
 	test_method_strs = []
 
@@ -115,7 +160,9 @@ def create_test_str(test_name, progs_dirpath, assert_true, out_path):
 	with open(TEST_CLASS_TEMPALTE_FPATH) as fin:
 		test_str = fin.read()
 
+	# Insert the test name.
 	test_str = test_str.replace("/* INSERT NAME HERE */", test_name)
+	# Insert the test methods.
 	test_str = test_str.replace("/* INSERT TESTS HERE */",
 		'\n\n'.join(test_method_strs))
 
@@ -132,18 +179,23 @@ def main():
 	# List of test method strings.
 	test_method_strs = []
 
-	create_test_str('GoLiteValidTest', VALID_PROGS_DIRPATH, True,
-		os.path.join(OUT_TEST_DIRPATH, 'GoLiteValidTest.java'))
+	# Create the parser test for syntactically valid programs.
+	create_test(OUT_VALID_TEST_NAME, VALID_PROGS_DIRPATH, True,
+		os.path.join(OUT_TEST_DIRPATH, '%s.java' % OUT_VALID_TEST_NAME))
 
-	create_test_str('GoLiteInvalidTest', INVALID_PROGS_DIRPATH, False,
-		os.path.join(OUT_TEST_DIRPATH, 'GoLiteInvalidTest.java'))
+	# Create the parser test for syntactically invalid programs.
+	create_test(OUT_INVALID_TEST_NAME, INVALID_PROGS_DIRPATH, False,
+		os.path.join(OUT_TEST_DIRPATH, '%s.java' % OUT_INVALID_TEST_NAME))
 
+	# Read in the test suite template.
 	with open(SUITE_TEMPALTE_FPATH) as fin:
 		suite_str = fin.read()
 
+	# Insert the test names into the test suite runner class.
 	suite_str = suite_str.replace("/* INSERT TEST CLASSES HERE */",
-		"GoLiteValidTest.class,\n\tGoLiteInvalidTest.class")
+		"%s.class,\n\t%s.class" % (OUT_VALID_TEST_NAME, OUT_INVALID_TEST_NAME))
 
+	# Save the test suite source to file.
 	with open(OUT_SUITE_FPATH, 'w') as fout:
 		fout.write(suite_str)
 

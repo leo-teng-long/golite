@@ -13,7 +13,7 @@ import org.junit.Test;
 
 
 /**
- * GoLite compiler test.
+ * GoLite parser test.
  */
 public class /* INSERT NAME HERE */ {
 
