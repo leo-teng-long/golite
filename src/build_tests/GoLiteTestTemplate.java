@@ -50,7 +50,9 @@ public class <<<INSERT NAME HERE>>> {
             Parser parser = new Parser(lexer);
             Start tree = parser.parse();
 
-            PrettyPrinter printer = new PrettyPrinter();
+            String filename = inPath.substring(0, inPath.indexOf('.'));
+
+            PrettyPrinter printer = new PrettyPrinter(filename);
             tree.apply(printer);
 
             String prettyParse = printer.getBufferString();
@@ -59,7 +61,7 @@ public class <<<INSERT NAME HERE>>> {
             parser = new Parser(lexer);
             tree = parser.parse();
 
-            printer = new PrettyPrinter();
+            printer = new PrettyPrinter(filename);
             tree.apply(printer);
 
             String prettyParsePrettyParse = printer.getBufferString();
