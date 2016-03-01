@@ -29,13 +29,12 @@ class Main {
                 else
                     System.out.println("INVALID");
             // Print scanner tokens to stdout.
-            } else if (args[0].equals("-printTokens"))
-                displayTokens(args[1]);
-            else if (args[0].equals("-pretty"))
+            } else if (args[0].equals("-pretty"))
                 prettyPrint(args[1]);
-            else {
+            else if (args[0].equals("-printTokens"))
+                displayTokens(args[1]);
+            else
                 printUsage();
-            }
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -135,4 +134,5 @@ class Main {
                 System.out.println(token.getClass().getSimpleName() + " (" + token.getText() + ")");
         }
     }
+    
 }
