@@ -9,9 +9,14 @@
 ## Requirements
 
 * Java SE 7 or higher
-* [sablecc-3.7](http://www.sablecc.org/) in `src` directory
-* `hamcrest-core-1.3.jar` in `src/jars` directory
-* `junit-4.12.jar` in `src/jars` directory 
+
+## Installation
+
+`cd` to the `src` directory and then run the install script:
+
+```
+./install.sh
+```
 
 ## Milestone #1
 
