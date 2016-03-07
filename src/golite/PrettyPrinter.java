@@ -654,12 +654,12 @@ public class PrettyPrinter extends DepthFirstAdapter {
       }
       afterCodeBlock();
     }
-    {
-      List<PElseif> copy = new ArrayList<PElseif>(node.getElseif());
-      for (PElseif e : copy) {
-        e.apply(this);
-      }
-    }
+    // {
+    //   List<PElseif> copy = new ArrayList<PElseif>(node.getElseif());
+    //   for (PElseif e : copy) {
+    //     e.apply(this);
+    //   }
+    // }
     if (node.getElseBlock().size() == 0) {
       return;
     }
@@ -679,21 +679,21 @@ public class PrettyPrinter extends DepthFirstAdapter {
    *
    * Pretty PRINT elif statement
    */
-  public void caseAElifElseif(AElifElseif node) {
-    buffer.append("else if");
-    if (node.getCondition() != null) {
-      addSpace();
-      node.getCondition().apply(this);
-    }
-    {
-      beforeCodeBlock();
-      List<PStmt> copy = new ArrayList<PStmt>(node.getBlock());
-      for (PStmt e : copy) {
-        prettyPrintStatement(e);
-      }
-      afterCodeBlock();
-    }
-  }
+  // public void caseAElifElseif(AElifElseif node) {
+  //   buffer.append("else if");
+  //   if (node.getCondition() != null) {
+  //     addSpace();
+  //     node.getCondition().apply(this);
+  //   }
+  //   {
+  //     beforeCodeBlock();
+  //     List<PStmt> copy = new ArrayList<PStmt>(node.getBlock());
+  //     for (PStmt e : copy) {
+  //       prettyPrintStatement(e);
+  //     }
+  //     afterCodeBlock();
+  //   }
+  // }
 
   /**
    * @Override public void caseAConditionCondition(AConditionCondition node)
@@ -953,9 +953,9 @@ public class PrettyPrinter extends DepthFirstAdapter {
   public void caseAStructTypeExpr(AStructTypeExpr node) {
     buffer.append("struct");
     beforeCodeBlock();
-    List<PArgGroup> copy = new ArrayList<PArgGroup>(node.getArgGroup());
-    for (PArgGroup e : copy) {
-      prettyPrintArgGroup(e);
+    List<PStructSub> copy = new ArrayList<PStructSub>(node.getStructSub());
+    for (PStructSub e : copy) {
+      prettyPrintStructSub(e);
     }
     afterCodeBlock();
   }
@@ -1808,6 +1808,17 @@ public class PrettyPrinter extends DepthFirstAdapter {
    * Formatting argument group for struct declaration
    */
   public void prettyPrintArgGroup(PArgGroup e) {
+    addTabs();
+    e.apply(this);
+    addNewLines(1);
+  }
+
+  /**
+   * @Private method
+   *
+   * Formatting argument group for struct declaration
+   */
+  public void prettyPrintStructSub(PStructSub e) {
     addTabs();
     e.apply(this);
     addNewLines(1);
