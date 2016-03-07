@@ -1,10 +1,10 @@
 # COMP 520 Project, Group 5 a.k.a. The Heapsters
 
-## Team Members
+## Project Members
 
 * Long, Teng (260616355)
-* Vala, Hardik (260309392)
 * Macdonald, Ethan (260517273)
+* Vala, Hardik (260309392)
 
 ## Requirements
 
@@ -19,7 +19,7 @@
 
 * Unzip SableCC 3.7 in `./src` directory
 * `cd src` and then `make build`
-* `java golite/Make -[scan | parse | pretty | printTokens] [filename]`
+* `java golite/Main -[scan | parse | pretty | printTokens] [filename]`
 
 ### Programs for Question 1
 
