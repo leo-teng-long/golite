@@ -4,6 +4,8 @@ import golite.parser.*;
 import golite.lexer.*;
 import golite.node.*;
 import golite.PrettyPrinter;
+import golite.exception.*;
+import golite.weeder.*;
 import java.io.*;
 
 
@@ -29,11 +31,14 @@ class Main {
                 else
                     System.out.println("INVALID");
             // Print scanner tokens to stdout.
-            } else if (args[0].equals("-printTokens"))
-                displayTokens(args[1]);
-            else if (args[0].equals("-pretty"))
+            } else if (args[0].equals("-pretty")) {
                 prettyPrint(args[1]);
-            else {
+            }
+            else if (args[0].equals("-printTokens")) {
+                displayTokens(args[1]);
+            } else if (args[0].equals("-weed")) {
+                weed(args[1]);
+            } else {
                 printUsage();
             }
         } catch (Exception e) {
@@ -45,7 +50,7 @@ class Main {
      * Prints the command-line usage to stderr.
      */
     public static void printUsage() {
-        System.err.println("Usage: Main -[scan | parse | pretty | printTokens] filename");
+        System.err.println("Usage: Main -[scan | parse | pretty | printTokens | weed] filename");
     }
 
     /**
@@ -114,6 +119,26 @@ class Main {
     }
 
     /**
+    * Weed a GoLite program.
+    * @param inPath - Filepath to GoLite program
+    */
+    public static boolean weed(String inPath) {
+        try {
+            Lexer lexer = new GoLiteLexer(new PushbackReader(new FileReader(inPath), 1024));
+            Parser parser = new Parser(lexer);
+            Weeder weed = new Weeder();
+
+            Start tree = parser.parse();
+            tree.apply(weed);
+
+        } catch (Exception e) {
+            System.err.println("ERROR: " + e);
+            return false;
+        }
+        return true;
+    }
+
+    /**
      * Prints the scanned tokens in a GoLite program, one per line. The scanner token is printed
      * along with the underlying scanned text in brackets (except for TEol token).
      *
@@ -135,4 +160,5 @@ class Main {
                 System.out.println(token.getClass().getSimpleName() + " (" + token.getText() + ")");
         }
     }
+    
 }

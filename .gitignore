@@ -4,6 +4,9 @@
 # Mac utility files
 .DS_Store
 
+# JAR files
+src/jars/*.jar
+
 # SableCC 3 generated classes
 src/golite/analysis/
 src/golite/lexer/
@@ -13,5 +16,11 @@ src/golite/parser/
 # SableCC 3 Source Code
 src/sablecc-3.7
 
-# Output files
+# Output pretty-print file
 src/.pretty.go
+
+# Auto-generated tests folder
+src/test/
+
+# Ethan's ignore folder
+./ignore_these/
