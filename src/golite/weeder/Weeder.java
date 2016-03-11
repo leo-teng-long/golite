@@ -12,6 +12,8 @@ public class Weeder extends DepthFirstAdapter
 {
 
     private LineAndPos lineAndPos = new LineAndPos();
+    private boolean packageFound = false;
+    private boolean inLoop = false;
 
     //Helper methods
     public void callWeedException(Node node, String s) {
@@ -27,6 +29,7 @@ public class Weeder extends DepthFirstAdapter
     public void inStart(Start node)
     {
         node.apply(lineAndPos);
+        packageFound = false;
         defaultIn(node);
     }
 
@@ -60,6 +63,11 @@ public class Weeder extends DepthFirstAdapter
     @Override
     public void inAProgProg(AProgProg node)
     {
+        if (packageFound) {
+            callWeedException(node, "Programs should not have more than one package declaration");
+        } else {
+            packageFound = true;
+        }
         defaultIn(node);
     }
 
@@ -832,6 +840,9 @@ public class Weeder extends DepthFirstAdapter
     @Override
     public void inAContinueStmt(AContinueStmt node)
     {
+        if (!inLoop) {
+            callWeedException(node, "Continue statements should only occur in for or while loops");
+        }
         defaultIn(node);
     }
 
@@ -851,6 +862,9 @@ public class Weeder extends DepthFirstAdapter
     @Override
     public void inABreakStmt(ABreakStmt node)
     {
+        if (!inLoop) {
+            callWeedException(node, "Break statements should only occur in for or while loops");
+        }
         defaultIn(node);
     }
 
@@ -984,6 +998,7 @@ public class Weeder extends DepthFirstAdapter
     @Override
     public void inAForLoopStmt(AForLoopStmt node)
     {
+        inLoop = true;
         defaultIn(node);
     }
 
@@ -991,6 +1006,7 @@ public class Weeder extends DepthFirstAdapter
     public void outAForLoopStmt(AForLoopStmt node)
     {
         defaultOut(node);
+        inLoop = false;
     }
 
     @Override
@@ -1022,6 +1038,7 @@ public class Weeder extends DepthFirstAdapter
     @Override
     public void inAWhileLoopStmt(AWhileLoopStmt node)
     {
+        inLoop = true;
         defaultIn(node);
     }
 
@@ -1029,6 +1046,7 @@ public class Weeder extends DepthFirstAdapter
     public void outAWhileLoopStmt(AWhileLoopStmt node)
     {
         defaultOut(node);
+        inLoop = false;
     }
 
     @Override
