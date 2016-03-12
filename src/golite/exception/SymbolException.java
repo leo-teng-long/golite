@@ -3,10 +3,8 @@ package golite.exception;
 import golite.node.*;
 
 @SuppressWarnings("serial")
-public class WeedException extends Exception
-{
-    public WeedException(String message)
-    {
+public class SymbolException extends Exception {
+    public SymbolException(String message) {
         super(message);
     }
 }
