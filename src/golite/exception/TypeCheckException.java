@@ -1,10 +1,10 @@
-package golite.Exception;
+package golite.exception;
 
 import golite.node.*;
 
 @SuppressWarnings("serial")
-public class TypeCheckerException extends Exception {
-    public TypeCheckerException(String message) {
+public class TypeCheckException extends Exception {
+    public TypeCheckException(String message) {
         super(message);
     }
 }
