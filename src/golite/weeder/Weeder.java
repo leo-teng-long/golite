@@ -204,6 +204,14 @@ public class Weeder extends DepthFirstAdapter
     @Override
     public void inASpecVarSpec(ASpecVarSpec node)
     {
+        {
+            int idLength = (new ArrayList<TId>(node.getId())).size();
+            int exprLength = (new ArrayList<PExpr>(node.getExpr())).size();
+            if (idLength != exprLength && exprLength > 0)
+            {
+                callWeedException(node, "Variable specification must include same number of items on left and right of assignment operator");
+            }
+        }
         defaultIn(node);
     }
 
@@ -343,6 +351,14 @@ public class Weeder extends DepthFirstAdapter
     @Override
     public void inAShortAssignStmt(AShortAssignStmt node)
     {
+        {
+            int idLength = (new ArrayList<TId>(node.getId())).size();
+            int exprLength = (new ArrayList<PExpr>(node.getExpr())).size();
+            if (idLength != exprLength && exprLength > 0)
+            {
+                callWeedException(node, "Short assignment must include same number of items on left and right of assignment operator");
+            }
+        }
         defaultIn(node);
     }
 
