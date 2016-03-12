@@ -1,5 +1,6 @@
 package golite;
 
+import golite.symbol.*;
 import golite.parser.*;
 import golite.lexer.*;
 import golite.node.*;
@@ -38,6 +39,8 @@ class Main {
                 displayTokens(args[1]);
             } else if (args[0].equals("-weed")) {
                 weed(args[1]);
+            } else if (args[0].equals("-symbol")) {
+                symbol(args[1]);
             } else {
                 printUsage();
             }
@@ -50,7 +53,7 @@ class Main {
      * Prints the command-line usage to stderr.
      */
     public static void printUsage() {
-        System.err.println("Usage: Main -[scan | parse | pretty | printTokens | weed] filename");
+        System.err.println("Usage: Main -[scan | parse | pretty | printTokens | weed | symbol] filename");
     }
 
     /**
@@ -130,6 +133,28 @@ class Main {
 
             Start tree = parser.parse();
             tree.apply(weed);
+
+        } catch (Exception e) {
+            System.err.println("ERROR: " + e);
+            return false;
+        }
+        return true;
+    }
+
+    /**
+    * Build a symbol table for a GoLite program.
+    * @param inPath - Filepath to GoLite program
+    */
+    public static boolean symbol(String inPath) {
+        try {
+            Lexer lexer = new GoLiteLexer(new PushbackReader(new FileReader(inPath), 1024));
+            Parser parser = new Parser(lexer);
+            Weeder weed = new Weeder();
+            Start tree = parser.parse();
+            tree.apply(weed);
+            SymbolTableBuilder symbolTableBuilder = new SymbolTableBuilder();
+            tree.apply(symbolTableBuilder);
+            SymbolTable symbolTable = symbolTableBuilder.getSymbolTable();
 
         } catch (Exception e) {
             System.err.println("ERROR: " + e);
