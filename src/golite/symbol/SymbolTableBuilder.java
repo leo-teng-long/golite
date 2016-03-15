@@ -19,61 +19,29 @@ public class SymbolTableBuilder extends DepthFirstAdapter
     {
         symbolTable = new SymbolTable();
         symbolTable.enterScope();
-        defaultIn(node);
     }
 
     @Override //Modified
-    public void outStart(Start node)
-    {
-        defaultOut(node);
-        symbolTable.exitScope();
-    }
-
-    @Override //Modified
-    public void inAFuncTopDec(AFuncTopDec node)
+    public void caseAFuncTopDec(AFuncTopDec node)
     {
         symbolTable.addSymbol(node.getId().getText(), node);
-        symbolTable.enterScope();
-        defaultIn(node);
-    }
-
-    @Override //Modified
-    public void outAFuncTopDec(AFuncTopDec node)
-    {
-        defaultOut(node);
-        symbolTable.exitScope();
     }
 
     @Override //Modified
     public void caseASpecVarSpec(ASpecVarSpec node)
     {
-        inASpecVarSpec(node);
         {
             List<TId> copy = new ArrayList<TId>(node.getId());
             for(TId e : copy)
             {
                 symbolTable.addSymbol(e.getText(), node);
-                e.apply(this);
             }
         }
-        if(node.getTypeExpr() != null)
-        {
-            node.getTypeExpr().apply(this);
-        }
-        {
-            List<PExpr> copy = new ArrayList<PExpr>(node.getExpr());
-            for(PExpr e : copy)
-            {
-                e.apply(this);
-            }
-        }
-        outASpecVarSpec(node);
     }
 
     @Override //Modified
-    public void inASpecTypeSpec(ASpecTypeSpec node)
+    public void caseASpecTypeSpec(ASpecTypeSpec node)
     {
         symbolTable.addSymbol(node.getId().getText(), node);
-        defaultIn(node);
     }
 }

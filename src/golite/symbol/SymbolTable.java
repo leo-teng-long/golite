@@ -63,11 +63,11 @@ public class SymbolTable {
      */
     private void callSymbolException(Node node, String s) {
         String message = "";
-        if (node != null) {
-            Integer line = lineAndPos.getLine(node);
-            Integer pos = lineAndPos.getPos(node);
-            message += "[" + line + "," + pos + "] ";
-        }
+        //if (node != null) {
+        //    Integer line = lineAndPos.getLine(node);
+        //    Integer pos = lineAndPos.getPos(node);
+        //    message += "[" + line + "," + pos + "] ";
+        //}
         message += s;
         SymbolException e = new SymbolException(message);
         e.printStackTrace();
@@ -80,6 +80,20 @@ public class SymbolTable {
     private void checkScopesSize() {
         if (scopes.isEmpty()) {
             callSymbolException(null, "Scope stack is empty");
+        }
+    }
+
+    /*
+     * Print symbols (for debugging purposes)
+     */
+    public void printSymbols() {
+        for (HashMap<String, Node> scope: scopes) {
+            System.out.println("ENTER SCOPE");
+            for (String str: scope.keySet()) {
+                System.out.print(str + ": ");
+                System.out.println(scope.get(str).getClass());
+            }
+            System.out.println("EXIT SCOPE");
         }
     }
 

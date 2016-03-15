@@ -17,8 +17,20 @@ public class TypeChecker extends DepthFirstAdapter {
     /** Constructor **/
     public TypeChecker() {
         symbolTable = new SymbolTable();
+        symbolTable.enterScope();
         typeTable = new HashMap<Node, PTypeExpr>();
         lineAndPos = new LineAndPos();
+    }
+
+    public TypeChecker(SymbolTable symbolTable) {
+        this.symbolTable = symbolTable;
+        typeTable = new HashMap<Node, PTypeExpr>();
+        lineAndPos = new LineAndPos();
+    }
+
+    public void outStart(Start node)
+    {
+        symbolTable.printSymbols();
     }
 
     /* Type check binary arithemic operators */
@@ -333,6 +345,10 @@ public class TypeChecker extends DepthFirstAdapter {
         return isOrderedType(node) || isBoolType(node);
     }
 
+    private boolean isStructType(PTypeExpr node) {
+        return node instanceof AStructTypeExpr;
+    }
+
     private void callTypeCheckException(Node node, String s) {
         String message = "";
         if (node != null) {
@@ -343,4 +359,107 @@ public class TypeChecker extends DepthFirstAdapter {
         e.printStackTrace();
         System.exit(1);
     }
+
+    /* Change scope when entering and exiting functions */
+    @Override //Modified
+    public void inAFuncTopDec(AFuncTopDec node)
+    {
+        symbolTable.addSymbol(node.getId().getText(), node);
+        symbolTable.enterScope();
+        defaultIn(node);
+    }
+
+    @Override //Modified
+    public void outAFuncTopDec(AFuncTopDec node)
+    {
+        defaultOut(node);
+        symbolTable.exitScope();
+    }
+
+    /* Add var and type specifications to symbol table */
+
+    @Override //Modified
+    public void inASpecVarSpec(ASpecVarSpec node)
+    {
+        {
+            List<TId> copy = new ArrayList<TId>(node.getId());
+            for(TId e : copy)
+            {
+                symbolTable.addSymbol(e.getText(), node);
+            }
+        }
+    }
+
+    private void putArgGroupNames(String name, AArgArgGroup node) {
+        for (TId id: node.getId())
+        {
+            symbolTable.addSymbol(name + "." + id.getText(), node.getTypeExpr());
+            putTypeExprNames(name + "." + id.getText(), node.getTypeExpr());
+        }
+    }
+
+    private void putTypeExprNames(String name, PTypeExpr node)
+    {
+        //TODO: Handle other types of type expressions
+        if (isStructType(node))
+        {
+            for (PArgGroup a: ((AStructTypeExpr) node).getArgGroup())
+            {
+                putArgGroupNames(name, (AArgArgGroup) a); //Hack -- works because there is only one type of arg_group in sablecc grammar
+            }
+        }
+    }
+
+    @Override
+    public void inASpecTypeSpec(ASpecTypeSpec node)
+    {
+        String name = node.getId().getText();
+        symbolTable.addSymbol(name, node.getTypeExpr());
+        putTypeExprNames(name, node.getTypeExpr());
+    }
+
+    @Override //Modified
+    public void inAShortAssignStmt(AShortAssignStmt node)
+    {
+        {
+            List<TId> copy = new ArrayList<TId>(node.getId());
+            for(TId e : copy)
+            {
+                symbolTable.addSymbol(e.getText(), node);
+            }
+        }
+    }
+
+    /* Add variable expressions to type table */
+    @Override
+    public void inAVariableExpr(AVariableExpr node)
+    {
+        defaultIn(node);
+        TId id = node.getId();
+        Node dec_node = symbolTable.getSymbol(id.getText(), node);
+        PTypeExpr type;
+        if (dec_node instanceof ASpecVarSpec)
+        {
+            ASpecVarSpec dec = (ASpecVarSpec) dec_node;
+            int idx = dec.getId().indexOf(id);
+            if (dec.getTypeExpr() != null)
+            {
+                type = dec.getTypeExpr();
+            } 
+            else 
+            {
+                type = typeTable.get(dec.getExpr().get(idx));
+            }
+            typeTable.put(node, type);
+        } 
+        else if (dec_node instanceof ASpecTypeSpec)
+        {
+            ASpecTypeSpec dec = (ASpecTypeSpec) dec_node;
+            type = dec.getTypeExpr();
+            typeTable.put(node, type);
+        } //TODO: add other conditions
+    }
+
+    /* Add field expressions to type table */
+    
 }

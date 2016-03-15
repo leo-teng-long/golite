@@ -1,5 +1,6 @@
 package golite;
 
+import golite.type.*;
 import golite.symbol.*;
 import golite.parser.*;
 import golite.lexer.*;
@@ -150,14 +151,16 @@ class Main {
             Lexer lexer = new GoLiteLexer(new PushbackReader(new FileReader(inPath), 1024));
             Parser parser = new Parser(lexer);
             Weeder weed = new Weeder();
-            Start tree = parser.parse();
-            tree.apply(weed);
+            Start start = parser.parse();
+            start.apply(weed);
             SymbolTableBuilder symbolTableBuilder = new SymbolTableBuilder();
-            tree.apply(symbolTableBuilder);
+            start.apply(symbolTableBuilder);
             SymbolTable symbolTable = symbolTableBuilder.getSymbolTable();
-
+            TypeChecker typeChecker = new TypeChecker();
+            start.apply(typeChecker);
         } catch (Exception e) {
             System.err.println("ERROR: " + e);
+            e.printStackTrace();
             return false;
         }
         return true;
