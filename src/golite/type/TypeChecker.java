@@ -17,7 +17,6 @@ public class TypeChecker extends DepthFirstAdapter {
     /** Constructor **/
     public TypeChecker() {
         symbolTable = new SymbolTable();
-        symbolTable.enterScope();
         typeTable = new HashMap<Node, PTypeExpr>();
         lineAndPos = new LineAndPos();
     }
@@ -28,9 +27,19 @@ public class TypeChecker extends DepthFirstAdapter {
         lineAndPos = new LineAndPos();
     }
 
+    public void inStart(Start node)
+    {
+        symbolTable.enterScope();
+    }
+
     public void outStart(Start node)
     {
+        symbolTable.exitScope();
         symbolTable.printSymbols();
+        for (Node n: typeTable.keySet())
+        {
+            System.out.println("Node: " + n + " Type: " + typeTable.get(n).getClass());
+        }
     }
 
     /* Type check binary arithemic operators */
@@ -352,7 +361,8 @@ public class TypeChecker extends DepthFirstAdapter {
     private void callTypeCheckException(Node node, String s) {
         String message = "";
         if (node != null) {
-            message += "[" + lineAndPos.getLine(node) + "] ";
+            node.apply(lineAndPos);
+            message += "[" + lineAndPos.getLine(node) + "," + lineAndPos.getPos(node) + "] ";
         }
         message += s;
         TypeCheckException e = new TypeCheckException(message);
@@ -379,13 +389,24 @@ public class TypeChecker extends DepthFirstAdapter {
     /* Add var and type specifications to symbol table */
 
     @Override //Modified
-    public void inASpecVarSpec(ASpecVarSpec node)
+    public void outASpecVarSpec(ASpecVarSpec node)
     {
         {
             List<TId> copy = new ArrayList<TId>(node.getId());
             for(TId e : copy)
             {
                 symbolTable.addSymbol(e.getText(), node);
+            }
+            if (node.getTypeExpr() != null)
+            {
+                for (PExpr e: node.getExpr())
+                {
+                    if (typeTable.get(e).getClass() != node.getTypeExpr().getClass())
+                    {
+                        System.out.println(e);
+                        callTypeCheckException(e, "Expression type does not match declared variable type");
+                    }
+                }
             }
         }
     }
@@ -459,7 +480,4 @@ public class TypeChecker extends DepthFirstAdapter {
             typeTable.put(node, type);
         } //TODO: add other conditions
     }
-
-    /* Add field expressions to type table */
-    
 }

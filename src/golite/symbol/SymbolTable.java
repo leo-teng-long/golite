@@ -21,6 +21,7 @@ public class SymbolTable {
      */
     public void enterScope() {
         scopes.push(new HashMap<String, Node>());
+        System.out.println("ENTER SCOPE");
     }
 
     /*
@@ -29,6 +30,7 @@ public class SymbolTable {
     public void exitScope() {
         checkScopesSize();
         scopes.pop();
+        System.out.println("EXIT SCOPE");
     }
 
     /*
@@ -40,6 +42,7 @@ public class SymbolTable {
             callSymbolException(node, "Identifier " + id + " cannot be re-declared");
         }
         scopes.peek().put(id, node);
+        System.out.println("Name: " + id + " Node: " + node);
     }
 
     /*

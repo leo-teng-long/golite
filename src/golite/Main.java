@@ -153,9 +153,6 @@ class Main {
             Weeder weed = new Weeder();
             Start start = parser.parse();
             start.apply(weed);
-            SymbolTableBuilder symbolTableBuilder = new SymbolTableBuilder();
-            start.apply(symbolTableBuilder);
-            SymbolTable symbolTable = symbolTableBuilder.getSymbolTable();
             TypeChecker typeChecker = new TypeChecker();
             start.apply(typeChecker);
         } catch (Exception e) {

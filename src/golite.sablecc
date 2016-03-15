@@ -560,15 +560,15 @@ Abstract Syntax Tree
 
     //* Variable specification. *//
 
-    var_spec = {spec} id+ type_expr? expr* ;
+    var_spec = {spec} id+ type_expr? expr* ; 
 
     //* Type specification. *//
 
-    type_spec = {spec} id type_expr ;
+    type_spec = {spec} id type_expr ; 
 
     //* Argument grouping. *//
 
-    arg_group = {arg} id+ type_expr ;
+    arg_group = {arg} id+ type_expr ; 
 
     //* Statement *//
 
@@ -621,8 +621,8 @@ Abstract Syntax Tree
         | {rune} rune
         | {string} string
         | {custom} id
-        | {array} expr type_expr
-        | {slice} type_expr
+        | {array} expr type_expr //TODO: Typecheck this
+        | {slice} type_expr //TODO: Typecheck this
         | {struct} arg_group* ;
 
     //* Expression. *//
@@ -652,12 +652,12 @@ Abstract Syntax Tree
         | {gte} [left]:expr [right]:expr
         | {and} [left]:expr [right]:expr
         | {or} [left]:expr [right]:expr
-        | {func_call} id expr*
-        | {append} id expr
-        | {type_cast} type_expr expr
-        | {array_elem} [array]:expr [index]:expr
-        | {field} expr id
-        | {variable} id
+        | {func_call} id expr* //TODO: Typecheck this
+        | {append} id expr //TODO: Typecheck this
+        | {type_cast} type_expr expr //TODO: Typecheck this
+        | {array_elem} [array]:expr [index]:expr //TODO: Typecheck this
+        | {field} expr id //TODO: Typecheck this
+        | {variable} id //TODO: Typecheck this
         | {int_lit} int_lit
         | {oct_lit} oct_lit
         | {hex_lit} hex_lit
