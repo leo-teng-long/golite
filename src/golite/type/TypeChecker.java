@@ -371,7 +371,7 @@ public class TypeChecker extends DepthFirstAdapter {
     }
 
     /* Change scope when entering and exiting functions */
-    @Override //Modified
+    @Override 
     public void inAFuncTopDec(AFuncTopDec node)
     {
         symbolTable.addSymbol(node.getId().getText(), node);
@@ -379,7 +379,7 @@ public class TypeChecker extends DepthFirstAdapter {
         defaultIn(node);
     }
 
-    @Override //Modified
+    @Override 
     public void outAFuncTopDec(AFuncTopDec node)
     {
         defaultOut(node);
@@ -388,7 +388,7 @@ public class TypeChecker extends DepthFirstAdapter {
 
     /* Add var and type specifications to symbol table */
 
-    @Override //Modified
+    @Override
     public void outASpecVarSpec(ASpecVarSpec node)
     {
         {
@@ -423,22 +423,24 @@ public class TypeChecker extends DepthFirstAdapter {
         }
     }
 
-    private void putArgGroupNames(String name, AArgArgGroup node) {
+    private void putArgGroup(String name, AArgArgGroup node) {
         for (TId id: node.getId())
         {
-            symbolTable.addSymbol(name + "." + id.getText(), node.getTypeExpr());
-            putTypeExprNames(name + "." + id.getText(), node.getTypeExpr());
+            String newName = name + "." + id.getText();
+            symbolTable.addSymbol(newName, node);
+            typeTable.put(node, getType(node));
+            putTypeExpr(newName, node.getTypeExpr());
         }
     }
 
-    private void putTypeExprNames(String name, PTypeExpr node)
+    private void putTypeExpr(String name, PTypeExpr node)
     {
         //TODO: Handle other types of type expressions
         if (isStructType(node))
         {
             for (PArgGroup a: ((AStructTypeExpr) node).getArgGroup())
             {
-                putArgGroupNames(name, (AArgArgGroup) a); //Hack -- works because there is only one type of arg_group in sablecc grammar
+                putArgGroup(name, (AArgArgGroup) a); //Hack -- works because there is only one type of arg_group in sablecc grammar
             }
         }
     }
@@ -448,10 +450,10 @@ public class TypeChecker extends DepthFirstAdapter {
     {
         String name = node.getId().getText();
         symbolTable.addSymbol(name, node.getTypeExpr());
-        putTypeExprNames(name, node.getTypeExpr());
+        putTypeExpr(name, node.getTypeExpr());
     }
 
-    @Override //Modified
+    @Override
     public void outAShortAssignStmt(AShortAssignStmt node)
     {
         {
@@ -462,6 +464,52 @@ public class TypeChecker extends DepthFirstAdapter {
             {
                 symbolTable.addSymbol(ids.get(i).getText(), node);
                 typeTable.put(ids.get(i), getType(exprs.get(i)));
+            }
+        }
+    }
+
+    /* Type Check Field Expressions */
+
+    @Override
+    public void outAFieldExpr(AFieldExpr node)
+    {
+        //Check that Expr is well typed with Struct type
+        //Check that Struct type has a field named id
+        PTypeExpr type = getType(node.getExpr());
+        String id = node.getId().getText();
+        if (type instanceof AStructTypeExpr)
+        {
+            for (PArgGroup a: ((AStructTypeExpr) type).getArgGroup())
+            {
+                PTypeExpr argType = ((AArgArgGroup) a).getTypeExpr();
+                for (TId argId: ((AArgArgGroup) a).getId())
+                {
+                    if (argId.getText().equals(id))
+                    {
+                        typeTable.put(node, argType); //Well typed
+                    }
+                }
+            }
+        }
+        else 
+        {
+            callTypeCheckException(node, "Fields calls can only be used on struct types");
+        }
+    }
+
+    /* Type check assignment statements */
+
+    @Override
+    public void outAAssignStmt(AAssignStmt node)
+    {
+        List<PExpr> ids = node.getLhs();
+        List<PExpr> exprs = node.getRhs();
+        int length = ids.size();
+        for (int i=0; i < length; i++)
+        {
+            if (getType(ids.get(i)).getClass() != getType(exprs.get(i)).getClass())
+            {
+                callTypeCheckException(node, "Types on left hand and right hand sides of assignment statements must be assignment compatable");
             }
         }
     }
@@ -496,7 +544,7 @@ public class TypeChecker extends DepthFirstAdapter {
         } //TODO: add other conditions
     }
 
-    /* Add append type checking */
+    /* Append type checking */
     @Override
     public void outAAppendExpr(AAppendExpr node)
     {
@@ -537,13 +585,14 @@ public class TypeChecker extends DepthFirstAdapter {
 
     private PTypeExpr getType(Node node)
     {
-        System.out.println("Finding " + node.getClass());
+        //Takes in a node and returns the type node from the AST/typeTable
         if (node instanceof AVariableExpr)
         {
             return getType(((AVariableExpr) node).getId());
         }
         else if (node instanceof TId)
         {
+
             String id = ((TId) node).getText();
             Node declaration = symbolTable.getSymbol(id, node.parent());
             PTypeExpr typeExpr = getType(declaration);
@@ -582,6 +631,18 @@ public class TypeChecker extends DepthFirstAdapter {
                 return type;
             }
             return null;
+        }
+        else if (node instanceof AStructTypeExpr)
+        {
+            return (AStructTypeExpr) node;
+        }
+        else if (node instanceof AArgArgGroup)
+        {
+            return ((AArgArgGroup) node).getTypeExpr();
+        }
+        else if (node instanceof AFieldExpr) 
+        {
+            return typeTable.get(node);
         }
         callTypeCheckException(node, "Did not find type for " + node.getClass());
         return null;
