@@ -4,16 +4,24 @@ import golite.node.*;
 import golite.exception.*;
 import golite.util.*;
 import java.util.*;
+import java.lang.*;
 
 public class SymbolTable {
 
     /* Class attributes */
     private Stack<HashMap<String, Node>> scopes;
     private LineAndPos lineAndPos = new LineAndPos();
+    private StringBuilder buffer;
 
     /* Constructor */
     public SymbolTable() {
         scopes = new Stack<HashMap<String, Node>>();
+        buffer = new StringBuilder();
+    }
+
+    private void addLine()
+    {
+        buffer.append(System.getProperty("line.separator"));
     }
 
     /*
@@ -21,7 +29,8 @@ public class SymbolTable {
      */
     public void enterScope() {
         scopes.push(new HashMap<String, Node>());
-        System.out.println("ENTER SCOPE");
+        buffer.append("ENTER SCOPE");
+        addLine();
     }
 
     /*
@@ -30,7 +39,8 @@ public class SymbolTable {
     public void exitScope() {
         checkScopesSize();
         scopes.pop();
-        System.out.println("EXIT SCOPE");
+        buffer.append("EXIT SCOPE");
+        addLine();
     }
 
     /*
@@ -42,7 +52,8 @@ public class SymbolTable {
             callSymbolException(node, "Identifier " + id + " cannot be re-declared");
         }
         scopes.peek().put(id, node);
-        System.out.println("Name: " + id + " Node: " + node);
+        buffer.append("Key: " + id + " Value: " + node.getClass());
+        addLine();
     }
 
     /*
@@ -86,18 +97,8 @@ public class SymbolTable {
         }
     }
 
-    /*
-     * Print symbols (for debugging purposes)
-     */
     public void printSymbols() {
-        for (HashMap<String, Node> scope: scopes) {
-            System.out.println("ENTER SCOPE");
-            for (String str: scope.keySet()) {
-                System.out.print(str + ": ");
-                System.out.println(scope.get(str).getClass());
-            }
-            System.out.println("EXIT SCOPE");
-        }
+        System.out.println(buffer.toString());
     }
 
 }
