@@ -654,10 +654,10 @@ Abstract Syntax Tree
         | {or} [left]:expr [right]:expr
         | {func_call} id expr* //TODO: Typecheck this
         | {append} id expr 
-        | {type_cast} type_expr expr //TODO: Typecheck this
+        | {type_cast} type_expr expr
         | {array_elem} [array]:expr [index]:expr //TODO: Typecheck this
         | {field} expr id 
-        | {variable} id //TODO: Typecheck this
+        | {variable} id 
         | {int_lit} int_lit
         | {oct_lit} oct_lit
         | {hex_lit} hex_lit

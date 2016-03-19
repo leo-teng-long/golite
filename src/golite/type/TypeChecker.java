@@ -486,7 +486,7 @@ public class TypeChecker extends DepthFirstAdapter {
                 {
                     if (argId.getText().equals(id))
                     {
-                        typeTable.put(node, argType); //Well typed
+                        typeTable.put(node, argType); // Well typed!
                     }
                 }
             }
@@ -519,29 +519,8 @@ public class TypeChecker extends DepthFirstAdapter {
     public void inAVariableExpr(AVariableExpr node)
     {
         defaultIn(node);
-        TId id = node.getId();
-        Node dec_node = symbolTable.getSymbol(id.getText(), node);
-        PTypeExpr type;
-        if (dec_node instanceof ASpecVarSpec)
-        {
-            ASpecVarSpec dec = (ASpecVarSpec) dec_node;
-            int idx = dec.getId().indexOf(id);
-            if (dec.getTypeExpr() != null)
-            {
-                type = dec.getTypeExpr();
-            } 
-            else 
-            {
-                type = typeTable.get(dec.getExpr().get(idx)); //TODO: is this line correct? weird parameter
-            }
-            typeTable.put(node, type);
-        } 
-        else if (dec_node instanceof ASpecTypeSpec)
-        {
-            ASpecTypeSpec dec = (ASpecTypeSpec) dec_node;
-            type = dec.getTypeExpr();
-            typeTable.put(node, type);
-        } //TODO: add other conditions
+        PTypeExpr type = getType(node.getId());
+        typeTable.put(node, type);
     }
 
     /* Append type checking */
@@ -551,11 +530,11 @@ public class TypeChecker extends DepthFirstAdapter {
         PTypeExpr idType = getType(node.getId());
         if (idType instanceof ASliceTypeExpr)
         {
-            PTypeExpr sliceType = ((ASliceTypeExpr) idType).getTypeExpr();
+            PTypeExpr sliceElementType = ((ASliceTypeExpr) idType).getTypeExpr();
             PTypeExpr exprType = getType(node.getExpr());
-            if (sliceType.getClass() == exprType.getClass())
+            if (sliceElementType.getClass() == exprType.getClass())
             {
-                //Append type checks correctly
+                typeTable.put(node, idType); // Well typed!
             }
             else
             {
@@ -566,6 +545,42 @@ public class TypeChecker extends DepthFirstAdapter {
         {
             callTypeCheckException(node, "Append must be passed a slice variable and an expression");
         }
+    }
+
+    /* Type check type casts and function calls */
+    @Override
+    public void outATypeCastExpr(ATypeCastExpr node)
+    {
+        PTypeExpr castType = getType(node);
+        PTypeExpr paramType = getType(node.getExpr());
+        if    (castType instanceof AIntTypeExpr
+            || castType instanceof AFloatTypeExpr
+            || castType instanceof ARuneTypeExpr
+            || castType instanceof ABoolTypeExpr)
+        {
+            if    (paramType instanceof AIntTypeExpr
+                || paramType instanceof AFloatTypeExpr
+                || paramType instanceof ARuneTypeExpr
+                || paramType instanceof ABoolTypeExpr)
+            {
+                typeTable.put(node, castType); // Well typed!
+            }
+            else
+            {
+                callTypeCheckException(node, "Invalid type cast. Use int, float64, bool, rune, or a type alias that maps to one of those four.");
+            }
+        }
+        else
+        {
+            callTypeCheckException(node, "Invaid type cast. Use int, float64, bool, rune, or a type alias that maps to one of those four.");
+        }
+    }
+
+    @Override
+    public void outAFuncCallExpr(AFuncCallExpr node)
+    {
+        System.out.println(node);
+        System.out.println(node.getClass());
     }
 
     /* More helper methods */
@@ -594,18 +609,41 @@ public class TypeChecker extends DepthFirstAdapter {
         {
 
             String id = ((TId) node).getText();
-            Node declaration = symbolTable.getSymbol(id, node.parent());
-            PTypeExpr typeExpr = getType(declaration);
-            if (typeExpr != null)
+            Node declaration = symbolTable.getSymbol(id, node);
+            if (declaration instanceof ASpecVarSpec)
             {
-                return typeExpr;
-            }
-            List<TId> ids = getIds(declaration);
-            for (TId e: ids)
-            {
-                if (id.equals(e.getText()))
+                ASpecVarSpec dec = (ASpecVarSpec) declaration;
+                int idx = dec.getId().indexOf(id);
+                PTypeExpr typeExpr = getType(declaration);
+                if (typeExpr != null)
                 {
-                    return typeTable.get(e);
+                    return typeExpr;
+                }
+                else 
+                {
+                    return typeTable.get(dec.getExpr().get(idx));
+                }
+            }
+            else if (declaration instanceof ASpecTypeSpec)
+            {
+                ASpecTypeSpec dec = (ASpecTypeSpec) declaration;
+                System.out.println(dec);
+                return dec.getTypeExpr();
+            }
+            else if (declaration instanceof AStructTypeExpr)
+            {
+                return (AStructTypeExpr) declaration;
+            }
+            else if (declaration instanceof AShortAssignStmt)
+            {
+                AShortAssignStmt dec = (AShortAssignStmt) declaration;
+                for (TId i: dec.getId())
+                {
+                    if (i.getText().equals(id))
+                    {
+                        int idx = dec.getId().indexOf(i);
+                        return typeTable.get(dec.getExpr().get(idx));
+                    }
                 }
             }
         }
@@ -643,6 +681,10 @@ public class TypeChecker extends DepthFirstAdapter {
         else if (node instanceof AFieldExpr) 
         {
             return typeTable.get(node);
+        }
+        else if (node instanceof ATypeCastExpr)
+        {
+            return ((ATypeCastExpr) node).getTypeExpr();
         }
         callTypeCheckException(node, "Did not find type for " + node.getClass());
         return null;
