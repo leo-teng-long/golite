@@ -38,7 +38,7 @@ public class TypeChecker extends DepthFirstAdapter {
         symbolTable.printSymbols();
         for (Node n: typeTable.keySet())
         {
-            System.out.println("Node: " + n + " Type: " + typeTable.get(n).getClass());
+            System.out.println("Node: " + n + " Key: " + n.getClass() + " Value: " + typeTable.get(n).getClass());
         }
     }
 
@@ -392,20 +392,32 @@ public class TypeChecker extends DepthFirstAdapter {
     public void outASpecVarSpec(ASpecVarSpec node)
     {
         {
-            List<TId> copy = new ArrayList<TId>(node.getId());
-            for(TId e : copy)
+            List<TId> ids = new ArrayList<TId>(node.getId());
+            List<PExpr> exprs = node.getExpr();
+            for (TId e: ids)
             {
                 symbolTable.addSymbol(e.getText(), node);
             }
             if (node.getTypeExpr() != null)
             {
-                for (PExpr e: node.getExpr())
+                for (PExpr e: exprs)
                 {
                     if (typeTable.get(e).getClass() != node.getTypeExpr().getClass())
                     {
-                        System.out.println(e);
                         callTypeCheckException(e, "Expression type does not match declared variable type");
                     }
+
+                }
+                for (TId e: ids)
+                {
+                        typeTable.put(e, node.getTypeExpr());
+                }
+            }
+            else
+            {
+                for (int i = 0; i < ids.size(); i++)
+                {
+                    typeTable.put(ids.get(i), typeTable.get(exprs.get(i)));
                 }
             }
         }
@@ -440,13 +452,16 @@ public class TypeChecker extends DepthFirstAdapter {
     }
 
     @Override //Modified
-    public void inAShortAssignStmt(AShortAssignStmt node)
+    public void outAShortAssignStmt(AShortAssignStmt node)
     {
         {
-            List<TId> copy = new ArrayList<TId>(node.getId());
-            for(TId e : copy)
+            List<TId> ids = new ArrayList<TId>(node.getId());
+            List<PExpr> exprs = new ArrayList<PExpr>(node.getExpr());
+            int length = ids.size();
+            for(int i=0; i < length; i++)
             {
-                symbolTable.addSymbol(e.getText(), node);
+                symbolTable.addSymbol(ids.get(i).getText(), node);
+                typeTable.put(ids.get(i), getType(exprs.get(i)));
             }
         }
     }
@@ -469,7 +484,7 @@ public class TypeChecker extends DepthFirstAdapter {
             } 
             else 
             {
-                type = typeTable.get(dec.getExpr().get(idx));
+                type = typeTable.get(dec.getExpr().get(idx)); //TODO: is this line correct? weird parameter
             }
             typeTable.put(node, type);
         } 
@@ -479,5 +494,96 @@ public class TypeChecker extends DepthFirstAdapter {
             type = dec.getTypeExpr();
             typeTable.put(node, type);
         } //TODO: add other conditions
+    }
+
+    /* Add append type checking */
+    @Override
+    public void outAAppendExpr(AAppendExpr node)
+    {
+        PTypeExpr idType = getType(node.getId());
+        if (idType instanceof ASliceTypeExpr)
+        {
+            PTypeExpr sliceType = ((ASliceTypeExpr) idType).getTypeExpr();
+            PTypeExpr exprType = getType(node.getExpr());
+            if (sliceType.getClass() == exprType.getClass())
+            {
+                //Append type checks correctly
+            }
+            else
+            {
+                callTypeCheckException(node, "Expression and slice types do not match");
+            }
+        }
+        else
+        {
+            callTypeCheckException(node, "Append must be passed a slice variable and an expression");
+        }
+    }
+
+    /* More helper methods */
+    private List<TId> getIds(Node node)
+    {
+        if (node instanceof AShortAssignStmt)
+        {
+            return ((AShortAssignStmt) node).getId();
+        }
+        if (node instanceof ASpecVarSpec)
+        {
+            return ((ASpecVarSpec) node).getId();
+        }
+        callTypeCheckException(node, "Ids not found for " + node.getClass());
+        return null;
+    }
+
+    private PTypeExpr getType(Node node)
+    {
+        System.out.println("Finding " + node.getClass());
+        if (node instanceof AVariableExpr)
+        {
+            return getType(((AVariableExpr) node).getId());
+        }
+        else if (node instanceof TId)
+        {
+            String id = ((TId) node).getText();
+            Node declaration = symbolTable.getSymbol(id, node.parent());
+            PTypeExpr typeExpr = getType(declaration);
+            if (typeExpr != null)
+            {
+                return typeExpr;
+            }
+            List<TId> ids = getIds(declaration);
+            for (TId e: ids)
+            {
+                if (id.equals(e.getText()))
+                {
+                    return typeTable.get(e);
+                }
+            }
+        }
+        else if (node instanceof AIntLitExpr 
+                || node instanceof AFloatLitExpr 
+                || node instanceof ARuneLitExpr 
+                || node instanceof AOctLitExpr
+                || node instanceof AHexLitExpr
+                || node instanceof AInterpretedStringLitExpr
+                || node instanceof ARawStringLitExpr)
+        {
+            return typeTable.get(node);
+        }
+        else if (node instanceof AShortAssignStmt)
+        {
+            return null;
+        }
+        else if (node instanceof ASpecVarSpec)
+        {
+            PTypeExpr type = ((ASpecVarSpec) node).getTypeExpr();
+            if (type != null)
+            {
+                return type;
+            }
+            return null;
+        }
+        callTypeCheckException(node, "Did not find type for " + node.getClass());
+        return null;
     }
 }
