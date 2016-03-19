@@ -9,7 +9,7 @@ build_tests: build
 	python build_tests/build_tests.py
 
 build: compile_grammar
-	javac golite/*.java golite/lexer/*.java golite/parser/*.java golite/node/*.java golite/analysis/*.java
+	javac golite/*.java golite/lexer/*.java golite/parser/*.java golite/node/*.java golite/analysis/*.java golite/*/*.java
 
 compile_grammar: clean
 	java -jar ./sablecc-3.7/lib/sablecc.jar golite.sablecc -d .
