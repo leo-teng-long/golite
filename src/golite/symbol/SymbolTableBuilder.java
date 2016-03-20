@@ -30,6 +30,9 @@ public class SymbolTableBuilder extends DepthFirstAdapter
         lineAndPos = new LineAndPos();
         typeTable = new HashMap<Node, PTypeExpr>();
         symbolTable.enterScope();
+        //Initialize boolean types
+        symbolTable.addSymbol("true", new ABoolTypeExpr());
+        symbolTable.addSymbol("false", new ABoolTypeExpr());
     }
 
     @Override
