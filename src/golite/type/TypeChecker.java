@@ -449,7 +449,7 @@ public class TypeChecker extends DepthFirstAdapter {
         {
             for (PArgGroup a: ((AStructTypeExpr) node).getArgGroup())
             {
-                putArgGroup(name, (AArgArgGroup) a); //Hack -- works because there is only one type of arg_group in sablecc grammar
+                putArgGroup(name, (AArgArgGroup) a);
             }
         }
     }

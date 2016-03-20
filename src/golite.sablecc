@@ -574,9 +574,9 @@ Abstract Syntax Tree
 
     stmt =
           {empty}
-        | {var_dec} var_spec+  //TODO: Typecheck this
+        | {var_dec} var_spec+ 
         | {short_assign} id+ expr+ 
-        | {type_dec} type_spec+  //TODO: Typecheck this
+        | {type_dec} type_spec+ 
         | {assign} [lhs]:expr+ [rhs]:expr+
         | {plus_assign} [lhs]: expr [rhs]:expr //TODO: Typecheck this
         | {minus_assign} [lhs]: expr [rhs]:expr //TODO: Typecheck this
@@ -652,7 +652,7 @@ Abstract Syntax Tree
         | {gte} [left]:expr [right]:expr
         | {and} [left]:expr [right]:expr
         | {or} [left]:expr [right]:expr
-        | {func_call} id expr* //TODO: Typecheck this //TODO: When writing tests for function expressions don't forget to test void types for null pointer errors
+        | {func_call} id expr* //TODO: When writing tests for function expressions don't forget to test void types for null pointer errors
         | {append} id expr //TODO: Add weeding pass to check for returns on EVERY path in a function
         | {type_cast} type_expr expr
         | {array_elem} [array]:expr [index]:expr
