@@ -7,5 +7,6 @@ package main
 /* Top-level declarations go here. */
 
 func main() {
-	/* Main method statements go here. */
+	/* Main method statements go here. If main method is empty just add
+	 * '// Do nothing.'*/
 }
