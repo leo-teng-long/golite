@@ -44,12 +44,22 @@ public class TypeChecker extends DepthFirstAdapter {
         }
     }
 
+    @Override
+    public void caseAVarsTopDec(AVarsTopDec node) {
+        // taken care of by SymbolTableBuilder
+    }
+
+    @Override
+    public void caseATypesTopDec(ATypesTopDec node) {
+        // taken care of by SymbolTableBuilder
+    }
+
     /* Type check plus op-assign statement */
     @Override
     public void outAPlusAssignStmt(APlusAssignStmt node) {
         PTypeExpr lhs = typeTable.get(node.getLhs());
         PTypeExpr rhs = typeTable.get(node.getRhs());
-        
+
         // (to-do) ...
     }
 
@@ -1011,13 +1021,13 @@ public class TypeChecker extends DepthFirstAdapter {
         {
             if (argTypes.get(i).getClass() == getType(paramTypes.get(i)).getClass())
             {
-                continue;   
+                continue;
             }
             else
             {
                 callTypeCheckException(node, "Function parameter types do not match with function signature");
             }
-            
+
         }
         // Well typed!
         PTypeExpr type = getType(node);
