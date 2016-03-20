@@ -16,6 +16,9 @@ VALID_PROGS_DIRPATH = os.path.join(PROGS_DIRPATH, "valid")
 INVALID_PROGS_DIRPATH = os.path.join(PROGS_DIRPATH, os.path.join("invalid",
 	"syntax"))
 
+# Directory name for tests from other groups.
+OTHER_GROUPS_PROGS_DIRNAME = "other_groups"
+
 
 # Filepath to test class template.
 TEST_CLASS_TEMPALTE_FPATH = os.path.join("build_tests",
@@ -109,6 +112,17 @@ def to_test_name(prog_fname):
 	return test_name
 
 
+def is_other_groups_test(prog_fpath):
+	"""
+	Checks if the test program is from another group.
+
+	@param prog_fpath - Filepath to program
+	@return True if the program corresponds to another group, false otherwise.
+	"""
+
+	return OTHER_GROUPS_PROGS_DIRNAME in os.path.split(prog_fpath)[0]
+
+
 def create_test_method_str(prog_fname, prog_fpath, tpe):
 	"""
 	Creates the source string for a test method from a corresponding test
@@ -123,6 +137,10 @@ def create_test_method_str(prog_fname, prog_fpath, tpe):
 	"""
 
 	test_name = to_test_name(prog_fname)
+
+	if is_other_groups_test(prog_fpath):
+		test_name = "Group" + os.path.basename(os.path.dirname(prog_fpath)) + \
+			capitalize(test_name)
 
 	if tpe == 'valid_parse':
 		assert_method_name = ASSERT_TRUE
@@ -172,7 +190,7 @@ def create_test(test_name, progs_dirpath, tpe, out_path):
 	# List of test method strings.
 	test_method_strs = []
 
-	# Create a test method for each valid program.
+	# Create a test method for each program.
 	for parent, subdirs, fnames in os.walk(progs_dirpath):
 		for fname in fnames:
 			if not fname.endswith('.go'):
