@@ -149,9 +149,9 @@ Tokens
     eol = lf | cr | cr lf ;
 
     // Single-line comment and multi-line comments.
-    comment = '//' not_eol* | '/*' ([all - '*'] | '*' [all - '/'])* '*/' ;
+    comment = '//' not_eol* | '/**/' | '/*' '*'* [all - '*']+ '*'+ ([all - ['*' + '/']] [all - '*']* '*'+)* '/' ;
     // Alternative form for handling multi-line comments:
-    // comment = '//' not_eol* | '/*' '*'* [all - '*']+ '*'+ ([all - ['*' + '/']] [all - '*']* '*'+)* '/' ;
+    // comment = '//' not_eol* | '/*' ([all - '*'] | '*' [all - '/'])* '*/' ;
 
     //* Literals. *//
 
