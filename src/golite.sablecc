@@ -248,8 +248,10 @@ Productions
     block {-> stmt*} = lbrace stmt* rbrace {-> [stmt]} ;
 
     stmt {-> stmt} =
+          {empty} semi
+            {-> New stmt.empty()}
         // Check expression is a function call in weeder.
-          {expr} expr semi
+        | {expr} expr semi
             {-> New stmt.expr(expr)}
         | {simple} simple_sub semi
             {-> simple_sub.stmt}
