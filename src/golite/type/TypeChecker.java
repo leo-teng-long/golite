@@ -21,8 +21,9 @@ public class TypeChecker extends DepthFirstAdapter {
         lineAndPos = new LineAndPos();
     }
 
-    public TypeChecker(SymbolTable symbolTable) {
+    public TypeChecker(SymbolTable symbolTable, HashMap<Node, PTypeExpr> typeTable) {
         this.symbolTable = symbolTable;
+        this.typeTable = typeTable;
         typeTable = new HashMap<Node, PTypeExpr>();
         lineAndPos = new LineAndPos();
     }

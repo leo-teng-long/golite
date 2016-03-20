@@ -9,6 +9,7 @@ import golite.PrettyPrinter;
 import golite.exception.*;
 import golite.weeder.*;
 import java.io.*;
+import java.util.*;
 
 
 /**
@@ -156,7 +157,8 @@ class Main {
             SymbolTableBuilder symbolBuilder = new SymbolTableBuilder();
             start.apply(symbolBuilder);
             SymbolTable symbol = symbolBuilder.getSymbolTable();
-            TypeChecker typeChecker = new TypeChecker(symbol);
+            HashMap<Node, PTypeExpr> typeTable = symbolBuilder.getTypeTable();
+            TypeChecker typeChecker = new TypeChecker(symbol, typeTable);
             start.apply(typeChecker);
         } catch (Exception e) {
             System.err.println("ERROR: " + e);
