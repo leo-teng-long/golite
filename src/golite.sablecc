@@ -248,6 +248,7 @@ Productions
     block {-> stmt*} = lbrace stmt* rbrace {-> [stmt]} ;
 
     stmt {-> stmt} =
+        // Check expression is a function call in weeder.
           {expr} expr semi
             {-> New stmt.expr(expr)}
         | {simple} simple_sub semi
@@ -268,10 +269,14 @@ Productions
             {-> switcheroo.stmt}
         | {loop} loop semi
             {-> loop.stmt}
+        // Check break only appears in a loop in weeder.
         | {break} break semi
             {-> New stmt.break()}
+        // Check break only appears in a loop in weeder.
         | {continue} continue semi
-            {-> New stmt.continue()} ;
+            {-> New stmt.continue()}
+        | {block} block semi
+            {-> New stmt.block([block.stmt])} ;
 
     simple_sub {-> stmt} =
           {assign} assignment
@@ -598,7 +603,8 @@ Abstract Syntax Tree
         | {if_else} condition [if_block]:stmt* [else_block]:stmt*
         | {switch} stmt? expr? case_block*
         | {for_loop} [init]:stmt expr [end]:stmt [block]:stmt*
-        | {while_loop} expr? [block]:stmt* ;
+        | {while_loop} expr? [block]:stmt*
+        | {block} stmt* ;
 
     condition = {condition} stmt? expr ;
 
