@@ -559,12 +559,12 @@ public class TypeChecker extends DepthFirstAdapter {
     public void outAPosExpr(APosExpr node) {
         PTypeExpr type = typeTable.get(node.getExpr());
         if (!isNumericType(type)) {
-            callTypeCheckException(node.getExpr(), "Unary operator '+' can only be applied to numeric");
+            callTypeCheckException(node.getExpr(), "Unary operator '+' not defined for non-numeric type");
         }
-        if (isFloatType(type)) {
-            typeTable.put(node, new AFloatTypeExpr());
-        } else {
+        if (isIntType(type)) {
             typeTable.put(node, new AIntTypeExpr());
+        } else {
+            typeTable.put(node, new AFloatTypeExpr());
         }
     }
 
@@ -572,20 +572,20 @@ public class TypeChecker extends DepthFirstAdapter {
     public void outANegExpr(ANegExpr node) {
         PTypeExpr type = typeTable.get(node.getExpr());
         if (!isNumericType(type)) {
-            callTypeCheckException(node.getExpr(), "Unary operator '-' can only be applied to numeric");
+            callTypeCheckException(node.getExpr(), "Unary operator '-' not defined for non-numeric type");
         }
-        if (isFloatType(type)) {
-            typeTable.put(node, new AFloatTypeExpr());
-        } else {
+        if (isIntType(type)) {
             typeTable.put(node, new AIntTypeExpr());
+        } else {
+            typeTable.put(node, new AFloatTypeExpr());
         }
     }
 
     @Override
     public void outABitCompExpr(ABitCompExpr node) {
         PTypeExpr type = typeTable.get(node.getExpr());
-        if (isIntType(type)) {
-            callTypeCheckException(node.getExpr(), "Unary operator '^' can only be applied to integer");
+        if (!isIntType(type)) {
+            callTypeCheckException(node.getExpr(), "Unary operator '^' not defined for non-int type");
         }
         typeTable.put(node, new AIntTypeExpr());
     }
@@ -593,8 +593,8 @@ public class TypeChecker extends DepthFirstAdapter {
     @Override
     public void outANotExpr(ANotExpr node) {
         PTypeExpr type = typeTable.get(node.getExpr());
-        if (isBoolType(type)) {
-            callTypeCheckException(node.getExpr(), "Unary operator '!' can only be applied to boolean");
+        if (!isBoolType(type)) {
+            callTypeCheckException(node.getExpr(), "Unary operator '!' not defined for non-bool type");
         }
         typeTable.put(node, new ABoolTypeExpr());
     }
@@ -687,6 +687,13 @@ public class TypeChecker extends DepthFirstAdapter {
             callTypeCheckException(errorNode, "Conditional operator '||' can only be applied to boolean");
         }
         typeTable.put(node, new ABoolTypeExpr());
+    }
+
+    /* Type check variables */
+    @Override
+    public void outAVariableExpr(AVariableExpr node) {
+        PTypeExpr type = getType(node.getId());
+        typeTable.put(type, type);
     }
 
     /* Type check numeric literals */
@@ -961,15 +968,6 @@ public class TypeChecker extends DepthFirstAdapter {
                 callTypeCheckException(node, "Types on left hand and right hand sides of assignment statements must be assignment compatable");
             }
         }
-    }
-
-    /* Add variable expressions to type table */
-    @Override
-    public void inAVariableExpr(AVariableExpr node)
-    {
-        defaultIn(node);
-        PTypeExpr type = getType(node.getId());
-        typeTable.put(node, type);
     }
 
     /* Append type checking */
