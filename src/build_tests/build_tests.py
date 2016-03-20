@@ -101,9 +101,10 @@ def to_test_name(prog_fname):
 
 	if '2d' in test_name:
 		test_name = test_name.replace('2d', 'TwoDim')
-
-	if '3d' in test_name:
+	elif '3d' in test_name:
 		test_name = test_name.replace('3d', 'ThreeDim')
+	elif test_name[0].isdigit():
+		test_name = '_' + test_name
 
 	return test_name
 
