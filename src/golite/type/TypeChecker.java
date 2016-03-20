@@ -780,7 +780,6 @@ public class TypeChecker extends DepthFirstAdapter {
     @Override
     public void inAFuncTopDec(AFuncTopDec node)
     {
-        symbolTable.addSymbol(node.getId().getText(), node);
         symbolTable.enterScope();
         List<PArgGroup> argGroups = node.getArgGroup();
         for (PArgGroup a: argGroups)

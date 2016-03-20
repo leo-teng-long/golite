@@ -21,10 +21,53 @@ public class SymbolTableBuilder extends DepthFirstAdapter
         symbolTable.enterScope();
     }
 
-    @Override //Modified
+    @Override
     public void caseAFuncTopDec(AFuncTopDec node)
     {
         symbolTable.addSymbol(node.getId().getText(), node);
+    }
+
+    @Override
+    public void inASpecTypeSpec(ASpecTypeSpec node)
+    {
+        String name = node.getId().getText();
+        symbolTable.addSymbol(name, node.getTypeExpr());
+        putTypeExpr(name, node.getTypeExpr());
+    }
+
+    @Override
+    public void outASpecVarSpec(ASpecVarSpec node)
+    {
+        {
+            List<TId> ids = new ArrayList<TId>(node.getId());
+            List<PExpr> exprs = node.getExpr();
+            for (TId e: ids)
+            {
+                symbolTable.addSymbol(e.getText(), node);
+            }
+            if (node.getTypeExpr() != null)
+            {
+                for (PExpr e: exprs)
+                {
+                    if (typeTable.get(e).getClass() != node.getTypeExpr().getClass())
+                    {
+                        callTypeCheckException(e, "Expression type does not match declared variable type");
+                    }
+
+                }
+                for (TId e: ids)
+                {
+                        typeTable.put(e, node.getTypeExpr());
+                }
+            }
+            else
+            {
+                for (int i = 0; i < ids.size(); i++)
+                {
+                    typeTable.put(ids.get(i), typeTable.get(exprs.get(i)));
+                }
+            }
+        }
     }
 
     @Override //Modified

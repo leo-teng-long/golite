@@ -153,7 +153,10 @@ class Main {
             Weeder weed = new Weeder();
             Start start = parser.parse();
             start.apply(weed);
-            TypeChecker typeChecker = new TypeChecker();
+            SymbolTableBuilder symbolBuilder = new SymbolTableBuilder();
+            start.apply(symbolBuilder);
+            SymbolTable symbol = symbolBuilder.getSymbolTable();
+            TypeChecker typeChecker = new TypeChecker(symbol);
             start.apply(typeChecker);
         } catch (Exception e) {
             System.err.println("ERROR: " + e);
