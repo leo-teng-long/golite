@@ -1200,6 +1200,7 @@ public class TypeChecker extends DepthFirstAdapter {
                 callTypeCheckException(node, "Did not find type for " + node.getClass());
             }
         }
+        callTypeCheckException(node, "Did not find type for " + node.getClass() + " tried to return null");
         return null;
     }
 }

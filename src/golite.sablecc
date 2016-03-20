@@ -571,7 +571,7 @@ Abstract Syntax Tree
     arg_group = {arg} id+ type_expr ; 
 
     //* Statement *//
-
+    //TODO: Don't forget to typecheck multidimensional arrays/slices
     stmt =
           {empty}
         | {var_dec} var_spec+ 
@@ -579,28 +579,28 @@ Abstract Syntax Tree
         | {type_dec} type_spec+ 
         | {assign} [lhs]:expr+ [rhs]:expr+
         | {plus_assign} [lhs]: expr [rhs]:expr //TODO: Typecheck this
-        | {minus_assign} [lhs]: expr [rhs]:expr //TODO: Typecheck this
-        | {star_assign} [lhs]: expr [rhs]:expr //TODO: Typecheck this
-        | {slash_assign} [lhs]: expr [rhs]:expr //TODO: Typecheck this
-        | {perc_assign} [lhs]: expr [rhs]:expr //TODO: Typecheck this
-        | {and_assign} [lhs]: expr [rhs]:expr //TODO: Typecheck this
-        | {pipe_assign} [lhs]: expr [rhs]:expr //TODO: Typecheck this
-        | {carot_assign} [lhs]: expr [rhs]:expr //TODO: Typecheck this
-        | {amp_carot_assign} [lhs]: expr [rhs]:expr //TODO: Typecheck this
-        | {lshift_assign} [lhs]: expr [rhs]:expr //TODO: Typecheck this
-        | {rshift_assign} [lhs]: expr [rhs]:expr //TODO: Typecheck this
-        | {incr} expr //TODO: Typecheck this
-        | {decr} expr //TODO: Typecheck this
-        | {expr} expr //TODO: Typecheck this
-        | {print} expr* //TODO: Typecheck this
-        | {println} expr* //TODO: Typecheck this
+        | {minus_assign} [lhs]: expr [rhs]:expr 
+        | {star_assign} [lhs]: expr [rhs]:expr 
+        | {slash_assign} [lhs]: expr [rhs]:expr 
+        | {perc_assign} [lhs]: expr [rhs]:expr 
+        | {and_assign} [lhs]: expr [rhs]:expr 
+        | {pipe_assign} [lhs]: expr [rhs]:expr 
+        | {carot_assign} [lhs]: expr [rhs]:expr 
+        | {amp_carot_assign} [lhs]: expr [rhs]:expr 
+        | {lshift_assign} [lhs]: expr [rhs]:expr 
+        | {rshift_assign} [lhs]: expr [rhs]:expr 
+        | {incr} expr 
+        | {decr} expr 
+        | {expr} expr 
+        | {print} expr* 
+        | {println} expr* 
         | {continue}
         | {break} 
-        | {return} expr? //TODO: Typecheck this
-        | {if_else} condition [if_block]:stmt* [elseif]:elseif* [else_block]:stmt* //TODO: Typecheck this
-        | {switch} stmt? expr? case_block* //TODO: Typecheck this
-        | {for_loop} [init]:stmt expr [end]:stmt [block]:stmt* //TODO: Typecheck this
-        | {while_loop} expr? [block]:stmt* ; //TODO: Typecheck this
+        | {return} expr? 
+        | {if_else} condition [if_block]:stmt* [elseif]:elseif* [else_block]:stmt* 
+        | {switch} stmt? expr? case_block* 
+        | {for_loop} [init]:stmt expr [end]:stmt [block]:stmt* 
+        | {while_loop} expr? [block]:stmt* ; 
 
     elseif = {elif} condition [block]:stmt*;
 
