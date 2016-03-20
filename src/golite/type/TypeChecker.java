@@ -764,7 +764,9 @@ public class TypeChecker extends DepthFirstAdapter {
                 || ((node1 instanceof AIntTypeExpr) && (node2 instanceof AIntTypeExpr))
                 || ((node1 instanceof AFloatTypeExpr) && (node2 instanceof AFloatTypeExpr))
                 || ((node1 instanceof ARuneTypeExpr) && (node2 instanceof ARuneTypeExpr))
-                || ((node1 instanceof AStringTypeExpr) && (node2 instanceof AStringTypeExpr));
+                || ((node1 instanceof AStringTypeExpr) && (node2 instanceof AStringTypeExpr))
+                || ((node1 instanceof ASliceTypeExpr) && (node2 instanceof ASliceTypeExpr))
+                || (node1.getClass() == node2.getClass());
     }
 
     private AFuncTopDec getParentFuncDec(AReturnStmt node) {
