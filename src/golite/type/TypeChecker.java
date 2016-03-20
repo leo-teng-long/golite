@@ -583,20 +583,34 @@ public class TypeChecker extends DepthFirstAdapter {
         System.out.println(node.getClass());
     }
 
-    /* More helper methods */
-    private List<TId> getIds(Node node)
+    /* Type check Array Elements */
+    @Override
+    public void outAArrayElemExpr(AArrayElemExpr node)
     {
-        if (node instanceof AShortAssignStmt)
+        PTypeExpr arrayType = getType(node.getArray());
+        PTypeExpr idxType = getType(node.getIndex());
+        if (idxType instanceof AIntTypeExpr)
         {
-            return ((AShortAssignStmt) node).getId();
+            if (arrayType instanceof AArrayTypeExpr)
+            {
+                typeTable.put(node, ((AArrayTypeExpr) arrayType).getTypeExpr()); // Well typed!
+            }
+            else if (arrayType instanceof ASliceTypeExpr)
+            {
+                typeTable.put(node, ((ASliceTypeExpr) arrayType).getTypeExpr()); // Well typed!
+            }
+            else
+            {
+                callTypeCheckException(node, "Indexing can only be used on arrays and slices");
+            }
         }
-        if (node instanceof ASpecVarSpec)
+        else
         {
-            return ((ASpecVarSpec) node).getId();
+            callTypeCheckException(node, "Index should be of type int");
         }
-        callTypeCheckException(node, "Ids not found for " + node.getClass());
-        return null;
     }
+
+    /* More helper methods */
 
     private PTypeExpr getType(Node node)
     {
@@ -685,6 +699,10 @@ public class TypeChecker extends DepthFirstAdapter {
         else if (node instanceof ATypeCastExpr)
         {
             return ((ATypeCastExpr) node).getTypeExpr();
+        }
+        else if (node instanceof AArrayElemExpr)
+        {
+            return typeTable.get(node);
         }
         callTypeCheckException(node, "Did not find type for " + node.getClass());
         return null;

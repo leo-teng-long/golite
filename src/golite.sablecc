@@ -655,7 +655,7 @@ Abstract Syntax Tree
         | {func_call} id expr* //TODO: Typecheck this
         | {append} id expr 
         | {type_cast} type_expr expr
-        | {array_elem} [array]:expr [index]:expr //TODO: Typecheck this
+        | {array_elem} [array]:expr [index]:expr
         | {field} expr id 
         | {variable} id 
         | {int_lit} int_lit
