@@ -67,7 +67,6 @@ public class SymbolTable {
                 return symbol;
             }
         }
-
         callSymbolException(node, "Identifier " + id + " is not defined");
         return null;
     }
@@ -77,11 +76,12 @@ public class SymbolTable {
      */
     private void callSymbolException(Node node, String s) {
         String message = "";
-        //if (node != null) {
-        //    Integer line = lineAndPos.getLine(node);
-        //    Integer pos = lineAndPos.getPos(node);
-        //    message += "[" + line + "," + pos + "] ";
-        //}
+        if (node != null) {
+            node.apply(lineAndPos);
+            Integer line = lineAndPos.getLine(node);
+            Integer pos = lineAndPos.getPos(node);
+            message += "[" + line + "," + pos + "] ";
+        }
         message += s;
         SymbolException e = new SymbolException(message);
         e.printStackTrace();

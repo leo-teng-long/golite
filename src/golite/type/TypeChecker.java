@@ -782,6 +782,15 @@ public class TypeChecker extends DepthFirstAdapter {
     {
         symbolTable.addSymbol(node.getId().getText(), node);
         symbolTable.enterScope();
+        List<PArgGroup> argGroups = node.getArgGroup();
+        for (PArgGroup a: argGroups)
+        {
+            for(TId i: ((AArgArgGroup) a).getId())
+            {
+                symbolTable.addSymbol(i.getText(), a);
+                typeTable.put(a, ((AArgArgGroup) a).getTypeExpr());
+            }
+        }
         defaultIn(node);
     }
 
@@ -846,7 +855,7 @@ public class TypeChecker extends DepthFirstAdapter {
         {
             for (PArgGroup a: ((AStructTypeExpr) node).getArgGroup())
             {
-                putArgGroup(name, (AArgArgGroup) a); //Hack -- works because there is only one type of arg_group in sablecc grammar
+                putArgGroup(name, (AArgArgGroup) a);
             }
         }
     }
@@ -985,8 +994,37 @@ public class TypeChecker extends DepthFirstAdapter {
     @Override
     public void outAFuncCallExpr(AFuncCallExpr node)
     {
-        System.out.println(node);
-        System.out.println(node.getClass());
+        String id = node.getId().getText();
+        Node decl = symbolTable.getSymbol(id, node);
+        List<PArgGroup> argGroups = ((AFuncTopDec) decl).getArgGroup();
+        ArrayList<PTypeExpr> argTypes = new ArrayList<PTypeExpr>();
+        List<PExpr> paramTypes = node.getExpr();
+        for (PArgGroup a: argGroups)
+        {
+            PTypeExpr argType = getType(a);
+            for (TId i: ((AArgArgGroup) a).getId())
+            {
+                argTypes.add(argType);
+            }
+        }
+        for (int i = 0; i<argTypes.size(); i++)
+        {
+            if (argTypes.get(i).getClass() == getType(paramTypes.get(i)).getClass())
+            {
+                continue;   
+            }
+            else
+            {
+                callTypeCheckException(node, "Function parameter types do not match with function signature");
+            }
+            
+        }
+        // Well typed!
+        PTypeExpr type = getType(node);
+        if (type != null)
+        {
+            typeTable.put(node, type);
+        }
     }
 
     /* Type check Array Elements */
@@ -1016,6 +1054,17 @@ public class TypeChecker extends DepthFirstAdapter {
         }
     }
 
+    /* Type check expressions completely */
+    @Override
+    public void outAExprStmt(AExprStmt node)
+    {
+        PTypeExpr type = getType(node);
+        if (type != null)
+        {
+            typeTable.put(node, type);
+        }
+    }
+
     /* More helper methods */
 
     private PTypeExpr getType(Node node)
@@ -1030,6 +1079,8 @@ public class TypeChecker extends DepthFirstAdapter {
 
             String id = ((TId) node).getText();
             Node declaration = symbolTable.getSymbol(id, node);
+            System.out.println(declaration);
+            System.out.println(declaration.getClass());
             if (declaration instanceof ASpecVarSpec)
             {
                 ASpecVarSpec dec = (ASpecVarSpec) declaration;
@@ -1065,6 +1116,10 @@ public class TypeChecker extends DepthFirstAdapter {
                         return typeTable.get(dec.getExpr().get(idx));
                     }
                 }
+            }
+            else if (declaration instanceof AArgArgGroup)
+            {
+                return typeTable.get(declaration);
             }
         }
         else if (node instanceof AIntLitExpr
@@ -1110,7 +1165,29 @@ public class TypeChecker extends DepthFirstAdapter {
         {
             return typeTable.get(node);
         }
-        callTypeCheckException(node, "Did not find type for " + node.getClass());
+        else if (node instanceof AExprStmt)
+        {
+            return getType(((AExprStmt) node).getExpr());
+        }
+        else if (node instanceof AFuncCallExpr)
+        {
+            String id = ((AFuncCallExpr) node).getId().getText();
+            Node decl = symbolTable.getSymbol(id, node);
+            if (decl instanceof AFuncTopDec)
+            {
+                return ((AFuncTopDec) decl).getTypeExpr();
+            }
+        }
+        else
+        {   try{
+                return typeTable.get(node);
+            }
+            catch (Exception e)
+            {
+                System.out.println(node);
+                callTypeCheckException(node, "Did not find type for " + node.getClass());
+            }
+        }
         return null;
     }
 }

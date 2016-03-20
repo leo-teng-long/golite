@@ -556,7 +556,7 @@ Abstract Syntax Tree
     top_dec =
           {vars} var_spec*
         | {types} type_spec*
-        | {func} id arg_group* type_expr? stmt* ;
+        | {func} id arg_group* type_expr? stmt* ; 
 
     //* Variable specification. *//
 
@@ -574,33 +574,33 @@ Abstract Syntax Tree
 
     stmt =
           {empty}
-        | {var_dec} var_spec+
-        | {short_assign} id+ expr+
-        | {type_dec} type_spec+
+        | {var_dec} var_spec+ 
+        | {short_assign} id+ expr+ 
+        | {type_dec} type_spec+ 
         | {assign} [lhs]:expr+ [rhs]:expr+
-        | {plus_assign} [lhs]: expr [rhs]:expr
-        | {minus_assign} [lhs]: expr [rhs]:expr
-        | {star_assign} [lhs]: expr [rhs]:expr
-        | {slash_assign} [lhs]: expr [rhs]:expr
-        | {perc_assign} [lhs]: expr [rhs]:expr
-        | {and_assign} [lhs]: expr [rhs]:expr
-        | {pipe_assign} [lhs]: expr [rhs]:expr
-        | {carot_assign} [lhs]: expr [rhs]:expr
-        | {amp_carot_assign} [lhs]: expr [rhs]:expr
-        | {lshift_assign} [lhs]: expr [rhs]:expr
-        | {rshift_assign} [lhs]: expr [rhs]:expr
-        | {incr} expr
-        | {decr} expr
-        | {expr} expr
-        | {print} expr*
-        | {println} expr*
+        | {plus_assign} [lhs]: expr [rhs]:expr //TODO: Typecheck this
+        | {minus_assign} [lhs]: expr [rhs]:expr //TODO: Typecheck this
+        | {star_assign} [lhs]: expr [rhs]:expr //TODO: Typecheck this
+        | {slash_assign} [lhs]: expr [rhs]:expr //TODO: Typecheck this
+        | {perc_assign} [lhs]: expr [rhs]:expr //TODO: Typecheck this
+        | {and_assign} [lhs]: expr [rhs]:expr //TODO: Typecheck this
+        | {pipe_assign} [lhs]: expr [rhs]:expr //TODO: Typecheck this
+        | {carot_assign} [lhs]: expr [rhs]:expr //TODO: Typecheck this
+        | {amp_carot_assign} [lhs]: expr [rhs]:expr //TODO: Typecheck this
+        | {lshift_assign} [lhs]: expr [rhs]:expr //TODO: Typecheck this
+        | {rshift_assign} [lhs]: expr [rhs]:expr //TODO: Typecheck this
+        | {incr} expr //TODO: Typecheck this
+        | {decr} expr //TODO: Typecheck this
+        | {expr} expr //TODO: Typecheck this
+        | {print} expr* //TODO: Typecheck this
+        | {println} expr* //TODO: Typecheck this
         | {continue}
-        | {break}
-        | {return} expr?
-        | {if_else} condition [if_block]:stmt* [elseif]:elseif* [else_block]:stmt*
-        | {switch} stmt? expr? case_block*
-        | {for_loop} [init]:stmt expr [end]:stmt [block]:stmt*
-        | {while_loop} expr? [block]:stmt* ;
+        | {break} 
+        | {return} expr? //TODO: Typecheck this
+        | {if_else} condition [if_block]:stmt* [elseif]:elseif* [else_block]:stmt* //TODO: Typecheck this
+        | {switch} stmt? expr? case_block* //TODO: Typecheck this
+        | {for_loop} [init]:stmt expr [end]:stmt [block]:stmt* //TODO: Typecheck this
+        | {while_loop} expr? [block]:stmt* ; //TODO: Typecheck this
 
     elseif = {elif} condition [block]:stmt*;
 
@@ -621,8 +621,8 @@ Abstract Syntax Tree
         | {rune} rune
         | {string} string
         | {custom} id
-        | {array} expr type_expr //TODO: Typecheck this
-        | {slice} type_expr //TODO: Typecheck this
+        | {array} expr type_expr 
+        | {slice} type_expr 
         | {struct} arg_group* ;
 
     //* Expression. *//
@@ -652,8 +652,8 @@ Abstract Syntax Tree
         | {gte} [left]:expr [right]:expr
         | {and} [left]:expr [right]:expr
         | {or} [left]:expr [right]:expr
-        | {func_call} id expr* //TODO: Typecheck this
-        | {append} id expr 
+        | {func_call} id expr* //TODO: When writing tests for function expressions don't forget to test void types for null pointer errors
+        | {append} id expr //TODO: Add weeding pass to check for returns on EVERY path in a function
         | {type_cast} type_expr expr
         | {array_elem} [array]:expr [index]:expr
         | {field} expr id 
