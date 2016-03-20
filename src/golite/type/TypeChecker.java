@@ -27,11 +27,13 @@ public class TypeChecker extends DepthFirstAdapter {
         lineAndPos = new LineAndPos();
     }
 
+    @Override
     public void inStart(Start node)
     {
         symbolTable.enterScope();
     }
 
+    @Override
     public void outStart(Start node)
     {
         symbolTable.exitScope();
@@ -42,7 +44,362 @@ public class TypeChecker extends DepthFirstAdapter {
         }
     }
 
+    /* Type check plus op-assign statement */
+    @Override
+    public void outAPlusAssignStmt(APlusAssignStmt node) {
+        PTypeExpr lhs = typeTable.get(node.getLhs());
+        PTypeExpr rhs = typeTable.get(node.getRhs());
+        
+        // (to-do) ...
+    }
+
+    /* Type check numeric op-assign statement */
+    @Override
+    public void outAMinusAssignStmt(AMinusAssignStmt node) {
+        PTypeExpr lhs = typeTable.get(node.getLhs());
+        PTypeExpr rhs = typeTable.get(node.getRhs());
+        if (!isNumericType(lhs) || !isNumericType(rhs)) {
+            Node errorNode = !isNumericType(lhs) ? node.getLhs() : node.getRhs();
+            callTypeCheckException(errorNode, "Binary operand '-' cannot be applied to non-numeric type");
+        }
+        if (isIntType(lhs) && isFloatType(rhs)) {
+            callTypeCheckException(node.getRhs(), "Op assign '-=' - cannot assign float to int variable");
+        }
+    }
+
+    @Override
+    public void outAStarAssignStmt(AStarAssignStmt node) {
+        PTypeExpr lhs = typeTable.get(node.getLhs());
+        PTypeExpr rhs = typeTable.get(node.getRhs());
+        if (!isNumericType(lhs) || !isNumericType(rhs)) {
+            Node errorNode = !isNumericType(lhs) ? node.getLhs() : node.getRhs();
+            callTypeCheckException(errorNode, "Binary operand '*' cannot be applied to non-numeric type");
+        }
+        if (isIntType(lhs) && isFloatType(rhs)) {
+            callTypeCheckException(node.getRhs(), "Op assign '*=' - cannot assign float to int variable");
+        }
+    }
+
+    @Override
+    public void outASlashAssignStmt(ASlashAssignStmt node) {
+        PTypeExpr lhs = typeTable.get(node.getLhs());
+        PTypeExpr rhs = typeTable.get(node.getRhs());
+        if (!isNumericType(lhs) || !isNumericType(rhs)) {
+            Node errorNode = !isNumericType(lhs) ? node.getLhs() : node.getRhs();
+            callTypeCheckException(errorNode, "Binary operand '/' cannot be applied to non-numeric type");
+        }
+        if (isIntType(lhs) && isFloatType(rhs)) {
+            callTypeCheckException(node.getRhs(), "Op assign '/=' - cannot assign float to int variable");
+        }
+    }
+
+    /* Type check int op-assign statements */
+    @Override
+    public void outAPercAssignStmt(APercAssignStmt node) {
+        PTypeExpr lhs = typeTable.get(node.getLhs());
+        PTypeExpr rhs = typeTable.get(node.getRhs());
+        if (!isIntType(lhs) || !isIntType(rhs)) {
+            Node errorNode = !isIntType(lhs) ? node.getLhs() : node.getRhs();
+            callTypeCheckException(errorNode, " Op assign '%=' - cannot be applied to non-int type");
+        }
+    }
+
+    @Override
+    public void outAAndAssignStmt(AAndAssignStmt node) {
+        PTypeExpr lhs = typeTable.get(node.getLhs());
+        PTypeExpr rhs = typeTable.get(node.getRhs());
+        if (!isIntType(lhs) || !isIntType(rhs)) {
+            Node errorNode = !isIntType(lhs) ? node.getLhs() : node.getRhs();
+            callTypeCheckException(errorNode, " Op assign '&=' - cannot be applied to non-int type");
+        }
+    }
+
+    @Override
+    public void outAPipeAssignStmt(APipeAssignStmt node) {
+        PTypeExpr lhs = typeTable.get(node.getLhs());
+        PTypeExpr rhs = typeTable.get(node.getRhs());
+        if (!isIntType(lhs) || !isIntType(rhs)) {
+            Node errorNode = !isIntType(lhs) ? node.getLhs() : node.getRhs();
+            callTypeCheckException(errorNode, " Op assign '|=' - cannot be applied to non-int type");
+        }
+    }
+
+    @Override
+    public void outACarotAssignStmt(ACarotAssignStmt node) {
+        PTypeExpr lhs = typeTable.get(node.getLhs());
+        PTypeExpr rhs = typeTable.get(node.getRhs());
+        if (!isIntType(lhs) || !isIntType(rhs)) {
+            Node errorNode = !isIntType(lhs) ? node.getLhs() : node.getRhs();
+            callTypeCheckException(errorNode, " Op assign '^=' - cannot be applied to non-int type");
+        }
+    }
+
+    @Override
+    public void caseAAmpCarotAssignStmt(AAmpCarotAssignStmt node) {
+        PTypeExpr lhs = typeTable.get(node.getLhs());
+        PTypeExpr rhs = typeTable.get(node.getRhs());
+        if (!isIntType(lhs) || !isIntType(rhs)) {
+            Node errorNode = !isIntType(lhs) ? node.getLhs() : node.getRhs();
+            callTypeCheckException(errorNode, " Op assign '&^=' - cannot be applied to non-int type");
+        }
+    }
+
+    @Override
+    public void caseALshiftAssignStmt(ALshiftAssignStmt node) {
+        PTypeExpr lhs = typeTable.get(node.getLhs());
+        PTypeExpr rhs = typeTable.get(node.getRhs());
+        if (!isIntType(lhs) || !isIntType(rhs)) {
+            Node errorNode = !isIntType(lhs) ? node.getLhs() : node.getRhs();
+            callTypeCheckException(errorNode, " Op assign '<<=' - cannot be applied to non-int type");
+        }
+    }
+
+    @Override
+    public void caseARshiftAssignStmt(ARshiftAssignStmt node) {
+        PTypeExpr lhs = typeTable.get(node.getLhs());
+        PTypeExpr rhs = typeTable.get(node.getRhs());
+        if (!isIntType(lhs) || !isIntType(rhs)) {
+            Node errorNode = !isIntType(lhs) ? node.getLhs() : node.getRhs();
+            callTypeCheckException(errorNode, " Op assign '>>=' - cannot be applied to non-int type");
+        }
+    }
+
+    /* Type check increment & decrement statements */
+    @Override
+    public void caseAIncrStmt(AIncrStmt node) {
+        if (node.getExpr() != null) {
+            node.getExpr().apply(this);
+            if (!isNumericType(typeTable.get(node.getExpr()))) {
+                callTypeCheckException(node.getExpr(), "Increment statement - operand is not of numeric type");
+            }
+        }
+    }
+
+    @Override
+    public void caseADecrStmt(ADecrStmt node) {
+        if (node.getExpr() != null) {
+            node.getExpr().apply(this);
+            if (!isNumericType(typeTable.get(node.getExpr()))) {
+                callTypeCheckException(node.getExpr(), "Decrement statement - operand is not of numeric type");
+            }
+        }
+    }
+
+    /* Type check print & println statements */
+    @Override
+    public void caseAPrintStmt(APrintStmt node) {
+        List<PExpr> copy = new ArrayList<PExpr>(node.getExpr());
+        for (PExpr e : copy) {
+            e.apply(this);
+            if (!isBaseType(typeTable.get(e))) {
+                callTypeCheckException(e, "Print statement - expression is not of base type");
+            }
+        }
+    }
+
+    @Override
+    public void caseAPrintlnStmt(APrintlnStmt node) {
+        List<PExpr> copy = new ArrayList<PExpr>(node.getExpr());
+        for (PExpr e : copy) {
+            e.apply(this);
+            if (!isBaseType(typeTable.get(e))) {
+                callTypeCheckException(e, "Println statement - expression is not of base type");
+            }
+        }
+    }
+
+    /* Type check continue & break statement */
+    @Override
+    public void caseAContinueStmt(AContinueStmt node) {
+        // Trivially well-typed
+    }
+
+    @Override
+    public void caseABreakStmt(ABreakStmt node) {
+        // Trivially well-typed
+    }
+
+    /* Type check return statement */
+    @Override
+    public void caseAReturnStmt(AReturnStmt node) {
+        AFuncTopDec funcDec = getParentFuncDec(node);
+        if (node.getExpr() != null) {
+            node.getExpr().apply(this);
+            if (funcDec.getTypeExpr() == null) {
+                callTypeCheckException(node.getExpr(), "Return statement - declared function has no return type");
+            }
+            if (!isSameType(typeTable.get(node.getExpr()), funcDec.getTypeExpr())) {
+                callTypeCheckException(node.getExpr(), "Return statement - return type does not match declared function");
+            }
+        } else {
+            if (funcDec.getTypeExpr() != null) {
+                callTypeCheckException(null, "Return statement - declared function has return type, cannot return nothing");
+            }
+        }
+    }
+
+    /* Type check if-else statement */
+    @Override
+    public void caseAIfElseStmt(AIfElseStmt node) {
+        if (node.getCondition() != null) {
+            node.getCondition().apply(this);
+        }
+        {
+            symbolTable.enterScope();
+            List<PStmt> copy = new ArrayList<PStmt>(node.getIfBlock());
+            for (PStmt e : copy) {
+                e.apply(this);
+            }
+            symbolTable.exitScope();
+        }
+        {
+            List<PElseif> copy = new ArrayList<PElseif>(node.getElseif());
+            for (PElseif e : copy) {
+                e.apply(this);
+            }
+        }
+        {
+            symbolTable.enterScope();
+            List<PStmt> copy = new ArrayList<PStmt>(node.getElseBlock());
+            for (PStmt e : copy) {
+                e.apply(this);
+            }
+            symbolTable.exitScope();
+        }
+    }
+
+    @Override
+    public void caseAElifElseif(AElifElseif node) {
+        if (node.getCondition() != null) {
+            node.getCondition().apply(this);
+        }
+        {
+            symbolTable.enterScope();
+            List<PStmt> copy = new ArrayList<PStmt>(node.getBlock());
+            for (PStmt e : copy) {
+                e.apply(this);
+            }
+            symbolTable.exitScope();
+        }
+    }
+
+    @Override
+    public void caseAConditionCondition(AConditionCondition node) {
+        if (node.getStmt() != null) {
+            node.getStmt().apply(this);
+        }
+        if (node.getExpr() != null) {
+            node.getExpr().apply(this);
+            if (!isBoolType(typeTable.get(node.getExpr()))) {
+                callTypeCheckException(node.getExpr(), "If-Else statement - condition must evaluate bool type");
+            }
+        }
+    }
+
+    /* Type check swtich statement */
+    @Override
+    public void caseASwitchStmt(ASwitchStmt node) {
+        if (node.getStmt() != null) {
+            node.getStmt().apply(this);
+        }
+        if (node.getExpr() != null) {
+            node.getExpr().apply(this);
+        }
+        {
+            symbolTable.enterScope();
+            List<PCaseBlock> copy = new ArrayList<PCaseBlock>(node.getCaseBlock());
+            for (PCaseBlock e : copy) {
+                e.apply(this);
+            }
+            symbolTable.exitScope();
+        }
+    }
+
+    @Override
+    public void caseABlockCaseBlock(ABlockCaseBlock node) {
+        if (node.getCaseCondition() != null) {
+            node.getCaseCondition().apply(this);
+        }
+        {
+            List<PStmt> copy = new ArrayList<PStmt>(node.getStmt());
+            for (PStmt e : copy) {
+                e.apply(this);
+            }
+        }
+    }
+
+    @Override
+    public void caseAExprsCaseCondition(AExprsCaseCondition node) {
+        if (((ASwitchStmt) node.parent().parent()).getExpr() != null) {
+            PExpr expr = ((ASwitchStmt) node.parent().parent()).getExpr();
+            List<PExpr> copy = new ArrayList<PExpr>(node.getExpr());
+            for (PExpr e : copy) {
+                e.apply(this);
+                if (!isSameType(typeTable.get(expr), typeTable.get(e))) {
+                    callTypeCheckException(e, "Switch statement - case expression type does not match");
+                }
+            }
+        } else {
+            List<PExpr> copy = new ArrayList<PExpr>(node.getExpr());
+            for (PExpr e : copy) {
+                e.apply(this);
+                if (!isBoolType(typeTable.get(e))) {
+                    callTypeCheckException(e, "Switch statement - case expression must evaluate to bool type");
+                }
+            }
+        }
+    }
+
+    @Override
+    public void caseADefaultCaseCondition(ADefaultCaseCondition node) {
+        // Trivially well-typed
+    }
+
+    /* Type check loop (for & while) statements */
+    @Override
+    public void caseAForLoopStmt(AForLoopStmt node) {
+        if (node.getInit() != null) {
+            node.getInit().apply(this);
+        }
+        if (node.getExpr() != null) {
+            node.getExpr().apply(this);
+            if (!isBoolType(typeTable.get(node.getExpr()))) {
+                callTypeCheckException(node.getExpr(), "For loop statement - loop expression must evaluate to bool type");
+            }
+        }
+        if (node.getEnd() != null) {
+            node.getEnd().apply(this);
+        }
+        {
+            symbolTable.enterScope();
+            List<PStmt> copy = new ArrayList<PStmt>(node.getBlock());
+            for (PStmt e : copy) {
+                e.apply(this);
+            }
+            symbolTable.exitScope();
+        }
+    }
+
+    @Override
+    public void caseAWhileLoopStmt(AWhileLoopStmt node) {
+        if (node.getExpr() != null) {
+            node.getExpr().apply(this);
+            if (!isBoolType(typeTable.get(node.getExpr()))) {
+                callTypeCheckException(node.getExpr(), "For loop statement - loop expression mush evaluate to bool type");
+            }
+        }
+        {
+            symbolTable.enterScope();
+            List<PStmt> copy = new ArrayList<PStmt>(node.getBlock());
+            for (PStmt e : copy) {
+                e.apply(this);
+            }
+            symbolTable.exitScope();
+        }
+    }
+
     /* Type check binary arithemic operators */
+    @Override
     public void outAAddExpr(AAddExpr node) {
         PTypeExpr left = typeTable.get(node.getLeft());
         PTypeExpr right = typeTable.get(node.getRight());
@@ -59,6 +416,7 @@ public class TypeChecker extends DepthFirstAdapter {
         }
     }
 
+    @Override
     public void outASubtractExpr(ASubtractExpr node) {
         PTypeExpr left = typeTable.get(node.getLeft());
         PTypeExpr right = typeTable.get(node.getRight());
@@ -73,6 +431,7 @@ public class TypeChecker extends DepthFirstAdapter {
         }
     }
 
+    @Override
     public void outAMultExpr(AMultExpr node) {
         PTypeExpr left = typeTable.get(node.getLeft());
         PTypeExpr right = typeTable.get(node.getRight());
@@ -87,6 +446,7 @@ public class TypeChecker extends DepthFirstAdapter {
         }
     }
 
+    @Override
     public void outADivExpr(ADivExpr node) {
         PTypeExpr left = typeTable.get(node.getLeft());
         PTypeExpr right = typeTable.get(node.getRight());
@@ -101,6 +461,7 @@ public class TypeChecker extends DepthFirstAdapter {
         }
     }
 
+    @Override
     public void outAModExpr(AModExpr node) {
         PTypeExpr left = typeTable.get(node.getLeft());
         PTypeExpr right = typeTable.get(node.getRight());
@@ -112,6 +473,7 @@ public class TypeChecker extends DepthFirstAdapter {
     }
 
     /* Type check binary bit operators */
+    @Override
     public void outABitAndExpr(ABitAndExpr node) {
         PTypeExpr left = typeTable.get(node.getLeft());
         PTypeExpr right = typeTable.get(node.getRight());
@@ -122,6 +484,7 @@ public class TypeChecker extends DepthFirstAdapter {
         typeTable.put(node, new AIntTypeExpr());
     }
 
+    @Override
     public void outABitOrExpr(ABitOrExpr node) {
         PTypeExpr left = typeTable.get(node.getLeft());
         PTypeExpr right = typeTable.get(node.getRight());
@@ -132,6 +495,7 @@ public class TypeChecker extends DepthFirstAdapter {
         typeTable.put(node, new AIntTypeExpr());
     }
 
+    @Override
     public void outABitXorExpr(ABitXorExpr node) {
         PTypeExpr left = typeTable.get(node.getLeft());
         PTypeExpr right = typeTable.get(node.getRight());
@@ -142,6 +506,7 @@ public class TypeChecker extends DepthFirstAdapter {
         typeTable.put(node, new AIntTypeExpr());
     }
 
+    @Override
     public void outABitClearExpr(ABitClearExpr node) {
         PTypeExpr left = typeTable.get(node.getLeft());
         PTypeExpr right = typeTable.get(node.getRight());
@@ -152,6 +517,7 @@ public class TypeChecker extends DepthFirstAdapter {
         typeTable.put(node, new AIntTypeExpr());
     }
 
+    @Override
     public void outABitLshiftExpr(ABitLshiftExpr node) {
         PTypeExpr left = typeTable.get(node.getLeft());
         PTypeExpr right = typeTable.get(node.getRight());
@@ -162,6 +528,7 @@ public class TypeChecker extends DepthFirstAdapter {
         typeTable.put(node, new AIntTypeExpr());
     }
 
+    @Override
     public void outABitRshiftExpr(ABitRshiftExpr node) {
         PTypeExpr left = typeTable.get(node.getLeft());
         PTypeExpr right = typeTable.get(node.getRight());
@@ -173,6 +540,7 @@ public class TypeChecker extends DepthFirstAdapter {
     }
 
     /* Type check unary operators */
+    @Override
     public void outAPosExpr(APosExpr node) {
         PTypeExpr type = typeTable.get(node.getExpr());
         if (!isNumericType(type)) {
@@ -185,6 +553,7 @@ public class TypeChecker extends DepthFirstAdapter {
         }
     }
 
+    @Override
     public void outANegExpr(ANegExpr node) {
         PTypeExpr type = typeTable.get(node.getExpr());
         if (!isNumericType(type)) {
@@ -197,6 +566,7 @@ public class TypeChecker extends DepthFirstAdapter {
         }
     }
 
+    @Override
     public void outABitCompExpr(ABitCompExpr node) {
         PTypeExpr type = typeTable.get(node.getExpr());
         if (isIntType(type)) {
@@ -205,6 +575,7 @@ public class TypeChecker extends DepthFirstAdapter {
         typeTable.put(node, new AIntTypeExpr());
     }
 
+    @Override
     public void outANotExpr(ANotExpr node) {
         PTypeExpr type = typeTable.get(node.getExpr());
         if (isBoolType(type)) {
@@ -214,6 +585,7 @@ public class TypeChecker extends DepthFirstAdapter {
     }
 
     /* Type check relational operands */
+    @Override
     public void outAEqExpr(AEqExpr node) {
         PTypeExpr left = typeTable.get(node.getLeft());
         PTypeExpr right = typeTable.get(node.getRight());
@@ -224,6 +596,7 @@ public class TypeChecker extends DepthFirstAdapter {
         typeTable.put(node, new ABoolTypeExpr());
     }
 
+    @Override
     public void outANeqExpr(ANeqExpr node) {
         PTypeExpr left = typeTable.get(node.getLeft());
         PTypeExpr right = typeTable.get(node.getRight());
@@ -234,6 +607,7 @@ public class TypeChecker extends DepthFirstAdapter {
         typeTable.put(node, new ABoolTypeExpr());
     }
 
+    @Override
     public void outALtExpr(ALtExpr node) {
         PTypeExpr left = typeTable.get(node.getLeft());
         PTypeExpr right = typeTable.get(node.getRight());
@@ -244,6 +618,7 @@ public class TypeChecker extends DepthFirstAdapter {
         typeTable.put(node, new ABoolTypeExpr());
     }
 
+    @Override
     public void outALteExpr(ALteExpr node) {
         PTypeExpr left = typeTable.get(node.getLeft());
         PTypeExpr right = typeTable.get(node.getRight());
@@ -254,6 +629,7 @@ public class TypeChecker extends DepthFirstAdapter {
         typeTable.put(node, new ABoolTypeExpr());
     }
 
+    @Override
     public void outAGtExpr(AGtExpr node) {
         PTypeExpr left = typeTable.get(node.getLeft());
         PTypeExpr right = typeTable.get(node.getRight());
@@ -264,6 +640,7 @@ public class TypeChecker extends DepthFirstAdapter {
         typeTable.put(node, new ABoolTypeExpr());
     }
 
+    @Override
     public void outAGteExpr(AGteExpr node) {
         PTypeExpr left = typeTable.get(node.getLeft());
         PTypeExpr right = typeTable.get(node.getRight());
@@ -275,6 +652,7 @@ public class TypeChecker extends DepthFirstAdapter {
     }
 
     /* Type check conditional operators */
+    @Override
     public void outAAndExpr(AAndExpr node) {
         PTypeExpr left = typeTable.get(node.getLeft());
         PTypeExpr right = typeTable.get(node.getRight());
@@ -285,6 +663,7 @@ public class TypeChecker extends DepthFirstAdapter {
         typeTable.put(node, new ABoolTypeExpr());
     }
 
+    @Override
     public void outAOrExpr(AOrExpr node) {
         PTypeExpr left = typeTable.get(node.getLeft());
         PTypeExpr right = typeTable.get(node.getRight());
@@ -296,31 +675,38 @@ public class TypeChecker extends DepthFirstAdapter {
     }
 
     /* Type check numeric literals */
+    @Override
     public void outAIntLitExpr(AIntLitExpr node) {
         typeTable.put(node, new AIntTypeExpr());
     }
 
+    @Override
     public void outAOctLitExpr(AOctLitExpr node) {
         typeTable.put(node, new AIntTypeExpr());
     }
 
-    public void outAOctLitExpr(AHexLitExpr node) {
+    @Override
+    public void outAHexLitExpr(AHexLitExpr node) {
         typeTable.put(node, new AIntTypeExpr());
     }
 
+    @Override
     public void outAFloatLitExpr(AFloatLitExpr node) {
         typeTable.put(node, new AFloatTypeExpr());
     }
 
+    @Override
     public void outARuneLitExpr(ARuneLitExpr node) {
         typeTable.put(node, new ARuneTypeExpr());
     }
 
     /* Type check string literals */
+    @Override
     public void outAInterpretedStringLitExpr(AInterpretedStringLitExpr node) {
         typeTable.put(node, new AStringTypeExpr());
     }
 
+    @Override
     public void outARawStringLitExpr(ARawStringLitExpr node) {
         typeTable.put(node, new AStringTypeExpr());
     }
@@ -358,6 +744,26 @@ public class TypeChecker extends DepthFirstAdapter {
         return node instanceof AStructTypeExpr;
     }
 
+    private boolean isBaseType(PTypeExpr node) {
+        return isBoolType(node) || isNumericType(node) || isStringType(node);
+    }
+
+    private boolean isSameType(PTypeExpr node1, PTypeExpr node2) {
+        return ((node1 instanceof ABoolTypeExpr) && (node2 instanceof ABoolTypeExpr))
+                || ((node1 instanceof AIntTypeExpr) && (node2 instanceof AIntTypeExpr))
+                || ((node1 instanceof AFloatTypeExpr) && (node2 instanceof AFloatTypeExpr))
+                || ((node1 instanceof ARuneTypeExpr) && (node2 instanceof ARuneTypeExpr))
+                || ((node1 instanceof AStringTypeExpr) && (node2 instanceof AStringTypeExpr));
+    }
+
+    private AFuncTopDec getParentFuncDec(AReturnStmt node) {
+        Node parent = node;
+        while (!(parent instanceof AFuncTopDec)) {
+            parent = parent.parent();
+        }
+        return (AFuncTopDec) parent;
+    }
+
     private void callTypeCheckException(Node node, String s) {
         String message = "";
         if (node != null) {
@@ -371,7 +777,7 @@ public class TypeChecker extends DepthFirstAdapter {
     }
 
     /* Change scope when entering and exiting functions */
-    @Override 
+    @Override
     public void inAFuncTopDec(AFuncTopDec node)
     {
         symbolTable.addSymbol(node.getId().getText(), node);
@@ -379,7 +785,7 @@ public class TypeChecker extends DepthFirstAdapter {
         defaultIn(node);
     }
 
-    @Override 
+    @Override
     public void outAFuncTopDec(AFuncTopDec node)
     {
         defaultOut(node);
@@ -491,7 +897,7 @@ public class TypeChecker extends DepthFirstAdapter {
                 }
             }
         }
-        else 
+        else
         {
             callTypeCheckException(node, "Fields calls can only be used on struct types");
         }
@@ -633,7 +1039,7 @@ public class TypeChecker extends DepthFirstAdapter {
                 {
                     return typeExpr;
                 }
-                else 
+                else
                 {
                     return typeTable.get(dec.getExpr().get(idx));
                 }
@@ -661,9 +1067,9 @@ public class TypeChecker extends DepthFirstAdapter {
                 }
             }
         }
-        else if (node instanceof AIntLitExpr 
-                || node instanceof AFloatLitExpr 
-                || node instanceof ARuneLitExpr 
+        else if (node instanceof AIntLitExpr
+                || node instanceof AFloatLitExpr
+                || node instanceof ARuneLitExpr
                 || node instanceof AOctLitExpr
                 || node instanceof AHexLitExpr
                 || node instanceof AInterpretedStringLitExpr
@@ -692,7 +1098,7 @@ public class TypeChecker extends DepthFirstAdapter {
         {
             return ((AArgArgGroup) node).getTypeExpr();
         }
-        else if (node instanceof AFieldExpr) 
+        else if (node instanceof AFieldExpr)
         {
             return typeTable.get(node);
         }
