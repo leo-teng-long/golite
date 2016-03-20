@@ -38,11 +38,15 @@ public class TypeChecker extends DepthFirstAdapter {
     public void outStart(Start node)
     {
         symbolTable.exitScope();
+        symbolTable.exitScope();
+        System.out.println("###SYMBOL TABLE:###\n");
         symbolTable.printSymbols();
+        System.out.println("###TYPE TABLE:###\n");
         for (Node n: typeTable.keySet())
         {
             System.out.println("Node: " + n + " Key: " + n.getClass() + " Value: " + typeTable.get(n).getClass());
         }
+        System.out.println();
     }
 
     @Override
@@ -918,9 +922,27 @@ public class TypeChecker extends DepthFirstAdapter {
                 }
             }
         }
+        else if (type instanceof ACustomTypeExpr)
+        {
+            PTypeExpr subType = getType(((ACustomTypeExpr) type).getId());
+            if (subType instanceof AStructTypeExpr)
+            {
+                for (PArgGroup a: ((AStructTypeExpr) subType).getArgGroup())
+                {
+                    PTypeExpr argType = ((AArgArgGroup) a).getTypeExpr();
+                    for (TId argId: ((AArgArgGroup) a).getId())
+                    {
+                        if (argId.getText().equals(id))
+                        {
+                            typeTable.put(node, argType); // Well typed!
+                        }
+                    }
+                }
+            }
+        }
         else
         {
-            callTypeCheckException(node, "Fields calls can only be used on struct types");
+            callTypeCheckException(node, "Fields calls can only be used on struct types, not " + type.getClass());
         }
     }
 
@@ -1088,11 +1110,8 @@ public class TypeChecker extends DepthFirstAdapter {
         }
         else if (node instanceof TId)
         {
-
             String id = ((TId) node).getText();
             Node declaration = symbolTable.getSymbol(id, node);
-            System.out.println(declaration);
-            System.out.println(declaration.getClass());
             if (declaration instanceof ASpecVarSpec)
             {
                 ASpecVarSpec dec = (ASpecVarSpec) declaration;
@@ -1100,6 +1119,10 @@ public class TypeChecker extends DepthFirstAdapter {
                 PTypeExpr typeExpr = getType(declaration);
                 if (typeExpr != null)
                 {
+                    /*if (typeExpr instanceof ACustomTypeExpr)
+                    {
+                        return getType(((ACustomTypeExpr) typeExpr).getId());
+                    }*/
                     return typeExpr;
                 }
                 else
@@ -1110,7 +1133,6 @@ public class TypeChecker extends DepthFirstAdapter {
             else if (declaration instanceof ASpecTypeSpec)
             {
                 ASpecTypeSpec dec = (ASpecTypeSpec) declaration;
-                System.out.println(dec);
                 return dec.getTypeExpr();
             }
             else if (declaration instanceof AStructTypeExpr)
@@ -1196,7 +1218,6 @@ public class TypeChecker extends DepthFirstAdapter {
             }
             catch (Exception e)
             {
-                System.out.println(node);
                 callTypeCheckException(node, "Did not find type for " + node.getClass());
             }
         }

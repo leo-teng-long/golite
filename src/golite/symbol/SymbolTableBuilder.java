@@ -23,7 +23,7 @@ public class SymbolTableBuilder extends DepthFirstAdapter
         return typeTable;
     }
 
-    @Override //Modified
+    @Override
     public void inStart(Start node) 
     {
         symbolTable = new SymbolTable();
@@ -33,6 +33,12 @@ public class SymbolTableBuilder extends DepthFirstAdapter
         //Initialize boolean types
         symbolTable.addSymbol("true", new ABoolTypeExpr());
         symbolTable.addSymbol("false", new ABoolTypeExpr());
+    }
+
+    @Override
+    public void outStart(Start node)
+    {
+        //symbolTable.exitScope();
     }
 
     @Override

@@ -577,7 +577,7 @@ Abstract Syntax Tree
         | {var_dec} var_spec+ 
         | {short_assign} id+ expr+ 
         | {type_dec} type_spec+ 
-        | {assign} [lhs]:expr+ [rhs]:expr+
+        | {assign} [lhs]:expr+ [rhs]:expr+ //TODO: Handle assigning values to aliases
         | {plus_assign} [lhs]: expr [rhs]:expr //TODO: Typecheck this
         | {minus_assign} [lhs]: expr [rhs]:expr 
         | {star_assign} [lhs]: expr [rhs]:expr 
@@ -654,7 +654,7 @@ Abstract Syntax Tree
         | {or} [left]:expr [right]:expr
         | {func_call} id expr* //TODO: When writing tests for function expressions don't forget to test void types for null pointer errors
         | {append} id expr //TODO: Add weeding pass to check for returns on EVERY path in a function
-        | {type_cast} type_expr expr
+        | {type_cast} type_expr expr //TODO: Pull out alias/custom type casts
         | {array_elem} [array]:expr [index]:expr
         | {field} expr id 
         | {variable} id 
