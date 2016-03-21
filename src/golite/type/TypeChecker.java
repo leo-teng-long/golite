@@ -45,11 +45,13 @@ public class TypeChecker extends DepthFirstAdapter {
         }
     }
 
+    // (need to be verified)
     @Override
     public void caseAVarsTopDec(AVarsTopDec node) {
         // taken care of by SymbolTableBuilder
     }
 
+    // (need to be verified)
     @Override
     public void caseATypesTopDec(ATypesTopDec node) {
         // taken care of by SymbolTableBuilder
@@ -180,8 +182,9 @@ public class TypeChecker extends DepthFirstAdapter {
     public void caseAIncrStmt(AIncrStmt node) {
         if (node.getExpr() != null) {
             node.getExpr().apply(this);
-            if (!isNumericType(typeTable.get(node.getExpr()))) {
-                callTypeCheckException(node.getExpr(), "Increment statement - operand is not of numeric type");
+            PTypeExpr type = typeTable.get(node.getExpr());
+            if (!isNumericType(type)) {
+                callTypeCheckException(node.getExpr(), "Operand of '++' is not of numeric type");
             }
         }
     }
@@ -190,8 +193,9 @@ public class TypeChecker extends DepthFirstAdapter {
     public void caseADecrStmt(ADecrStmt node) {
         if (node.getExpr() != null) {
             node.getExpr().apply(this);
-            if (!isNumericType(typeTable.get(node.getExpr()))) {
-                callTypeCheckException(node.getExpr(), "Decrement statement - operand is not of numeric type");
+            PTypeExpr type = typeTable.get(node.getExpr());
+            if (!isNumericType(type)) {
+                callTypeCheckException(node.getExpr(), "Operand of '--' is not of numeric type");
             }
         }
     }
@@ -202,8 +206,9 @@ public class TypeChecker extends DepthFirstAdapter {
         List<PExpr> copy = new ArrayList<PExpr>(node.getExpr());
         for (PExpr e : copy) {
             e.apply(this);
-            if (!isBaseType(typeTable.get(e))) {
-                callTypeCheckException(e, "Print statement - expression is not of base type");
+            PTypeExpr type = typeTable.get(e);
+            if (!isBaseType(type)) {
+                callTypeCheckException(e, "Expression is not of base type");
             }
         }
     }
@@ -213,8 +218,9 @@ public class TypeChecker extends DepthFirstAdapter {
         List<PExpr> copy = new ArrayList<PExpr>(node.getExpr());
         for (PExpr e : copy) {
             e.apply(this);
-            if (!isBaseType(typeTable.get(e))) {
-                callTypeCheckException(e, "Println statement - expression is not of base type");
+            PTypeExpr type = typeTable.get(e);
+            if (!isBaseType(type)) {
+                callTypeCheckException(e, "Expression is not of base type");
             }
         }
     }
@@ -235,16 +241,20 @@ public class TypeChecker extends DepthFirstAdapter {
     public void caseAReturnStmt(AReturnStmt node) {
         AFuncTopDec funcDec = getParentFuncDec(node);
         if (node.getExpr() != null) {
-            node.getExpr().apply(this);
             if (funcDec.getTypeExpr() == null) {
-                callTypeCheckException(node.getExpr(), "Return statement - declared function has no return type");
+                callTypeCheckException(node.getExpr(), "Declared function has no return type");
             }
-            if (!isSameType(typeTable.get(node.getExpr()), funcDec.getTypeExpr())) {
-                callTypeCheckException(node.getExpr(), "Return statement - return type does not match declared function");
+            node.getExpr().apply(this);
+            PTypeExpr type = typeTable.get(node.getExpr());
+            // ##################################################
+            // (numeric return type might need special attention)
+            // ##################################################
+            if (!isSameType(type, funcDec.getTypeExpr())) {
+                callTypeCheckException(node.getExpr(), "Expression returned not matched function return type");
             }
         } else {
             if (funcDec.getTypeExpr() != null) {
-                callTypeCheckException(null, "Return statement - declared function has return type, cannot return nothing");
+                callTypeCheckException(funcDec, "Declared function cannot return void");
             }
         }
     }
@@ -252,6 +262,7 @@ public class TypeChecker extends DepthFirstAdapter {
     /* Type check if-else statement */
     @Override
     public void caseAIfElseStmt(AIfElseStmt node) {
+        symbolTable.enterScope();
         if (node.getCondition() != null) {
             node.getCondition().apply(this);
         }
@@ -263,6 +274,7 @@ public class TypeChecker extends DepthFirstAdapter {
             }
             symbolTable.exitScope();
         }
+        symbolTable.exitScope();
         {
             List<PElseif> copy = new ArrayList<PElseif>(node.getElseif());
             for (PElseif e : copy) {
@@ -281,6 +293,7 @@ public class TypeChecker extends DepthFirstAdapter {
 
     @Override
     public void caseAElifElseif(AElifElseif node) {
+        symbolTable.enterScope();
         if (node.getCondition() != null) {
             node.getCondition().apply(this);
         }
@@ -292,6 +305,7 @@ public class TypeChecker extends DepthFirstAdapter {
             }
             symbolTable.exitScope();
         }
+        symbolTable.enterScope();
     }
 
     @Override
@@ -301,8 +315,9 @@ public class TypeChecker extends DepthFirstAdapter {
         }
         if (node.getExpr() != null) {
             node.getExpr().apply(this);
-            if (!isBoolType(typeTable.get(node.getExpr()))) {
-                callTypeCheckException(node.getExpr(), "If-Else statement - condition must evaluate bool type");
+            PTypeExpr type = typeTable.get(node.getExpr());
+            if (!isBoolType(type)) {
+                callTypeCheckException(node.getExpr(), "Condition expression not evaluate to bool type");
             }
         }
     }
@@ -310,6 +325,7 @@ public class TypeChecker extends DepthFirstAdapter {
     /* Type check swtich statement */
     @Override
     public void caseASwitchStmt(ASwitchStmt node) {
+        symbolTable.enterScope();
         if (node.getStmt() != null) {
             node.getStmt().apply(this);
         }
@@ -324,6 +340,7 @@ public class TypeChecker extends DepthFirstAdapter {
             }
             symbolTable.exitScope();
         }
+        symbolTable.exitScope();
     }
 
     @Override
@@ -343,19 +360,22 @@ public class TypeChecker extends DepthFirstAdapter {
     public void caseAExprsCaseCondition(AExprsCaseCondition node) {
         if (((ASwitchStmt) node.parent().parent()).getExpr() != null) {
             PExpr expr = ((ASwitchStmt) node.parent().parent()).getExpr();
+            PTypeExpr exprType = typeTable.get(expr);
             List<PExpr> copy = new ArrayList<PExpr>(node.getExpr());
             for (PExpr e : copy) {
                 e.apply(this);
-                if (!isSameType(typeTable.get(expr), typeTable.get(e))) {
-                    callTypeCheckException(e, "Switch statement - case expression type does not match");
+                PTypeExpr type = typeTable.get(e);
+                if (!isSameType(exprType, type)) {
+                    callTypeCheckException(e, "Case expression mis-matched with switch expression");
                 }
             }
         } else {
             List<PExpr> copy = new ArrayList<PExpr>(node.getExpr());
             for (PExpr e : copy) {
                 e.apply(this);
-                if (!isBoolType(typeTable.get(e))) {
-                    callTypeCheckException(e, "Switch statement - case expression must evaluate to bool type");
+                PTypeExpr type = typeTable.get(e);
+                if (!isBoolType(type)) {
+                    callTypeCheckException(e, "Case expression not evaluated to bool type");
                 }
             }
         }
@@ -369,13 +389,15 @@ public class TypeChecker extends DepthFirstAdapter {
     /* Type check loop (for & while) statements */
     @Override
     public void caseAForLoopStmt(AForLoopStmt node) {
+        symbolTable.enterScope();
         if (node.getInit() != null) {
             node.getInit().apply(this);
         }
         if (node.getExpr() != null) {
             node.getExpr().apply(this);
-            if (!isBoolType(typeTable.get(node.getExpr()))) {
-                callTypeCheckException(node.getExpr(), "For loop statement - loop expression must evaluate to bool type");
+            PTypeExpr type = typeTable.get(node.getExpr());
+            if (!isBoolType(type)) {
+                callTypeCheckException(node.getExpr(), "Loop expression not evaluated to bool type");
             }
         }
         if (node.getEnd() != null) {
@@ -389,14 +411,16 @@ public class TypeChecker extends DepthFirstAdapter {
             }
             symbolTable.exitScope();
         }
+        symbolTable.exitScope();
     }
 
     @Override
     public void caseAWhileLoopStmt(AWhileLoopStmt node) {
         if (node.getExpr() != null) {
             node.getExpr().apply(this);
-            if (!isBoolType(typeTable.get(node.getExpr()))) {
-                callTypeCheckException(node.getExpr(), "For loop statement - loop expression mush evaluate to bool type");
+            PTypeExpr type = typeTable.get(node.getExpr());
+            if (!isBoolType(type)) {
+                callTypeCheckException(node.getExpr(), "Loop expression not evaluated to bool type");
             }
         }
         {
@@ -422,8 +446,11 @@ public class TypeChecker extends DepthFirstAdapter {
             }
         } else if (isStringType(left) && isStringType(right)) {
             typeTable.put(node, new AStringTypeExpr());
-        } else {
+        } else if (isOrderedType(left) && isOrderedType(right)) {
             callTypeCheckException(node.getLeft(), "Binary operator '+' has miss-matched operands");
+        } else {
+            Node errorNode = !isOrderedType(left) ? node.getLeft() : node.getRight();
+            callTypeCheckException(errorNode, "Binary operator '+' not defined for non-numeric / non-string");
         }
     }
 
@@ -433,12 +460,12 @@ public class TypeChecker extends DepthFirstAdapter {
         PTypeExpr right = typeTable.get(node.getRight());
         if (!isNumericType(left) || !isNumericType(right)) {
             Node errorNode = !isNumericType(left) ? node.getLeft() : node.getRight();
-            callTypeCheckException(errorNode, "Binary operator '-' can only be applied to numeric");
+            callTypeCheckException(errorNode, "Binary operator '-' not defined for non-numeric");
         }
-        if (isFloatType(left) || isFloatType(right)) {
-            typeTable.put(node, new AFloatTypeExpr());
-        } else {
+        if (isIntType(left) && isIntType(right)) {
             typeTable.put(node, new AIntTypeExpr());
+        } else {
+            typeTable.put(node, new AFloatTypeExpr());
         }
     }
 
@@ -448,12 +475,12 @@ public class TypeChecker extends DepthFirstAdapter {
         PTypeExpr right = typeTable.get(node.getRight());
         if (!isNumericType(left) || !isNumericType(right)) {
             Node errorNode = !isNumericType(left) ? node.getLeft() : node.getRight();
-            callTypeCheckException(errorNode, "Binary operator '*' can only be applied to numeric");
+            callTypeCheckException(errorNode, "Binary operator '*' not defined for non-numeric");
         }
-        if (isFloatType(left) || isFloatType(right)) {
-            typeTable.put(node, new AFloatTypeExpr());
-        } else {
+        if (isIntType(left) && isIntType(right)) {
             typeTable.put(node, new AIntTypeExpr());
+        } else {
+            typeTable.put(node, new AFloatTypeExpr());
         }
     }
 
@@ -463,12 +490,12 @@ public class TypeChecker extends DepthFirstAdapter {
         PTypeExpr right = typeTable.get(node.getRight());
         if (!isNumericType(left) || !isNumericType(right)) {
             Node errorNode = !isNumericType(left) ? node.getLeft() : node.getRight();
-            callTypeCheckException(errorNode, "Binary operator '/' can only be applied to numeric");
+            callTypeCheckException(errorNode, "Binary operator '/' not defined for non-numeric");
         }
-        if (isFloatType(left) || isFloatType(right)) {
-            typeTable.put(node, new AFloatTypeExpr());
-        } else {
+        if (isIntType(left) && isIntType(right)) {
             typeTable.put(node, new AIntTypeExpr());
+        } else {
+            typeTable.put(node, new AFloatTypeExpr());
         }
     }
 
@@ -477,8 +504,8 @@ public class TypeChecker extends DepthFirstAdapter {
         PTypeExpr left = typeTable.get(node.getLeft());
         PTypeExpr right = typeTable.get(node.getRight());
         if (!isIntType(left) || !isIntType(right)) {
-            Node errorNode = !isNumericType(left) ? node.getLeft() : node.getRight();
-            callTypeCheckException(errorNode, "Binary operator '%' can only be applied to integer");
+            Node errorNode = !isIntType(left) ? node.getLeft() : node.getRight();
+            callTypeCheckException(errorNode, "Binary operator '%' not defined for non-int");
         }
         typeTable.put(node, new AIntTypeExpr());
     }
@@ -490,7 +517,7 @@ public class TypeChecker extends DepthFirstAdapter {
         PTypeExpr right = typeTable.get(node.getRight());
         if (!isIntType(left) || !isIntType(right)) {
             Node errorNode = !isIntType(left) ? node.getLeft() : node.getRight();
-            callTypeCheckException(errorNode, "Binary operator '&' can only be applied to integer");
+            callTypeCheckException(errorNode, "Binary operator '&' not defined for non-int");
         }
         typeTable.put(node, new AIntTypeExpr());
     }
@@ -501,7 +528,7 @@ public class TypeChecker extends DepthFirstAdapter {
         PTypeExpr right = typeTable.get(node.getRight());
         if (!isIntType(left) || !isIntType(right)) {
             Node errorNode = !isIntType(left) ? node.getLeft() : node.getRight();
-            callTypeCheckException(errorNode, "Binary operator '|' can only be applied to integer");
+            callTypeCheckException(errorNode, "Binary operator '|' not defined for non-int");
         }
         typeTable.put(node, new AIntTypeExpr());
     }
@@ -512,7 +539,7 @@ public class TypeChecker extends DepthFirstAdapter {
         PTypeExpr right = typeTable.get(node.getRight());
         if (!isIntType(left) || !isIntType(right)) {
             Node errorNode = !isIntType(left) ? node.getLeft() : node.getRight();
-            callTypeCheckException(errorNode, "Binary operator '^' can only be applied to integer");
+            callTypeCheckException(errorNode, "Binary operator '^' not defined for non-int");
         }
         typeTable.put(node, new AIntTypeExpr());
     }
@@ -523,7 +550,7 @@ public class TypeChecker extends DepthFirstAdapter {
         PTypeExpr right = typeTable.get(node.getRight());
         if (!isIntType(left) || !isIntType(right)) {
             Node errorNode = !isIntType(left) ? node.getLeft() : node.getRight();
-            callTypeCheckException(errorNode, "Binary operator '&^' can only be applied to integer");
+            callTypeCheckException(errorNode, "Binary operator '&^' not defined for non-int");
         }
         typeTable.put(node, new AIntTypeExpr());
     }
@@ -534,7 +561,7 @@ public class TypeChecker extends DepthFirstAdapter {
         PTypeExpr right = typeTable.get(node.getRight());
         if (!isIntType(left) || !isIntType(right)) {
             Node errorNode = !isIntType(left) ? node.getLeft() : node.getRight();
-            callTypeCheckException(errorNode, "Binary operator '<<' can only be applied to integer");
+            callTypeCheckException(errorNode, "Binary operator '<<' not defined for non-int");
         }
         typeTable.put(node, new AIntTypeExpr());
     }
@@ -545,7 +572,7 @@ public class TypeChecker extends DepthFirstAdapter {
         PTypeExpr right = typeTable.get(node.getRight());
         if (!isIntType(left) || !isIntType(right)) {
             Node errorNode = !isIntType(left) ? node.getLeft() : node.getRight();
-            callTypeCheckException(errorNode, "Binary operator '>>' can only be applied to integer");
+            callTypeCheckException(errorNode, "Binary operator '>>' not defined for non-int");
         }
         typeTable.put(node, new AIntTypeExpr());
     }
