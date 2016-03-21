@@ -14,5 +14,13 @@ build: compile_grammar
 compile_grammar: clean
 	java -jar ./sablecc-3.7/lib/sablecc.jar golite.sablecc -d .
 
+test_type_valid: build
+	for f in ../programs/valid/type/*.go; do echo $$f; java golite/Main -symbol $$f; done
+
+test_type_invalid: build
+	for f in ../programs/invalid/type/*.go; do echo $$f; java golite/Main -symbol $$f; done
+
+test_type: build test_type_valid test_type_invalid
+
 clean:
 	rm -rf golite/*.class golite/lexer golite/parser golite/node golite/analysis
