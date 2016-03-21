@@ -368,6 +368,8 @@ Productions
         | {expr_only_wt_semi} switch semi expr lbrace case_block* rbrace
             {-> New stmt.switch(Null, expr, [case_block])}
         | {none} switch lbrace case_block* rbrace
+            {-> New stmt.switch(Null, Null, [case_block])}
+        | {none_wt_semi} switch semi lbrace case_block* rbrace
             {-> New stmt.switch(Null, Null, [case_block])} ;
 
     case_block {-> case_block} =
