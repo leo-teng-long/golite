@@ -1,6 +1,7 @@
 run_tests: compile_tests
-	-java -cp jars/hamcrest-core-1.3.jar:jars/junit-4.12.jar: org.junit.runner.JUnitCore test.GoLiteTestSuite
-	rm -f .pretty.go
+	-java -cp jars/hamcrest-core-1.3.jar:jars/junit-4.12.jar: org.junit.runner.JUnitCore test.GoLiteTestSuite > run_tests.log
+	less run_tests.log
+	rm -f run_tests.log .pretty.go
 
 compile_tests: build_tests
 	javac -cp jars/junit-4.12.jar: test/*.java
