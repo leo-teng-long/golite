@@ -2,9 +2,15 @@
 Automatic test generator for the GoLite compiler.
 """
 
+import logging
 import os
 import re
 import sys
+
+
+# Configure logging.
+logging.basicConfig(format="%(levelname)s: [%(asctime)s] %(message)s",
+	level=logging.INFO)
 
 
 # Path to programs directory.
@@ -193,10 +199,12 @@ def create_test(test_name, progs_dirpath, tpe, out_path):
 
 	# Load filepaths to tests to ignore, if the test ignore file exists.
 	if os.path.exists(TEST_IGNORE_PATH):
+		logging.info("Reading test ignore file from %s..." % TEST_IGNORE_PATH)
 		with open(TEST_IGNORE_PATH) as fin:
 			tests_to_ignore = set([l.strip() for l in fin
 				if not l.startswith('#')])
 	else:
+		logging.info("No test ignore file at %s." % TEST_IGNORE_PATH)
 		tests_to_ignore = set()
 
 	# List of test method strings.
@@ -239,14 +247,17 @@ def main():
 	test_method_strs = []
 
 	# Create the parser test for syntactically valid programs.
+	logging.info("Creating parser test for syntactically valid programs...")
 	create_test(OUT_VALID_PARSE_TNAME, VALID_PROGS_DIRPATH, 'valid_parse',
 		os.path.join(OUT_TEST_DIRPATH, '%s.java' % OUT_VALID_PARSE_TNAME))
 
 	# Create the parser test for syntactically invalid programs.
+	logging.info("Creating parser test for syntactically invalid programs...")
 	create_test(OUT_INVALID_PARSE_TNAME, INVALID_PROGS_DIRPATH, 'invalid_parse',
 		os.path.join(OUT_TEST_DIRPATH, '%s.java' % OUT_INVALID_PARSE_TNAME))
 
 	# Create the pretty printer test.
+	logging.info("Creating pretty printer tests...")
 	create_test(OUT_PRETTY_TNAME, VALID_PROGS_DIRPATH, 'pretty',
 		os.path.join(OUT_TEST_DIRPATH, '%s.java' % OUT_PRETTY_TNAME))
 
