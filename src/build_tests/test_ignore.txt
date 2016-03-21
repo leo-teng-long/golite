@@ -1,0 +1,3 @@
+../programs/valid/syntax/intervening_empty_multi-line_comments.go
+../programs/valid/syntax/other_groups/04/tricky-comments2.go
+../programs/valid/syntax/other_groups/04/fact.go

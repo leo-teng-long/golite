@@ -29,6 +29,10 @@ SUITE_TEMPALTE_FPATH = os.path.join("build_tests",
 	"GoLiteTestSuiteTemplate.java")
 
 
+# Filepath to test ignore file, listing filepaths to tests to ignore.
+TEST_IGNORE_PATH = os.path.join("build_tests", "test_ignore.txt")
+
+
 # Assert method names.
 ASSERT_TRUE = "assertTrue"
 ASSERT_FALSE = "assertFalse"
@@ -187,6 +191,10 @@ def create_test(test_name, progs_dirpath, tpe, out_path):
 	@param out_path - Output file to test source file
 	"""
 
+	# Load filepaths to tests to ignore.
+	with open(TEST_IGNORE_PATH) as fin:
+		tests_to_ignore = set([l.strip() for l in fin])
+
 	# List of test method strings.
 	test_method_strs = []
 
@@ -198,8 +206,9 @@ def create_test(test_name, progs_dirpath, tpe, out_path):
 
 			test_prog_path = os.path.join(parent, fname)
 
-			test_method_strs.append(create_test_method_str(fname,
-				test_prog_path, tpe))
+			if not test_prog_path in tests_to_ignore:
+				test_method_strs.append(create_test_method_str(fname,
+					test_prog_path, tpe))
 
 	# Read the test template source.
 	with open(TEST_CLASS_TEMPALTE_FPATH) as fin:
