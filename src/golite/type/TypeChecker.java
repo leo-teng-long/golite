@@ -931,7 +931,33 @@ public class TypeChecker extends DepthFirstAdapter {
     }
 
     private boolean isSameType(PTypeExpr node1, PTypeExpr node2) {
-        return node1.getClass() == node2.getClass();
+        boolean isSameType = node1.getClass() == node2.getClass();
+        if (isSameType && node1 instanceof ACustomTypeExpr) {
+            return isSameCustomType((ACustomTypeExpr) node1, (ACustomTypeExpr) node2);
+        }
+        return isSameType;
+    }
+
+    private boolean isSameCustomType(ACustomTypeExpr node1, ACustomTypeExpr node2)
+    {
+        PTypeExpr t1 = getType(node1);
+        PTypeExpr t2 = getType(node2);
+        if (isSameType(t1, t2))
+        {
+            if (t1 instanceof AStructTypeExpr)
+            {
+                return isSameStruct((AStructTypeExpr) t1, (AStructTypeExpr) t2);
+            }
+            return true;
+        }
+        return false;
+    }
+
+    private boolean isSameStruct(AStructTypeExpr node1, AStructTypeExpr node2)
+    {
+        String name1 = ((ASpecTypeSpec) node1.parent()).getId().getText();
+        String name2 = ((ASpecTypeSpec) node2.parent()).getId().getText();
+        return name1.equals(name2);
     }
 
     private boolean isAssignable(PExpr node) {
@@ -1058,7 +1084,6 @@ public class TypeChecker extends DepthFirstAdapter {
             int length = ids.size();
             for(int i=0; i < length; i++)
             {
-                System.out.println(exprs.get(i).getClass());
                 symbolTable.addSymbol(ids.get(i).getText(), node);
                 typeTable.put(ids.get(i), getType(exprs.get(i)));
             }
@@ -1140,16 +1165,6 @@ public class TypeChecker extends DepthFirstAdapter {
         return 0;
     }
 
-    private boolean isSameStruct(AStructTypeExpr node1, AStructTypeExpr node2)
-    {
-        String name1 = ((ASpecTypeSpec) node1.parent()).getId().getText();
-        String name2 = ((ASpecTypeSpec) node2.parent()).getId().getText();
-        System.out.println(name1);
-        System.out.println(name2);
-        System.out.println(name1.equals(name2));
-        return name1.equals(name2);
-    }
-
     @Override
     public void outAAppendExpr(AAppendExpr node)
     {
@@ -1170,9 +1185,7 @@ public class TypeChecker extends DepthFirstAdapter {
                 }
                 else if (sliceElementType instanceof ACustomTypeExpr)
                 {
-                    PTypeExpr sliceStructType = getType(sliceElementType);
-                    PTypeExpr exprStructType = getType(exprType);
-                    if (sliceStructType instanceof AStructTypeExpr && !isSameStruct((AStructTypeExpr) sliceStructType, (AStructTypeExpr) exprStructType))
+                    if (!isSameCustomType((ACustomTypeExpr) sliceElementType, (ACustomTypeExpr) exprType))
                     {
                         callTypeCheckException(node, "Tried to append mismatching structs");
                     }
