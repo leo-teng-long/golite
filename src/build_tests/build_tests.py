@@ -191,9 +191,12 @@ def create_test(test_name, progs_dirpath, tpe, out_path):
 	@param out_path - Output file to test source file
 	"""
 
-	# Load filepaths to tests to ignore.
-	with open(TEST_IGNORE_PATH) as fin:
-		tests_to_ignore = set([l.strip() for l in fin])
+	# Load filepaths to tests to ignore, if the test ignore file exists.
+	if os.path.exists(TEST_IGNORE_PATH):
+		with open(TEST_IGNORE_PATH) as fin:
+			tests_to_ignore = set([l.strip() for l in fin])
+	else:
+		tests_to_ignore = set()
 
 	# List of test method strings.
 	test_method_strs = []
