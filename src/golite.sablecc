@@ -418,7 +418,9 @@ Productions
         | {slice} lsquare rsquare type_expr
             {-> New type_expr.slice(type_expr.type_expr)}
         | {struct} struct lbrace struct_sub_stmt* rbrace
-            {-> New type_expr.struct([struct_sub_stmt.struct_sub])};
+            {-> New type_expr.struct([struct_sub_stmt.struct_sub])}
+        | {paren} lparen type_expr rparen
+            {-> type_expr};
 
     prim_type {-> type_expr} =
           {bool} bool
