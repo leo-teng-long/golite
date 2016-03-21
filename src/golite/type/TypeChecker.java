@@ -600,9 +600,12 @@ public class TypeChecker extends DepthFirstAdapter {
     public void outAEqExpr(AEqExpr node) {
         PTypeExpr left = typeTable.get(node.getLeft());
         PTypeExpr right = typeTable.get(node.getRight());
+        // ##################################################
+        // Array & Slice are comparable (not yet implemented)
+        // ##################################################
         if (!isComparableType(left) || !isComparableType(right)) {
             Node errorNode = !isComparableType(left) ? node.getLeft() : node.getRight();
-            callTypeCheckException(errorNode, "Relational operator '==' can only be applied to comparable");
+            callTypeCheckException(errorNode, "Relational operator '==' not defined for non-comparable");
         }
         typeTable.put(node, new ABoolTypeExpr());
     }
@@ -611,9 +614,12 @@ public class TypeChecker extends DepthFirstAdapter {
     public void outANeqExpr(ANeqExpr node) {
         PTypeExpr left = typeTable.get(node.getLeft());
         PTypeExpr right = typeTable.get(node.getRight());
+        // ##################################################
+        // Array & Slice are comparable (not yet implemented)
+        // ##################################################
         if (!isComparableType(left) || !isComparableType(right)) {
             Node errorNode = !isComparableType(left) ? node.getLeft() : node.getRight();
-            callTypeCheckException(errorNode, "Relational operator '!=' can only be applied to comparable");
+            callTypeCheckException(errorNode, "Relational operator '!=' not defined for non-comparable");
         }
         typeTable.put(node, new ABoolTypeExpr());
     }
@@ -624,7 +630,7 @@ public class TypeChecker extends DepthFirstAdapter {
         PTypeExpr right = typeTable.get(node.getRight());
         if (!isOrderedType(left) || !isOrderedType(right)) {
             Node errorNode = !isOrderedType(left) ? node.getLeft() : node.getRight();
-            callTypeCheckException(errorNode, "Relational operator '<' can only be applied to ordered");
+            callTypeCheckException(errorNode, "Relational operator '<' not defined for non-ordered");
         }
         typeTable.put(node, new ABoolTypeExpr());
     }
@@ -635,7 +641,7 @@ public class TypeChecker extends DepthFirstAdapter {
         PTypeExpr right = typeTable.get(node.getRight());
         if (!isOrderedType(left) || !isOrderedType(right)) {
             Node errorNode = !isOrderedType(left) ? node.getLeft() : node.getRight();
-            callTypeCheckException(errorNode, "Relational operator '<=' can only be applied to ordered");
+            callTypeCheckException(errorNode, "Relational operator '<=' not defined for non-ordered");
         }
         typeTable.put(node, new ABoolTypeExpr());
     }
@@ -646,7 +652,7 @@ public class TypeChecker extends DepthFirstAdapter {
         PTypeExpr right = typeTable.get(node.getRight());
         if (!isOrderedType(left) || !isOrderedType(right)) {
             Node errorNode = !isOrderedType(left) ? node.getLeft() : node.getRight();
-            callTypeCheckException(errorNode, "Relational operator '>' can only be applied to ordered");
+            callTypeCheckException(errorNode, "Relational operator '>' not defined for non-ordered");
         }
         typeTable.put(node, new ABoolTypeExpr());
     }
@@ -657,7 +663,7 @@ public class TypeChecker extends DepthFirstAdapter {
         PTypeExpr right = typeTable.get(node.getRight());
         if (!isOrderedType(left) || !isOrderedType(right)) {
             Node errorNode = !isOrderedType(left) ? node.getLeft() : node.getRight();
-            callTypeCheckException(errorNode, "Relational operator '>=' can only be applied to ordered");
+            callTypeCheckException(errorNode, "Relational operator '>=' not defined for non-ordered");
         }
         typeTable.put(node, new ABoolTypeExpr());
     }
@@ -669,7 +675,7 @@ public class TypeChecker extends DepthFirstAdapter {
         PTypeExpr right = typeTable.get(node.getRight());
         if (!isBoolType(left) || !isBoolType(right)) {
             Node errorNode = !isBoolType(left) ? node.getLeft() : node.getRight();
-            callTypeCheckException(errorNode, "Conditional operator '&&' can only be applied to boolean");
+            callTypeCheckException(errorNode, "Conditional operator '&&' not defined for non-boolean");
         }
         typeTable.put(node, new ABoolTypeExpr());
     }
@@ -680,7 +686,7 @@ public class TypeChecker extends DepthFirstAdapter {
         PTypeExpr right = typeTable.get(node.getRight());
         if (!isBoolType(left) || !isBoolType(right)) {
             Node errorNode = !isBoolType(left) ? node.getLeft() : node.getRight();
-            callTypeCheckException(errorNode, "Conditional operator '||' can only be applied to boolean");
+            callTypeCheckException(errorNode, "Conditional operator '||' not defined for non-boolean");
         }
         typeTable.put(node, new ABoolTypeExpr());
     }
@@ -689,7 +695,7 @@ public class TypeChecker extends DepthFirstAdapter {
     @Override
     public void outAVariableExpr(AVariableExpr node) {
         PTypeExpr type = getType(node.getId());
-        typeTable.put(type, type);
+        typeTable.put(node, type);
     }
 
     /* Type check numeric literals */
@@ -755,15 +761,15 @@ public class TypeChecker extends DepthFirstAdapter {
     }
 
     public boolean isComparableType(PTypeExpr node) {
-        return isOrderedType(node) || isBoolType(node);
-    }
-
-    private boolean isStructType(PTypeExpr node) {
-        return node instanceof AStructTypeExpr;
+        return isBoolType(node) || isOrderedType(node);
     }
 
     private boolean isBaseType(PTypeExpr node) {
         return isBoolType(node) || isNumericType(node) || isStringType(node);
+    }
+
+    private boolean isStructType(PTypeExpr node) {
+        return node instanceof AStructTypeExpr;
     }
 
     private boolean isSameType(PTypeExpr node1, PTypeExpr node2) {
