@@ -72,9 +72,6 @@ public class TypeChecker extends DepthFirstAdapter {
         if (!isSameType(lhs, rhs)) {
             callTypeCheckException(node.getLhs(), "Op-assign '+=': mismatched operand type");
         }
-        if (isRuneType(lhs)) {
-            callTypeCheckException(node.getLhs(), "Op-assign '+=': cannot assign to rune type expression");
-        }
         if (!isOrderedType(lhs) || !isOrderedType(rhs)) {
             Node errorNode = !isOrderedType(lhs) ? node.getLhs() : node.getRhs();
             callTypeCheckException(errorNode, "Op-assign '+=': not defined for non-numeric or non-string");
@@ -92,9 +89,6 @@ public class TypeChecker extends DepthFirstAdapter {
         if (!isSameType(lhs, rhs)) {
             callTypeCheckException(node.getLhs(), "Op-assign '-=': mismatched operand type");
         }
-        if (isRuneType(lhs)) {
-            callTypeCheckException(node.getLhs(), "Op-assign '-=': cannot assign to rune type expression");
-        }
         if (!isNumericType(lhs) || !isNumericType(rhs)) {
             Node errorNode = !isNumericType(lhs) ? node.getLhs() : node.getRhs();
             callTypeCheckException(errorNode, "Op-assign '-=': not defined for non-numeric");
@@ -111,9 +105,6 @@ public class TypeChecker extends DepthFirstAdapter {
         if (!isSameType(lhs, rhs)) {
             callTypeCheckException(node.getLhs(), "Op-assign '*=': mismatched operand type");
         }
-        if (isRuneType(lhs)) {
-            callTypeCheckException(node.getLhs(), "Op-assign '*=': cannot assign to rune type expression");
-        }
         if (!isNumericType(lhs) || !isNumericType(rhs)) {
             Node errorNode = !isNumericType(lhs) ? node.getLhs() : node.getRhs();
             callTypeCheckException(errorNode, "Op-assign '*=': not defined for non-numeric");
@@ -129,9 +120,6 @@ public class TypeChecker extends DepthFirstAdapter {
         PTypeExpr rhs = typeTable.get(node.getRhs());
         if (!isSameType(lhs, rhs)) {
             callTypeCheckException(node.getLhs(), "Op-assign '/=': mismatched operand type");
-        }
-        if (isRuneType(lhs)) {
-            callTypeCheckException(node.getLhs(), "Op-assign '/=': cannot assign to rune type expression");
         }
         if (!isNumericType(lhs) || !isNumericType(rhs)) {
             Node errorNode = !isNumericType(lhs) ? node.getLhs() : node.getRhs();
@@ -150,9 +138,6 @@ public class TypeChecker extends DepthFirstAdapter {
         if (!isSameType(lhs, rhs)) {
             callTypeCheckException(node.getLhs(), "Op-assign '%=': mismatched operand type");
         }
-        if (isRuneType(lhs)) {
-            callTypeCheckException(node.getLhs(), "Op-assign '%=': cannot assign to rune type expression");
-        }
         if (!isIntOrRuneType(lhs) || !isIntOrRuneType(rhs)) {
             Node errorNode = !isIntOrRuneType(lhs) ? node.getLhs() : node.getRhs();
             callTypeCheckException(errorNode, "Op-assign '%=': not defined for non-integer");
@@ -168,9 +153,6 @@ public class TypeChecker extends DepthFirstAdapter {
         PTypeExpr rhs = typeTable.get(node.getRhs());
         if (!isSameType(lhs, rhs)) {
             callTypeCheckException(node.getLhs(), "Op-assign '&=': mismatched operand type");
-        }
-        if (isRuneType(lhs)) {
-            callTypeCheckException(node.getLhs(), "Op-assign '&=': cannot assign to rune type expression");
         }
         if (!isIntOrRuneType(lhs) || !isIntOrRuneType(rhs)) {
             Node errorNode = !isIntOrRuneType(lhs) ? node.getLhs() : node.getRhs();
@@ -188,9 +170,6 @@ public class TypeChecker extends DepthFirstAdapter {
         if (!isSameType(lhs, rhs)) {
             callTypeCheckException(node.getLhs(), "Op-assign '|=': mismatched operand type");
         }
-        if (isRuneType(lhs)) {
-            callTypeCheckException(node.getLhs(), "Op-assign '|=': cannot assign to rune type expression");
-        }
         if (!isIntOrRuneType(lhs) || !isIntOrRuneType(rhs)) {
             Node errorNode = !isIntOrRuneType(lhs) ? node.getLhs() : node.getRhs();
             callTypeCheckException(errorNode, "Op-assign '|=': not defined for non-integer");
@@ -206,9 +185,6 @@ public class TypeChecker extends DepthFirstAdapter {
         PTypeExpr rhs = typeTable.get(node.getRhs());
         if (!isSameType(lhs, rhs)) {
             callTypeCheckException(node.getLhs(), "Op-assign '^=': mismatched operand type");
-        }
-        if (isRuneType(lhs)) {
-            callTypeCheckException(node.getLhs(), "Op-assign '^=': cannot assign to rune type expression");
         }
         if (!isIntOrRuneType(lhs) || !isIntOrRuneType(rhs)) {
             Node errorNode = !isIntOrRuneType(lhs) ? node.getLhs() : node.getRhs();
@@ -226,9 +202,6 @@ public class TypeChecker extends DepthFirstAdapter {
         if (!isSameType(lhs, rhs)) {
             callTypeCheckException(node.getLhs(), "Op-assign '&^=': mismatched operand type");
         }
-        if (isRuneType(lhs)) {
-            callTypeCheckException(node.getLhs(), "Op-assign '&^=': cannot assign to rune type expression");
-        }
         if (!isIntOrRuneType(lhs) || !isIntOrRuneType(rhs)) {
             Node errorNode = !isIntOrRuneType(lhs) ? node.getLhs() : node.getRhs();
             callTypeCheckException(errorNode, "Op-assign '&^=': not defined for non-integer");
@@ -245,9 +218,6 @@ public class TypeChecker extends DepthFirstAdapter {
         if (!isSameType(lhs, rhs)) {
             callTypeCheckException(node.getLhs(), "Op-assign '<<=': mismatched operand type");
         }
-        if (isRuneType(lhs)) {
-            callTypeCheckException(node.getLhs(), "Op-assign '<<=': cannot assign to rune type expression");
-        }
         if (!isIntOrRuneType(lhs) || !isIntOrRuneType(rhs)) {
             Node errorNode = !isIntOrRuneType(lhs) ? node.getLhs() : node.getRhs();
             callTypeCheckException(errorNode, "Op-assign '<<=': not defined for non-integer");
@@ -263,9 +233,6 @@ public class TypeChecker extends DepthFirstAdapter {
         PTypeExpr rhs = typeTable.get(node.getRhs());
         if (!isSameType(lhs, rhs)) {
             callTypeCheckException(node.getLhs(), "Op-assign '>>=': mismatched operand type");
-        }
-        if (isRuneType(lhs)) {
-            callTypeCheckException(node.getLhs(), "Op-assign '>>=': cannot assign to rune type expression");
         }
         if (!isIntOrRuneType(lhs) || !isIntOrRuneType(rhs)) {
             Node errorNode = !isIntOrRuneType(lhs) ? node.getLhs() : node.getRhs();
@@ -338,7 +305,7 @@ public class TypeChecker extends DepthFirstAdapter {
         AFuncTopDec funcDec = getParentFuncDec(node);
         if (node.getExpr() != null) {
             if (funcDec.getTypeExpr() == null) {
-                callTypeCheckException(node.getExpr(), "Declared function has no return type");
+                callTypeCheckException(node.getExpr(), "Return: declared function has no return type");
             }
             node.getExpr().apply(this);
             PTypeExpr type = typeTable.get(node.getExpr());
@@ -346,11 +313,11 @@ public class TypeChecker extends DepthFirstAdapter {
             // (numeric return type might need special attention)
             // ##################################################
             if (!isSameType(type, funcDec.getTypeExpr())) {
-                callTypeCheckException(node.getExpr(), "Expression returned not matched function return type");
+                callTypeCheckException(node.getExpr(), "Return: expression returned not matched function return type");
             }
         } else {
             if (funcDec.getTypeExpr() != null) {
-                callTypeCheckException(funcDec, "Declared function cannot return void");
+                callTypeCheckException(funcDec, "Return: declared function cannot return void");
             }
         }
     }
@@ -413,7 +380,7 @@ public class TypeChecker extends DepthFirstAdapter {
             node.getExpr().apply(this);
             PTypeExpr type = typeTable.get(node.getExpr());
             if (!isBoolType(type)) {
-                callTypeCheckException(node.getExpr(), "Condition expression not evaluate to bool type");
+                callTypeCheckException(node.getExpr(), "If-else: condition expression not evaluated to bool type");
             }
         }
     }
@@ -462,7 +429,7 @@ public class TypeChecker extends DepthFirstAdapter {
                 e.apply(this);
                 PTypeExpr type = typeTable.get(e);
                 if (!isSameType(exprType, type)) {
-                    callTypeCheckException(e, "Case expression mis-matched with switch expression");
+                    callTypeCheckException(e, "Switch: case expression mismatched with switch expression");
                 }
             }
         } else {
@@ -471,7 +438,7 @@ public class TypeChecker extends DepthFirstAdapter {
                 e.apply(this);
                 PTypeExpr type = typeTable.get(e);
                 if (!isBoolType(type)) {
-                    callTypeCheckException(e, "Case expression not evaluated to bool type");
+                    callTypeCheckException(e, "Switch: case expression not evaluated to bool type");
                 }
             }
         }
@@ -493,7 +460,7 @@ public class TypeChecker extends DepthFirstAdapter {
             node.getExpr().apply(this);
             PTypeExpr type = typeTable.get(node.getExpr());
             if (!isBoolType(type)) {
-                callTypeCheckException(node.getExpr(), "Loop expression not evaluated to bool type");
+                callTypeCheckException(node.getExpr(), "For: loop expression not evaluated to bool type");
             }
         }
         if (node.getEnd() != null) {
@@ -516,7 +483,7 @@ public class TypeChecker extends DepthFirstAdapter {
             node.getExpr().apply(this);
             PTypeExpr type = typeTable.get(node.getExpr());
             if (!isBoolType(type)) {
-                callTypeCheckException(node.getExpr(), "Loop expression not evaluated to bool type");
+                callTypeCheckException(node.getExpr(), "For: loop expression not evaluated to bool type");
             }
         }
         {
@@ -534,19 +501,19 @@ public class TypeChecker extends DepthFirstAdapter {
     public void outAAddExpr(AAddExpr node) {
         PTypeExpr left = typeTable.get(node.getLeft());
         PTypeExpr right = typeTable.get(node.getRight());
-        if (isNumericType(left) && isNumericType(right)) {
-            if (isIntType(left) && isIntType(right)) {
-                typeTable.put(node, new AIntTypeExpr());
-            } else {
-                typeTable.put(node, new AFloatTypeExpr());
-            }
-        } else if (isStringType(left) && isStringType(right)) {
-            typeTable.put(node, new AStringTypeExpr());
-        } else if (isOrderedType(left) && isOrderedType(right)) {
-            callTypeCheckException(node.getLeft(), "Binary operator '+' has miss-matched operands");
-        } else {
+        if (!isSameType(left, right)) {
+            callTypeCheckException(node.getLeft(), "Binary '+': mismatched operand type");
+        }
+        if (!isOrderedType(left) || !isOrderedType(right)) {
             Node errorNode = !isOrderedType(left) ? node.getLeft() : node.getRight();
-            callTypeCheckException(errorNode, "Binary operator '+' not defined for non-numeric / non-string");
+            callTypeCheckException(errorNode, "Binary '+': not defined for non-numeric or non-string");
+        }
+        if (isIntOrRuneType(left)) {
+            typeTable.put(node, new AIntTypeExpr());
+        } else if (isFloatType(left)) {
+            typeTable.put(node, new AFloatTypeExpr());
+        } else {
+            typeTable.put(node, new AStringTypeExpr());
         }
     }
 
@@ -554,11 +521,14 @@ public class TypeChecker extends DepthFirstAdapter {
     public void outASubtractExpr(ASubtractExpr node) {
         PTypeExpr left = typeTable.get(node.getLeft());
         PTypeExpr right = typeTable.get(node.getRight());
+        if (!isSameType(left, right)) {
+            callTypeCheckException(node.getLeft(), "Binary '-': mismatched operand type");
+        }
         if (!isNumericType(left) || !isNumericType(right)) {
             Node errorNode = !isNumericType(left) ? node.getLeft() : node.getRight();
-            callTypeCheckException(errorNode, "Binary operator '-' not defined for non-numeric");
+            callTypeCheckException(errorNode, "Binary '-': not defined for non-numeric");
         }
-        if (isIntType(left) && isIntType(right)) {
+        if (isIntOrRuneType(left)) {
             typeTable.put(node, new AIntTypeExpr());
         } else {
             typeTable.put(node, new AFloatTypeExpr());
@@ -569,11 +539,14 @@ public class TypeChecker extends DepthFirstAdapter {
     public void outAMultExpr(AMultExpr node) {
         PTypeExpr left = typeTable.get(node.getLeft());
         PTypeExpr right = typeTable.get(node.getRight());
+        if (!isSameType(left, right)) {
+            callTypeCheckException(node.getLeft(), "Binary '*': mismatched operand type");
+        }
         if (!isNumericType(left) || !isNumericType(right)) {
             Node errorNode = !isNumericType(left) ? node.getLeft() : node.getRight();
-            callTypeCheckException(errorNode, "Binary operator '*' not defined for non-numeric");
+            callTypeCheckException(errorNode, "Binary '*': not defined for non-numeric");
         }
-        if (isIntType(left) && isIntType(right)) {
+        if (isIntOrRuneType(left)) {
             typeTable.put(node, new AIntTypeExpr());
         } else {
             typeTable.put(node, new AFloatTypeExpr());
@@ -584,11 +557,14 @@ public class TypeChecker extends DepthFirstAdapter {
     public void outADivExpr(ADivExpr node) {
         PTypeExpr left = typeTable.get(node.getLeft());
         PTypeExpr right = typeTable.get(node.getRight());
+        if (!isSameType(left, right)) {
+            callTypeCheckException(node.getLeft(), "Binary '/': mismatched operand type");
+        }
         if (!isNumericType(left) || !isNumericType(right)) {
             Node errorNode = !isNumericType(left) ? node.getLeft() : node.getRight();
-            callTypeCheckException(errorNode, "Binary operator '/' not defined for non-numeric");
+            callTypeCheckException(errorNode, "Binary '/': not defined for non-numeric");
         }
-        if (isIntType(left) && isIntType(right)) {
+        if (isIntOrRuneType(left)) {
             typeTable.put(node, new AIntTypeExpr());
         } else {
             typeTable.put(node, new AFloatTypeExpr());
@@ -599,9 +575,12 @@ public class TypeChecker extends DepthFirstAdapter {
     public void outAModExpr(AModExpr node) {
         PTypeExpr left = typeTable.get(node.getLeft());
         PTypeExpr right = typeTable.get(node.getRight());
-        if (!isIntType(left) || !isIntType(right)) {
-            Node errorNode = !isIntType(left) ? node.getLeft() : node.getRight();
-            callTypeCheckException(errorNode, "Binary operator '%' not defined for non-int");
+        if (!isSameType(left, right)) {
+            callTypeCheckException(node.getLeft(), "Binary '%': mismatched operand type");
+        }
+        if (!isIntOrRuneType(left) || !isIntOrRuneType(right)) {
+            Node errorNode = !isIntOrRuneType(left) ? node.getLeft() : node.getRight();
+            callTypeCheckException(errorNode, "Binary '%': not defined for non-integer");
         }
         typeTable.put(node, new AIntTypeExpr());
     }
@@ -611,9 +590,12 @@ public class TypeChecker extends DepthFirstAdapter {
     public void outABitAndExpr(ABitAndExpr node) {
         PTypeExpr left = typeTable.get(node.getLeft());
         PTypeExpr right = typeTable.get(node.getRight());
-        if (!isIntType(left) || !isIntType(right)) {
-            Node errorNode = !isIntType(left) ? node.getLeft() : node.getRight();
-            callTypeCheckException(errorNode, "Binary operator '&' not defined for non-int");
+        if (!isSameType(left, right)) {
+            callTypeCheckException(node.getLeft(), "Binary '&': mismatched operand type");
+        }
+        if (!isIntOrRuneType(left) || !isIntOrRuneType(right)) {
+            Node errorNode = !isIntOrRuneType(left) ? node.getLeft() : node.getRight();
+            callTypeCheckException(errorNode, "Binary '&': not defined for non-integer");
         }
         typeTable.put(node, new AIntTypeExpr());
     }
@@ -622,9 +604,12 @@ public class TypeChecker extends DepthFirstAdapter {
     public void outABitOrExpr(ABitOrExpr node) {
         PTypeExpr left = typeTable.get(node.getLeft());
         PTypeExpr right = typeTable.get(node.getRight());
-        if (!isIntType(left) || !isIntType(right)) {
-            Node errorNode = !isIntType(left) ? node.getLeft() : node.getRight();
-            callTypeCheckException(errorNode, "Binary operator '|' not defined for non-int");
+        if (!isSameType(left, right)) {
+            callTypeCheckException(node.getLeft(), "Binary '|': mismatched operand type");
+        }
+        if (!isIntOrRuneType(left) || !isIntOrRuneType(right)) {
+            Node errorNode = !isIntOrRuneType(left) ? node.getLeft() : node.getRight();
+            callTypeCheckException(errorNode, "Binary '|': not defined for non-integer");
         }
         typeTable.put(node, new AIntTypeExpr());
     }
@@ -633,9 +618,12 @@ public class TypeChecker extends DepthFirstAdapter {
     public void outABitXorExpr(ABitXorExpr node) {
         PTypeExpr left = typeTable.get(node.getLeft());
         PTypeExpr right = typeTable.get(node.getRight());
-        if (!isIntType(left) || !isIntType(right)) {
-            Node errorNode = !isIntType(left) ? node.getLeft() : node.getRight();
-            callTypeCheckException(errorNode, "Binary operator '^' not defined for non-int");
+        if (!isSameType(left, right)) {
+            callTypeCheckException(node.getLeft(), "Binary '^': mismatched operand type");
+        }
+        if (!isIntOrRuneType(left) || !isIntOrRuneType(right)) {
+            Node errorNode = !isIntOrRuneType(left) ? node.getLeft() : node.getRight();
+            callTypeCheckException(errorNode, "Binary '^': not defined for non-integer");
         }
         typeTable.put(node, new AIntTypeExpr());
     }
@@ -644,9 +632,12 @@ public class TypeChecker extends DepthFirstAdapter {
     public void outABitClearExpr(ABitClearExpr node) {
         PTypeExpr left = typeTable.get(node.getLeft());
         PTypeExpr right = typeTable.get(node.getRight());
-        if (!isIntType(left) || !isIntType(right)) {
-            Node errorNode = !isIntType(left) ? node.getLeft() : node.getRight();
-            callTypeCheckException(errorNode, "Binary operator '&^' not defined for non-int");
+        if (!isSameType(left, right)) {
+            callTypeCheckException(node.getLeft(), "Binary '&^': mismatched operand type");
+        }
+        if (!isIntOrRuneType(left) || !isIntOrRuneType(right)) {
+            Node errorNode = !isIntOrRuneType(left) ? node.getLeft() : node.getRight();
+            callTypeCheckException(errorNode, "Binary '&^': not defined for non-integer");
         }
         typeTable.put(node, new AIntTypeExpr());
     }
@@ -655,9 +646,12 @@ public class TypeChecker extends DepthFirstAdapter {
     public void outABitLshiftExpr(ABitLshiftExpr node) {
         PTypeExpr left = typeTable.get(node.getLeft());
         PTypeExpr right = typeTable.get(node.getRight());
-        if (!isIntType(left) || !isIntType(right)) {
-            Node errorNode = !isIntType(left) ? node.getLeft() : node.getRight();
-            callTypeCheckException(errorNode, "Binary operator '<<' not defined for non-int");
+        if (!isSameType(left, right)) {
+            callTypeCheckException(node.getLeft(), "Binary '<<': mismatched operand type");
+        }
+        if (!isIntOrRuneType(left) || !isIntOrRuneType(right)) {
+            Node errorNode = !isIntOrRuneType(left) ? node.getLeft() : node.getRight();
+            callTypeCheckException(errorNode, "Binary '<<': not defined for non-integer");
         }
         typeTable.put(node, new AIntTypeExpr());
     }
@@ -666,9 +660,12 @@ public class TypeChecker extends DepthFirstAdapter {
     public void outABitRshiftExpr(ABitRshiftExpr node) {
         PTypeExpr left = typeTable.get(node.getLeft());
         PTypeExpr right = typeTable.get(node.getRight());
-        if (!isIntType(left) || !isIntType(right)) {
-            Node errorNode = !isIntType(left) ? node.getLeft() : node.getRight();
-            callTypeCheckException(errorNode, "Binary operator '>>' not defined for non-int");
+        if (!isSameType(left, right)) {
+            callTypeCheckException(node.getLeft(), "Binary '>>': mismatched operand type");
+        }
+        if (!isIntOrRuneType(left) || !isIntOrRuneType(right)) {
+            Node errorNode = !isIntOrRuneType(left) ? node.getLeft() : node.getRight();
+            callTypeCheckException(errorNode, "Binary '>>': not defined for non-integer");
         }
         typeTable.put(node, new AIntTypeExpr());
     }
@@ -678,9 +675,9 @@ public class TypeChecker extends DepthFirstAdapter {
     public void outAPosExpr(APosExpr node) {
         PTypeExpr type = typeTable.get(node.getExpr());
         if (!isNumericType(type)) {
-            callTypeCheckException(node.getExpr(), "Unary operator '+' not defined for non-numeric type");
+            callTypeCheckException(node.getExpr(), "Unary '+': not defined for non-numeric");
         }
-        if (isIntType(type)) {
+        if (isIntOrRuneType(type)) {
             typeTable.put(node, new AIntTypeExpr());
         } else {
             typeTable.put(node, new AFloatTypeExpr());
@@ -691,9 +688,9 @@ public class TypeChecker extends DepthFirstAdapter {
     public void outANegExpr(ANegExpr node) {
         PTypeExpr type = typeTable.get(node.getExpr());
         if (!isNumericType(type)) {
-            callTypeCheckException(node.getExpr(), "Unary operator '-' not defined for non-numeric type");
+            callTypeCheckException(node.getExpr(), "Unary '-': not defined for non-numeric");
         }
-        if (isIntType(type)) {
+        if (isIntOrRuneType(type)) {
             typeTable.put(node, new AIntTypeExpr());
         } else {
             typeTable.put(node, new AFloatTypeExpr());
@@ -703,8 +700,8 @@ public class TypeChecker extends DepthFirstAdapter {
     @Override
     public void outABitCompExpr(ABitCompExpr node) {
         PTypeExpr type = typeTable.get(node.getExpr());
-        if (!isIntType(type)) {
-            callTypeCheckException(node.getExpr(), "Unary operator '^' not defined for non-int type");
+        if (!isIntOrRuneType(type)) {
+            callTypeCheckException(node.getExpr(), "Unary '^': not defined for non-integer");
         }
         typeTable.put(node, new AIntTypeExpr());
     }
@@ -713,7 +710,7 @@ public class TypeChecker extends DepthFirstAdapter {
     public void outANotExpr(ANotExpr node) {
         PTypeExpr type = typeTable.get(node.getExpr());
         if (!isBoolType(type)) {
-            callTypeCheckException(node.getExpr(), "Unary operator '!' not defined for non-bool type");
+            callTypeCheckException(node.getExpr(), "Unary '!': not defined for non-boolean");
         }
         typeTable.put(node, new ABoolTypeExpr());
     }
@@ -726,9 +723,12 @@ public class TypeChecker extends DepthFirstAdapter {
         // ##################################################
         // Array & Slice are comparable (not yet implemented)
         // ##################################################
+        if (!isSameType(left, right)) {
+            callTypeCheckException(node.getLeft(), "Relational '==': mismatched operand type");
+        }
         if (!isComparableType(left) || !isComparableType(right)) {
             Node errorNode = !isComparableType(left) ? node.getLeft() : node.getRight();
-            callTypeCheckException(errorNode, "Relational operator '==' not defined for non-comparable");
+            callTypeCheckException(errorNode, "Relational '==': not defined for non-comparable");
         }
         typeTable.put(node, new ABoolTypeExpr());
     }
@@ -740,9 +740,12 @@ public class TypeChecker extends DepthFirstAdapter {
         // ##################################################
         // Array & Slice are comparable (not yet implemented)
         // ##################################################
+        if (!isSameType(left, right)) {
+            callTypeCheckException(node.getLeft(), "Relational '!=': mismatched operand type");
+        }
         if (!isComparableType(left) || !isComparableType(right)) {
             Node errorNode = !isComparableType(left) ? node.getLeft() : node.getRight();
-            callTypeCheckException(errorNode, "Relational operator '!=' not defined for non-comparable");
+            callTypeCheckException(errorNode, "Relational '!=': not defined for non-comparable");
         }
         typeTable.put(node, new ABoolTypeExpr());
     }
@@ -751,9 +754,12 @@ public class TypeChecker extends DepthFirstAdapter {
     public void outALtExpr(ALtExpr node) {
         PTypeExpr left = typeTable.get(node.getLeft());
         PTypeExpr right = typeTable.get(node.getRight());
+        if (!isSameType(left, right)) {
+            callTypeCheckException(node.getLeft(), "Relational '<': mismatched operand type");
+        }
         if (!isOrderedType(left) || !isOrderedType(right)) {
             Node errorNode = !isOrderedType(left) ? node.getLeft() : node.getRight();
-            callTypeCheckException(errorNode, "Relational operator '<' not defined for non-ordered");
+            callTypeCheckException(errorNode, "Relational '<': not defined for non-ordered");
         }
         typeTable.put(node, new ABoolTypeExpr());
     }
@@ -762,9 +768,12 @@ public class TypeChecker extends DepthFirstAdapter {
     public void outALteExpr(ALteExpr node) {
         PTypeExpr left = typeTable.get(node.getLeft());
         PTypeExpr right = typeTable.get(node.getRight());
+        if (!isSameType(left, right)) {
+            callTypeCheckException(node.getLeft(), "Relational '<=': mismatched operand type");
+        }
         if (!isOrderedType(left) || !isOrderedType(right)) {
             Node errorNode = !isOrderedType(left) ? node.getLeft() : node.getRight();
-            callTypeCheckException(errorNode, "Relational operator '<=' not defined for non-ordered");
+            callTypeCheckException(errorNode, "Relational '<=': not defined for non-ordered");
         }
         typeTable.put(node, new ABoolTypeExpr());
     }
@@ -773,9 +782,12 @@ public class TypeChecker extends DepthFirstAdapter {
     public void outAGtExpr(AGtExpr node) {
         PTypeExpr left = typeTable.get(node.getLeft());
         PTypeExpr right = typeTable.get(node.getRight());
+        if (!isSameType(left, right)) {
+            callTypeCheckException(node.getLeft(), "Relational '>': mismatched operand type");
+        }
         if (!isOrderedType(left) || !isOrderedType(right)) {
             Node errorNode = !isOrderedType(left) ? node.getLeft() : node.getRight();
-            callTypeCheckException(errorNode, "Relational operator '>' not defined for non-ordered");
+            callTypeCheckException(errorNode, "Relational '>': not defined for non-ordered");
         }
         typeTable.put(node, new ABoolTypeExpr());
     }
@@ -784,9 +796,12 @@ public class TypeChecker extends DepthFirstAdapter {
     public void outAGteExpr(AGteExpr node) {
         PTypeExpr left = typeTable.get(node.getLeft());
         PTypeExpr right = typeTable.get(node.getRight());
+        if (!isSameType(left, right)) {
+            callTypeCheckException(node.getLeft(), "Relational '>=': mismatched operand type");
+        }
         if (!isOrderedType(left) || !isOrderedType(right)) {
             Node errorNode = !isOrderedType(left) ? node.getLeft() : node.getRight();
-            callTypeCheckException(errorNode, "Relational operator '>=' not defined for non-ordered");
+            callTypeCheckException(errorNode, "Relational '>=': not defined for non-ordered");
         }
         typeTable.put(node, new ABoolTypeExpr());
     }
@@ -798,7 +813,7 @@ public class TypeChecker extends DepthFirstAdapter {
         PTypeExpr right = typeTable.get(node.getRight());
         if (!isBoolType(left) || !isBoolType(right)) {
             Node errorNode = !isBoolType(left) ? node.getLeft() : node.getRight();
-            callTypeCheckException(errorNode, "Conditional operator '&&' not defined for non-boolean");
+            callTypeCheckException(errorNode, "Conditional '&&': not defined for non-boolean");
         }
         typeTable.put(node, new ABoolTypeExpr());
     }
@@ -809,7 +824,7 @@ public class TypeChecker extends DepthFirstAdapter {
         PTypeExpr right = typeTable.get(node.getRight());
         if (!isBoolType(left) || !isBoolType(right)) {
             Node errorNode = !isBoolType(left) ? node.getLeft() : node.getRight();
-            callTypeCheckException(errorNode, "Conditional operator '||' not defined for non-boolean");
+            callTypeCheckException(errorNode, "Conditional '||': not defined for non-boolean");
         }
         typeTable.put(node, new ABoolTypeExpr());
     }
@@ -1252,7 +1267,7 @@ public class TypeChecker extends DepthFirstAdapter {
                 typeTable.put(node, new ACustomTypeExpr(node.getId())); //Well typed!
                 typeTable.put(decl, new ACustomTypeExpr(node.getId()));
             }
-        }    
+        }
     }
 
     /* Type check Array Elements */
