@@ -194,7 +194,8 @@ def create_test(test_name, progs_dirpath, tpe, out_path):
 	# Load filepaths to tests to ignore, if the test ignore file exists.
 	if os.path.exists(TEST_IGNORE_PATH):
 		with open(TEST_IGNORE_PATH) as fin:
-			tests_to_ignore = set([l.strip() for l in fin])
+			tests_to_ignore = set([l.strip() for l in fin
+				if not l.startswith('#')])
 	else:
 		tests_to_ignore = set()
 
