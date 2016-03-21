@@ -42,7 +42,7 @@ func f() {
 
 	// type casting, works like function calls
 	x = int(y)
-	x = x.f()
+	// x = x.f() // Group 05: Pretty sure this is invalid for GoLite.
 	x = num(y) // if num is a type struct
 
 	var y num = num(x)
