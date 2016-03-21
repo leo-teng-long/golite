@@ -60,143 +60,235 @@ public class TypeChecker extends DepthFirstAdapter {
     /* Type check plus op-assign statement */
     @Override
     public void outAPlusAssignStmt(APlusAssignStmt node) {
+        if (!isAssignable(node.getLhs())) {
+            callTypeCheckException(node.getLhs(), "Op-assign '+=': LHS not assignable");
+        }
         PTypeExpr lhs = typeTable.get(node.getLhs());
         PTypeExpr rhs = typeTable.get(node.getRhs());
-
-        // (to-do) ...
+        if (!isSameType(lhs, rhs)) {
+            callTypeCheckException(node.getLhs(), "Op-assign '+=': mismatched operand type");
+        }
+        if (isRuneType(lhs)) {
+            callTypeCheckException(node.getLhs(), "Op-assign '+=': cannot assign to rune type expression");
+        }
+        if (!isOrderedType(lhs) || !isOrderedType(rhs)) {
+            Node errorNode = !isOrderedType(lhs) ? node.getLhs() : node.getRhs();
+            callTypeCheckException(errorNode, "Op-assign '+=': not defined for non-numeric or non-string");
+        }
     }
 
     /* Type check numeric op-assign statement */
     @Override
     public void outAMinusAssignStmt(AMinusAssignStmt node) {
+        if (!isAssignable(node.getLhs())) {
+            callTypeCheckException(node.getLhs(), "Op-assign '-=': LHS not assignable");
+        }
         PTypeExpr lhs = typeTable.get(node.getLhs());
         PTypeExpr rhs = typeTable.get(node.getRhs());
+        if (!isSameType(lhs, rhs)) {
+            callTypeCheckException(node.getLhs(), "Op-assign '-=': mismatched operand type");
+        }
+        if (isRuneType(lhs)) {
+            callTypeCheckException(node.getLhs(), "Op-assign '-=': cannot assign to rune type expression");
+        }
         if (!isNumericType(lhs) || !isNumericType(rhs)) {
             Node errorNode = !isNumericType(lhs) ? node.getLhs() : node.getRhs();
-            callTypeCheckException(errorNode, "Binary operand '-' cannot be applied to non-numeric type");
-        }
-        if (isIntType(lhs) && isFloatType(rhs)) {
-            callTypeCheckException(node.getRhs(), "Op assign '-=' - cannot assign float to int variable");
+            callTypeCheckException(errorNode, "Op-assign '-=': not defined for non-numeric");
         }
     }
 
     @Override
     public void outAStarAssignStmt(AStarAssignStmt node) {
+        if (!isAssignable(node.getLhs())) {
+            callTypeCheckException(node.getLhs(), "Op-assign '*=': LHS not assignable");
+        }
         PTypeExpr lhs = typeTable.get(node.getLhs());
         PTypeExpr rhs = typeTable.get(node.getRhs());
+        if (!isSameType(lhs, rhs)) {
+            callTypeCheckException(node.getLhs(), "Op-assign '*=': mismatched operand type");
+        }
+        if (isRuneType(lhs)) {
+            callTypeCheckException(node.getLhs(), "Op-assign '*=': cannot assign to rune type expression");
+        }
         if (!isNumericType(lhs) || !isNumericType(rhs)) {
             Node errorNode = !isNumericType(lhs) ? node.getLhs() : node.getRhs();
-            callTypeCheckException(errorNode, "Binary operand '*' cannot be applied to non-numeric type");
-        }
-        if (isIntType(lhs) && isFloatType(rhs)) {
-            callTypeCheckException(node.getRhs(), "Op assign '*=' - cannot assign float to int variable");
+            callTypeCheckException(errorNode, "Op-assign '*=': not defined for non-numeric");
         }
     }
 
     @Override
     public void outASlashAssignStmt(ASlashAssignStmt node) {
+        if (!isAssignable(node.getLhs())) {
+            callTypeCheckException(node.getLhs(), "Op-assign '/=': LHS not assignable");
+        }
         PTypeExpr lhs = typeTable.get(node.getLhs());
         PTypeExpr rhs = typeTable.get(node.getRhs());
+        if (!isSameType(lhs, rhs)) {
+            callTypeCheckException(node.getLhs(), "Op-assign '/=': mismatched operand type");
+        }
+        if (isRuneType(lhs)) {
+            callTypeCheckException(node.getLhs(), "Op-assign '/=': cannot assign to rune type expression");
+        }
         if (!isNumericType(lhs) || !isNumericType(rhs)) {
             Node errorNode = !isNumericType(lhs) ? node.getLhs() : node.getRhs();
-            callTypeCheckException(errorNode, "Binary operand '/' cannot be applied to non-numeric type");
-        }
-        if (isIntType(lhs) && isFloatType(rhs)) {
-            callTypeCheckException(node.getRhs(), "Op assign '/=' - cannot assign float to int variable");
+            callTypeCheckException(errorNode, "Op-assign '/=': not defined for non-numeric");
         }
     }
 
     /* Type check int op-assign statements */
     @Override
     public void outAPercAssignStmt(APercAssignStmt node) {
+        if (!isAssignable(node.getLhs())) {
+            callTypeCheckException(node.getLhs(), "Op-assign '%=': LHS not assignable");
+        }
         PTypeExpr lhs = typeTable.get(node.getLhs());
         PTypeExpr rhs = typeTable.get(node.getRhs());
-        if (!isIntType(lhs) || !isIntType(rhs)) {
-            Node errorNode = !isIntType(lhs) ? node.getLhs() : node.getRhs();
-            callTypeCheckException(errorNode, " Op assign '%=' - cannot be applied to non-int type");
+        if (!isSameType(lhs, rhs)) {
+            callTypeCheckException(node.getLhs(), "Op-assign '%=': mismatched operand type");
+        }
+        if (isRuneType(lhs)) {
+            callTypeCheckException(node.getLhs(), "Op-assign '%=': cannot assign to rune type expression");
+        }
+        if (!isIntOrRuneType(lhs) || !isIntOrRuneType(rhs)) {
+            Node errorNode = !isIntOrRuneType(lhs) ? node.getLhs() : node.getRhs();
+            callTypeCheckException(errorNode, "Op-assign '%=': not defined for non-integer");
         }
     }
 
     @Override
     public void outAAndAssignStmt(AAndAssignStmt node) {
+        if (!isAssignable(node.getLhs())) {
+            callTypeCheckException(node.getLhs(), "Op-assign '&=': LHS not assignable");
+        }
         PTypeExpr lhs = typeTable.get(node.getLhs());
         PTypeExpr rhs = typeTable.get(node.getRhs());
-        if (!isIntType(lhs) || !isIntType(rhs)) {
-            Node errorNode = !isIntType(lhs) ? node.getLhs() : node.getRhs();
-            callTypeCheckException(errorNode, " Op assign '&=' - cannot be applied to non-int type");
+        if (!isSameType(lhs, rhs)) {
+            callTypeCheckException(node.getLhs(), "Op-assign '&=': mismatched operand type");
+        }
+        if (isRuneType(lhs)) {
+            callTypeCheckException(node.getLhs(), "Op-assign '&=': cannot assign to rune type expression");
+        }
+        if (!isIntOrRuneType(lhs) || !isIntOrRuneType(rhs)) {
+            Node errorNode = !isIntOrRuneType(lhs) ? node.getLhs() : node.getRhs();
+            callTypeCheckException(errorNode, "Op-assign '&=': not defined for non-integer");
         }
     }
 
     @Override
     public void outAPipeAssignStmt(APipeAssignStmt node) {
+        if (!isAssignable(node.getLhs())) {
+            callTypeCheckException(node.getLhs(), "Op-assign '|=': LHS not assignable");
+        }
         PTypeExpr lhs = typeTable.get(node.getLhs());
         PTypeExpr rhs = typeTable.get(node.getRhs());
-        if (!isIntType(lhs) || !isIntType(rhs)) {
-            Node errorNode = !isIntType(lhs) ? node.getLhs() : node.getRhs();
-            callTypeCheckException(errorNode, " Op assign '|=' - cannot be applied to non-int type");
+        if (!isSameType(lhs, rhs)) {
+            callTypeCheckException(node.getLhs(), "Op-assign '|=': mismatched operand type");
+        }
+        if (isRuneType(lhs)) {
+            callTypeCheckException(node.getLhs(), "Op-assign '|=': cannot assign to rune type expression");
+        }
+        if (!isIntOrRuneType(lhs) || !isIntOrRuneType(rhs)) {
+            Node errorNode = !isIntOrRuneType(lhs) ? node.getLhs() : node.getRhs();
+            callTypeCheckException(errorNode, "Op-assign '|=': not defined for non-integer");
         }
     }
 
     @Override
     public void outACarotAssignStmt(ACarotAssignStmt node) {
+        if (!isAssignable(node.getLhs())) {
+            callTypeCheckException(node.getLhs(), "Op-assign '^=': LHS not assignable");
+        }
         PTypeExpr lhs = typeTable.get(node.getLhs());
         PTypeExpr rhs = typeTable.get(node.getRhs());
-        if (!isIntType(lhs) || !isIntType(rhs)) {
-            Node errorNode = !isIntType(lhs) ? node.getLhs() : node.getRhs();
-            callTypeCheckException(errorNode, " Op assign '^=' - cannot be applied to non-int type");
+        if (!isSameType(lhs, rhs)) {
+            callTypeCheckException(node.getLhs(), "Op-assign '^=': mismatched operand type");
+        }
+        if (isRuneType(lhs)) {
+            callTypeCheckException(node.getLhs(), "Op-assign '^=': cannot assign to rune type expression");
+        }
+        if (!isIntOrRuneType(lhs) || !isIntOrRuneType(rhs)) {
+            Node errorNode = !isIntOrRuneType(lhs) ? node.getLhs() : node.getRhs();
+            callTypeCheckException(errorNode, "Op-assign '^=': not defined for non-integer");
         }
     }
 
     @Override
-    public void caseAAmpCarotAssignStmt(AAmpCarotAssignStmt node) {
+    public void outAAmpCarotAssignStmt(AAmpCarotAssignStmt node) {
+        if (!isAssignable(node.getLhs())) {
+            callTypeCheckException(node.getLhs(), "Op-assign '&^=': LHS not assignable");
+        }
         PTypeExpr lhs = typeTable.get(node.getLhs());
         PTypeExpr rhs = typeTable.get(node.getRhs());
-        if (!isIntType(lhs) || !isIntType(rhs)) {
-            Node errorNode = !isIntType(lhs) ? node.getLhs() : node.getRhs();
-            callTypeCheckException(errorNode, " Op assign '&^=' - cannot be applied to non-int type");
+        if (!isSameType(lhs, rhs)) {
+            callTypeCheckException(node.getLhs(), "Op-assign '&^=': mismatched operand type");
+        }
+        if (isRuneType(lhs)) {
+            callTypeCheckException(node.getLhs(), "Op-assign '&^=': cannot assign to rune type expression");
+        }
+        if (!isIntOrRuneType(lhs) || !isIntOrRuneType(rhs)) {
+            Node errorNode = !isIntOrRuneType(lhs) ? node.getLhs() : node.getRhs();
+            callTypeCheckException(errorNode, "Op-assign '&^=': not defined for non-integer");
         }
     }
 
     @Override
-    public void caseALshiftAssignStmt(ALshiftAssignStmt node) {
+    public void outALshiftAssignStmt(ALshiftAssignStmt node) {
+        if (!isAssignable(node.getLhs())) {
+            callTypeCheckException(node.getLhs(), "Op-assign '<<=': LHS not assignable");
+        }
         PTypeExpr lhs = typeTable.get(node.getLhs());
         PTypeExpr rhs = typeTable.get(node.getRhs());
-        if (!isIntType(lhs) || !isIntType(rhs)) {
-            Node errorNode = !isIntType(lhs) ? node.getLhs() : node.getRhs();
-            callTypeCheckException(errorNode, " Op assign '<<=' - cannot be applied to non-int type");
+        if (!isSameType(lhs, rhs)) {
+            callTypeCheckException(node.getLhs(), "Op-assign '<<=': mismatched operand type");
+        }
+        if (isRuneType(lhs)) {
+            callTypeCheckException(node.getLhs(), "Op-assign '<<=': cannot assign to rune type expression");
+        }
+        if (!isIntOrRuneType(lhs) || !isIntOrRuneType(rhs)) {
+            Node errorNode = !isIntOrRuneType(lhs) ? node.getLhs() : node.getRhs();
+            callTypeCheckException(errorNode, "Op-assign '<<=': not defined for non-integer");
         }
     }
 
     @Override
-    public void caseARshiftAssignStmt(ARshiftAssignStmt node) {
+    public void outARshiftAssignStmt(ARshiftAssignStmt node) {
+        if (!isAssignable(node.getLhs())) {
+            callTypeCheckException(node.getLhs(), "Op-assign '>>=': LHS not assignable");
+        }
         PTypeExpr lhs = typeTable.get(node.getLhs());
         PTypeExpr rhs = typeTable.get(node.getRhs());
-        if (!isIntType(lhs) || !isIntType(rhs)) {
-            Node errorNode = !isIntType(lhs) ? node.getLhs() : node.getRhs();
-            callTypeCheckException(errorNode, " Op assign '>>=' - cannot be applied to non-int type");
+        if (!isSameType(lhs, rhs)) {
+            callTypeCheckException(node.getLhs(), "Op-assign '>>=': mismatched operand type");
+        }
+        if (isRuneType(lhs)) {
+            callTypeCheckException(node.getLhs(), "Op-assign '>>=': cannot assign to rune type expression");
+        }
+        if (!isIntOrRuneType(lhs) || !isIntOrRuneType(rhs)) {
+            Node errorNode = !isIntOrRuneType(lhs) ? node.getLhs() : node.getRhs();
+            callTypeCheckException(errorNode, "Op-assign '>>=': not defined for non-integer");
         }
     }
 
     /* Type check increment & decrement statements */
     @Override
-    public void caseAIncrStmt(AIncrStmt node) {
-        if (node.getExpr() != null) {
-            node.getExpr().apply(this);
-            PTypeExpr type = typeTable.get(node.getExpr());
-            if (!isNumericType(type)) {
-                callTypeCheckException(node.getExpr(), "Operand of '++' is not of numeric type");
-            }
+    public void outAIncrStmt(AIncrStmt node) {
+        if (!isAssignable(node.getExpr())) {
+            callTypeCheckException(node.getExpr(), "Increment '++': expression not assignable");
+        }
+        PTypeExpr type = typeTable.get(node.getExpr());
+        if (!isNumericType(type)) {
+            callTypeCheckException(node.getExpr(), "Increment '++': expression not of numeric type");
         }
     }
 
     @Override
-    public void caseADecrStmt(ADecrStmt node) {
-        if (node.getExpr() != null) {
-            node.getExpr().apply(this);
-            PTypeExpr type = typeTable.get(node.getExpr());
-            if (!isNumericType(type)) {
-                callTypeCheckException(node.getExpr(), "Operand of '--' is not of numeric type");
-            }
+    public void outADecrStmt(ADecrStmt node) {
+        if (!isAssignable(node.getExpr())) {
+            callTypeCheckException(node.getExpr(), "Decrement '--': expression not assignable");
+        }
+        PTypeExpr type = typeTable.get(node.getExpr());
+        if (!isNumericType(type)) {
+            callTypeCheckException(node.getExpr(), "Decrement '--': expression not of numeric type");
         }
     }
 
@@ -208,7 +300,7 @@ public class TypeChecker extends DepthFirstAdapter {
             e.apply(this);
             PTypeExpr type = typeTable.get(e);
             if (!isBaseType(type)) {
-                callTypeCheckException(e, "Expression is not of base type");
+                callTypeCheckException(e, "Print: expression is not of base type");
             }
         }
     }
@@ -220,7 +312,7 @@ public class TypeChecker extends DepthFirstAdapter {
             e.apply(this);
             PTypeExpr type = typeTable.get(e);
             if (!isBaseType(type)) {
-                callTypeCheckException(e, "Expression is not of base type");
+                callTypeCheckException(e, "Println: expression is not of base type");
             }
         }
     }
@@ -768,26 +860,34 @@ public class TypeChecker extends DepthFirstAdapter {
     }
 
     private boolean isIntType(PTypeExpr node) {
-        return (node instanceof AIntTypeExpr) || (node instanceof ARuneTypeExpr);
+        return node instanceof AIntTypeExpr;
     }
 
     private boolean isFloatType(PTypeExpr node) {
         return node instanceof AFloatTypeExpr;
     }
 
-    private boolean isNumericType(PTypeExpr node) {
-        return isIntType(node) || isFloatType(node);
+    private boolean isRuneType(PTypeExpr node) {
+        return node instanceof ARuneTypeExpr;
     }
 
     private boolean isStringType(PTypeExpr node) {
         return node instanceof AStringTypeExpr;
     }
 
+    private boolean isIntOrRuneType(PTypeExpr node) {
+        return isIntType(node) || isRuneType(node);
+    }
+
+    private boolean isNumericType(PTypeExpr node) {
+        return isIntOrRuneType(node) || isFloatType(node);
+    }
+
     private boolean isOrderedType(PTypeExpr node) {
         return isNumericType(node) || isStringType(node);
     }
 
-    public boolean isComparableType(PTypeExpr node) {
+    private boolean isComparableType(PTypeExpr node) {
         return isBoolType(node) || isOrderedType(node);
     }
 
@@ -795,18 +895,28 @@ public class TypeChecker extends DepthFirstAdapter {
         return isBoolType(node) || isNumericType(node) || isStringType(node);
     }
 
+    private boolean isCustomType(PTypeExpr node) {
+        return node instanceof ACustomTypeExpr;
+    }
+
+    private boolean isArrayType(PTypeExpr node) {
+        return node instanceof AArrayTypeExpr;
+    }
+
+    private boolean isSliceType(PTypeExpr node) {
+        return node instanceof ASliceTypeExpr;
+    }
+
     private boolean isStructType(PTypeExpr node) {
         return node instanceof AStructTypeExpr;
     }
 
     private boolean isSameType(PTypeExpr node1, PTypeExpr node2) {
-        return ((node1 instanceof ABoolTypeExpr) && (node2 instanceof ABoolTypeExpr))
-                || ((node1 instanceof AIntTypeExpr) && (node2 instanceof AIntTypeExpr))
-                || ((node1 instanceof AFloatTypeExpr) && (node2 instanceof AFloatTypeExpr))
-                || ((node1 instanceof ARuneTypeExpr) && (node2 instanceof ARuneTypeExpr))
-                || ((node1 instanceof AStringTypeExpr) && (node2 instanceof AStringTypeExpr))
-                || ((node1 instanceof ASliceTypeExpr) && (node2 instanceof ASliceTypeExpr))
-                || (node1.getClass() == node2.getClass());
+        return node1.getClass() == node2.getClass();
+    }
+
+    private boolean isAssignable(PExpr node) {
+        return (node instanceof AVariableExpr) || (node instanceof AFieldExpr) || (node instanceof AArrayElemExpr);
     }
 
     private AFuncTopDec getParentFuncDec(AReturnStmt node) {
