@@ -149,7 +149,7 @@ Tokens
     eol = lf | cr | cr lf ;
 
     // Single-line comment and multi-line comments.
-    comment = '//' not_eol* | '/**/' | '/*' '*'* [all - '*']+ '*'+ ([all - ['*' + '/']] [all - '*']* '*'+)* '/' ;
+    comment = '//' not_eol* | '/**/' | '/*' '*'* [all - '*']+ '*'+ ([all - ['*' + '/']] [all - '*']* '*'+)* '/' || '//' not_eol* ;
     // Alternative form for handling multi-line comments:
     // comment = '//' not_eol* | '/*' ([all - '*'] | '*' [all - '/'])* '*/' ;
 
@@ -364,6 +364,8 @@ Productions
         | {stmt_only} switch simple_sub semi lbrace case_block* rbrace
             {-> New stmt.switch(simple_sub.stmt, Null, [case_block])}
         | {expr_only} switch expr lbrace case_block* rbrace
+            {-> New stmt.switch(Null, expr, [case_block])}
+        | {expr_only_wt_semi} switch semi expr lbrace case_block* rbrace
             {-> New stmt.switch(Null, expr, [case_block])}
         | {none} switch lbrace case_block* rbrace
             {-> New stmt.switch(Null, Null, [case_block])} ;
