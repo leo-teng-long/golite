@@ -503,14 +503,14 @@ Productions
     term {-> expr} =
           {atom} atom
             {-> atom.expr}
-        | {pos} plus atom
-            {-> New expr.pos(atom.expr)}
-        | {neg} minus atom
-            {-> New expr.neg(atom.expr)}
-        | {not} not atom
-            {-> New expr.not(atom.expr)}
-        | {bit_comp} carot atom
-            {-> New expr.bit_comp(atom.expr)} ;
+        | {pos} plus term
+            {-> New expr.pos(term.expr)}
+        | {neg} minus term
+            {-> New expr.neg(term.expr)}
+        | {not} not term
+            {-> New expr.not(term.expr)}
+        | {bit_comp} carot term
+            {-> New expr.bit_comp(term.expr)} ;
 
     atom {-> expr} =
           {lit} lit
