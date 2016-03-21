@@ -161,7 +161,7 @@ Tokens
     hex_lit = '0' ['x' + 'X'] hex_digit+ ;
 
     // Floating-point.
-    float_lit = ('0' | pos_digit digit*)? '.' digit* | '.' digit+ ;
+    float_lit = digit* '.' digit* | '.' digit+ ;
 
     // Rune.
     rune_lit = squote ([not_eol - [squote + '\']] | escape_squote| escapes) squote ;
