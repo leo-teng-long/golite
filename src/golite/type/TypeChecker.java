@@ -39,14 +39,14 @@ public class TypeChecker extends DepthFirstAdapter {
     {
         symbolTable.exitScope();
         symbolTable.exitScope();
-        System.out.println("###SYMBOL TABLE:###\n");
+        System.out.println("###SYMBOL TABLE:###");
         symbolTable.printSymbols();
-        System.out.println("###TYPE TABLE:###\n");
+        System.out.println("###TYPE TABLE:###");
         for (Node n: typeTable.keySet())
         {
             System.out.println("Node: " + n + " Key: " + n.getClass() + " Value: " + typeTable.get(n).getClass());
         }
-        System.out.println();
+        System.out.println("\n\n\n");
     }
 
     @Override
@@ -243,7 +243,7 @@ public class TypeChecker extends DepthFirstAdapter {
             if (funcDec.getTypeExpr() == null) {
                 callTypeCheckException(node.getExpr(), "Return statement - declared function has no return type");
             }
-            if (!isSameType(typeTable.get(node.getExpr()), funcDec.getTypeExpr())) {
+            if (!isSameType(getType(node.getExpr()), funcDec.getTypeExpr())) {
                 callTypeCheckException(node.getExpr(), "Return statement - return type does not match declared function");
             }
         } else {
@@ -693,7 +693,7 @@ public class TypeChecker extends DepthFirstAdapter {
     @Override
     public void outAVariableExpr(AVariableExpr node) {
         PTypeExpr type = getType(node.getId());
-        typeTable.put(type, type);
+        typeTable.put(node, type);
     }
 
     /* Type check numeric literals */
@@ -900,6 +900,7 @@ public class TypeChecker extends DepthFirstAdapter {
             int length = ids.size();
             for(int i=0; i < length; i++)
             {
+                System.out.println(exprs.get(i).getClass());
                 symbolTable.addSymbol(ids.get(i).getText(), node);
                 typeTable.put(ids.get(i), getType(exprs.get(i)));
             }
@@ -971,6 +972,26 @@ public class TypeChecker extends DepthFirstAdapter {
     }
 
     /* Append type checking */
+    private int getDimension(ASliceTypeExpr node)
+    {
+        PTypeExpr elementType = node.getTypeExpr();
+        if (elementType instanceof ASliceTypeExpr)
+        {
+            return 1 + getDimension((ASliceTypeExpr) elementType);
+        }
+        return 0;
+    }
+
+    private boolean isSameStruct(AStructTypeExpr node1, AStructTypeExpr node2)
+    {
+        String name1 = ((ASpecTypeSpec) node1.parent()).getId().getText();
+        String name2 = ((ASpecTypeSpec) node2.parent()).getId().getText();
+        System.out.println(name1);
+        System.out.println(name2);
+        System.out.println(name1.equals(name2));
+        return name1.equals(name2);
+    }
+
     @Override
     public void outAAppendExpr(AAppendExpr node)
     {
@@ -981,6 +1002,23 @@ public class TypeChecker extends DepthFirstAdapter {
             PTypeExpr exprType = getType(node.getExpr());
             if (sliceElementType.getClass() == exprType.getClass())
             {
+                System.out.println(sliceElementType.getClass());
+                if (sliceElementType instanceof ASliceTypeExpr)
+                {
+                    if (!(getDimension((ASliceTypeExpr) sliceElementType) == getDimension((ASliceTypeExpr) exprType)))
+                    {
+                        callTypeCheckException(node, "Tried to append row with wrong dimension to slice");
+                    }
+                }
+                else if (sliceElementType instanceof ACustomTypeExpr)
+                {
+                    PTypeExpr sliceStructType = getType(sliceElementType);
+                    PTypeExpr exprStructType = getType(exprType);
+                    if (sliceStructType instanceof AStructTypeExpr && !isSameStruct((AStructTypeExpr) sliceStructType, (AStructTypeExpr) exprStructType))
+                    {
+                        callTypeCheckException(node, "Tried to append mismatching structs");
+                    }
+                }
                 typeTable.put(node, idType); // Well typed!
             }
             else
@@ -1028,35 +1066,50 @@ public class TypeChecker extends DepthFirstAdapter {
     {
         String id = node.getId().getText();
         Node decl = symbolTable.getSymbol(id, node);
-        List<PArgGroup> argGroups = ((AFuncTopDec) decl).getArgGroup();
-        ArrayList<PTypeExpr> argTypes = new ArrayList<PTypeExpr>();
-        List<PExpr> paramTypes = node.getExpr();
-        for (PArgGroup a: argGroups)
+        if (decl instanceof AFuncTopDec)
         {
-            PTypeExpr argType = getType(a);
-            for (TId i: ((AArgArgGroup) a).getId())
+            List<PArgGroup> argGroups = ((AFuncTopDec) decl).getArgGroup();
+            ArrayList<PTypeExpr> argTypes = new ArrayList<PTypeExpr>();
+            List<PExpr> paramTypes = node.getExpr();
+            for (PArgGroup a: argGroups)
             {
-                argTypes.add(argType);
+                PTypeExpr argType = getType(a);
+                for (TId i: ((AArgArgGroup) a).getId())
+                {
+                    argTypes.add(argType);
+                }
             }
-        }
-        for (int i = 0; i<argTypes.size(); i++)
-        {
-            if (argTypes.get(i).getClass() == getType(paramTypes.get(i)).getClass())
+            for (int i = 0; i<argTypes.size(); i++)
             {
-                continue;
-            }
-            else
-            {
-                callTypeCheckException(node, "Function parameter types do not match with function signature");
-            }
+                if (argTypes.get(i).getClass() == getType(paramTypes.get(i)).getClass())
+                {
+                    continue;
+                }
+                else
+                {
+                    callTypeCheckException(node, "Function parameter types do not match with function signature");
+                }
 
+            }
+            // Well typed!
+            PTypeExpr type = getType(node);
+            if (type != null)
+            {
+                typeTable.put(node, type);
+            }
         }
-        // Well typed!
-        PTypeExpr type = getType(node);
-        if (type != null)
+        else if (decl instanceof ASpecTypeSpec)
         {
-            typeTable.put(node, type);
-        }
+            PTypeExpr castType = ((ASpecTypeSpec) decl).getTypeExpr();
+            if    (castType instanceof AIntTypeExpr
+            || castType instanceof AFloatTypeExpr
+            || castType instanceof ARuneTypeExpr
+            || castType instanceof ABoolTypeExpr)
+            {
+                typeTable.put(node, new ACustomTypeExpr(node.getId())); //Well typed!
+                typeTable.put(decl, new ACustomTypeExpr(node.getId()));
+            }
+        }    
     }
 
     /* Type check Array Elements */
@@ -1117,10 +1170,6 @@ public class TypeChecker extends DepthFirstAdapter {
                 PTypeExpr typeExpr = getType(declaration);
                 if (typeExpr != null)
                 {
-                    /*if (typeExpr instanceof ACustomTypeExpr)
-                    {
-                        return getType(((ACustomTypeExpr) typeExpr).getId());
-                    }*/
                     return typeExpr;
                 }
                 else
@@ -1152,6 +1201,12 @@ public class TypeChecker extends DepthFirstAdapter {
             else if (declaration instanceof AArgArgGroup)
             {
                 return typeTable.get(declaration);
+            }
+            else if (declaration instanceof ABoolTypeExpr)
+            {
+                typeTable.put(node, ((ABoolTypeExpr) declaration));
+                typeTable.put(declaration, ((ABoolTypeExpr) declaration));
+                return typeTable.get(node);
             }
         }
         else if (node instanceof AIntLitExpr
@@ -1203,12 +1258,24 @@ public class TypeChecker extends DepthFirstAdapter {
         }
         else if (node instanceof AFuncCallExpr)
         {
-            String id = ((AFuncCallExpr) node).getId().getText();
+            /* TODO:
+             * THIS DOES NOT WORK FOR CUSTOM ALIAS TYPE CASTS!
+             * WHEN A CUSTOM TYPE CAST IS CALLED ON A LITERAL, THE AFuncCallExpr NODE HAS NULL id. :'(
+             */
+            String id = (((AFuncCallExpr) node).getId()).getText();
             Node decl = symbolTable.getSymbol(id, node);
             if (decl instanceof AFuncTopDec)
             {
                 return ((AFuncTopDec) decl).getTypeExpr();
             }
+            else if (decl instanceof ASpecTypeSpec)
+            {
+                return ((ASpecTypeSpec) decl).getTypeExpr();
+            }
+        }
+        else if (node instanceof ACustomTypeExpr)
+        {
+            return getType(((ACustomTypeExpr) node).getId());
         }
         else
         {   try{
