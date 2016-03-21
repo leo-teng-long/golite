@@ -537,7 +537,7 @@ Productions
         | {type_cast} prim_type lparen expr rparen
             {-> New expr.type_cast(prim_type.type_expr, expr)}
         | {custom} id lparen expr_list rparen
-            {-> New expr.func_call(id, [expr_list.expr])};
+            {-> New expr.func_call(id, [expr_list.expr])} ;
 
     //* Literals. *//
 
