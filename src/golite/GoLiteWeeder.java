@@ -1,4 +1,4 @@
-package golite.weeder;
+package golite;
 
 import java.util.*;
 import golite.exception.*;
@@ -10,7 +10,8 @@ import golite.analysis.*;
 /**
  * GoLite Weeder.
  */
-public class Weeder extends DepthFirstAdapter {
+// TODO: Add string of error-causing code in select error messages.
+public class GoLiteWeeder extends DepthFirstAdapter {
 
     /** Line and position tracker for token AST nodes. */
     private LineAndPosTracker lineAndPosTracker = new LineAndPosTracker();
@@ -113,16 +114,6 @@ public class Weeder extends DepthFirstAdapter {
         throwWeederException(node, "Missing return");
     }
 
-    /**
-     * Checks whether the given Id token is blank, i.e. an underscore.
-     *
-     * @param id - Id token
-     * @return True if the id is underscore, false otherwise.
-     */
-    private boolean isUnderscore(TId id) {
-        return id.getText().equals("_");
-    }
-
     // Gather line and position information.
     @Override 
     public void inStart(Start node) {
@@ -218,14 +209,15 @@ public class Weeder extends DepthFirstAdapter {
     public void inAExprStmt(AExprStmt node) {
         PExpr pExpr = node.getExpr();
         if (!(pExpr instanceof AFuncCallExpr || pExpr instanceof AAppendExpr))
-            this.throwWeederException(node, node + " evaluated but not used");
+            // TODO: Add string of error-causing code.
+            this.throwWeederException(node, "Evaluated but not used");
     }
 
     // Throw an error if the number of identifiers on the R.H.S. of a variable specification is not
     // equal to the number of expressions on the L.H.S.
     @Override
     public void inASpecVarSpec(ASpecVarSpec node) {
-        int idListLength = node.getId().size();
+        int idListLength = node.getOptId().size();
         int exprListLength = node.getExpr().size();
         
         if (exprListLength > 0 && idListLength != exprListLength)
@@ -234,19 +226,19 @@ public class Weeder extends DepthFirstAdapter {
     }
 
     // Throw an error if the number of identifiers on the R.H.S. of a short assignment is not equal
-    // to the number of expressions on the L.H.S.
+    // to the number of expressions on the L.H.S. or the L.H.S. is a sole blank.
     @Override
     public void inAShortAssignStmt(AShortAssignStmt node) {
-        LinkedList<TId> ids = node.getId();
+        LinkedList<POptId> optIds = node.getOptId();
         
-        int idListLength = ids.size();
+        int optIdListLength = optIds.size();
         int exprListLength = node.getExpr().size();
         
-        if (exprListLength > 0 && idListLength != exprListLength)
+        if (exprListLength > 0 && optIdListLength != exprListLength)
             this.throwWeederException(node,
-                "L.H.S and R.H.S. of short assignment don't match");    
+                "Assignment count mismatch: " + optIdListLength + " = " + exprListLength);    
 
-        if (idListLength == 1 && this.isUnderscore(ids.getFirst()))
+        if (optIdListLength == 1 && optIds.getFirst() instanceof ABlankOptId)
             this.throwWeederException(node, "No new variables declared on the left side of :=");
     }
 
@@ -266,28 +258,18 @@ public class Weeder extends DepthFirstAdapter {
     @Override
     public void inAIncrStmt(AIncrStmt node) {
         PExpr pExpr = node.getExpr();
-        if (!this.isIncrDecrable(pExpr))
-            this.throwWeederException(node, "Cannot assign to " + pExpr);
+        if (!this.isNonConstant(pExpr))
+            // TODO: Add string of error-causing code.
+            this.throwWeederException(node, "Cannot assign");
     }
 
     // Throw an error if decrement is applied to a non-decrementable.
     @Override
     public void inADecrStmt(ADecrStmt node) {
         PExpr pExpr = node.getExpr();
-        if (!this.isIncrDecrable(pExpr))
-            this.throwWeederException(node, "Cannot assign to " + pExpr);
-    }
-
-    /**
-     * Checks whether the given expression is incrementable/decrementable.
-     *
-     * @param pExpr - Production expression node
-     * @return True if the expression is incrementable/decrementable, false otherwise
-     */
-    private boolean isIncrDecrable(PExpr pExpr) {
-        return (pExpr instanceof AVariableExpr
-            || pExpr instanceof AFieldExpr
-            || pExpr instanceof AArrayElemExpr);
+        if (!this.isNonConstant(pExpr))
+            // TODO: Add string of error-causing code.
+            this.throwWeederException(node, "Cannot assign");
     }
 
     // Throw an error if a switch statement contains multiple default cases.
@@ -361,6 +343,37 @@ public class Weeder extends DepthFirstAdapter {
     public void inATypeCastExpr(ATypeCastExpr node) {
         if (node.getTypeExpr() instanceof AStringTypeExpr)
             this.throwWeederException(node, "Cannot cast to type string");
+    }
+
+    // Throw an error if the object in a field access is not non-constant and not a function call.
+    @Override
+    public void inAFieldExpr(AFieldExpr node) {
+        PExpr obj = node.getExpr();
+        if (!(this.isNonConstant(obj) || obj instanceof AFuncCallExpr))
+            // TODO: Change message to "Invalid operation" + (error-causing code).
+            this.throwWeederException(node, "Invalid field access operation");
+    }    
+
+    // Throw an error if the array in an array access is not non-constant and not a function call. 
+    @Override
+    public void inAArrayElemExpr(AArrayElemExpr node) {
+        PExpr array = node.getArray();
+        if (!(this.isNonConstant(array) || array instanceof AFuncCallExpr))
+            // TODO: Change message to "Invalid operation" + (error-causing code).
+            this.throwWeederException(node, "Invalid array access operation");
+    }
+
+    /**
+     * Checks whether the given expression is non-constant, i.e. a variable,
+     * field, or array element.
+     *
+     * @param pExpr - Production expression node
+     * @return True if the expression is non-constant, false otherwise
+     */
+    private boolean isNonConstant(PExpr pExpr) {
+        return (pExpr instanceof AVariableExpr
+            || pExpr instanceof AFieldExpr
+            || pExpr instanceof AArrayElemExpr);
     }
 
 }

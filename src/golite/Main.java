@@ -7,7 +7,6 @@ import golite.lexer.*;
 import golite.node.*;
 import golite.PrettyPrinter;
 import golite.exception.*;
-import golite.weeder.*;
 import java.io.*;
 import java.util.*;
 
@@ -106,12 +105,12 @@ class Main {
         try {
             Lexer lexer = new GoLiteLexer(new PushbackReader(new FileReader(inPath), 1024));
             Parser p = new Parser(lexer);
-            Weeder weeder = new Weeder();
+            GoLiteWeeder weeder = new GoLiteWeeder();
 
             Start ast = p.parse();
             ast.apply(weeder);
         }
-        catch (LexerException|ParserException|WeederException e) {
+        catch (LexerException|ParserException|GoLiteWeederException e) {
             if (verbose) {
                 System.err.println("ERROR: " + e);
             }
@@ -149,7 +148,7 @@ class Main {
         try {
             Lexer lexer = new GoLiteLexer(new PushbackReader(new FileReader(inPath), 1024));
             Parser parser = new Parser(lexer);
-            Weeder weed = new Weeder();
+            GoLiteWeeder weed = new GoLiteWeeder();
 
             Start tree = parser.parse();
             tree.apply(weed);
@@ -173,7 +172,7 @@ class Main {
         try {
             Lexer lexer = new GoLiteLexer(new PushbackReader(new FileReader(inPath), 1024));
             Parser parser = new Parser(lexer);
-            Weeder weed = new Weeder();
+            GoLiteWeeder weed = new GoLiteWeeder();
             Start start = parser.parse();
             start.apply(weed);
             SymbolTableBuilder symbolBuilder = new SymbolTableBuilder();
