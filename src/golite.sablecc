@@ -298,6 +298,8 @@ Productions
         | {decr} expr minus_minus
             {-> New stmt.decr(expr)} ;
 
+    // TODO: L.H.S assignability should be checked in the weeder.
+
     assignment {-> stmt} =
           {assign} opt_assignable_list assign expr_list
             {-> New stmt.assign([opt_assignable_list.expr], [expr_list.expr])}
