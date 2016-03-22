@@ -622,33 +622,11 @@ Abstract Syntax Tree
     //TODO: Don't forget to typecheck multidimensional arrays/slices
     stmt =
           {empty}
-<<<<<<< HEAD
-        | {var_dec} var_spec+ 
-        | {short_assign} id+ expr+ 
-        | {type_dec} type_spec+ 
-        | {assign} [lhs]:expr+ [rhs]:expr+ //TODO: Handle assigning values to aliases
-        | {plus_assign} [lhs]: expr [rhs]:expr //TODO: Typecheck this
-        | {minus_assign} [lhs]: expr [rhs]:expr 
-        | {star_assign} [lhs]: expr [rhs]:expr 
-        | {slash_assign} [lhs]: expr [rhs]:expr 
-        | {perc_assign} [lhs]: expr [rhs]:expr 
-        | {and_assign} [lhs]: expr [rhs]:expr 
-        | {pipe_assign} [lhs]: expr [rhs]:expr 
-        | {carot_assign} [lhs]: expr [rhs]:expr 
-        | {amp_carot_assign} [lhs]: expr [rhs]:expr 
-        | {lshift_assign} [lhs]: expr [rhs]:expr 
-        | {rshift_assign} [lhs]: expr [rhs]:expr 
-        | {incr} expr 
-        | {decr} expr 
-        | {expr} expr 
-        | {print} expr* 
-        | {println} expr* 
-=======
         | {var_dec} var_spec+
         | {short_assign} opt_id+ expr+
         | {type_dec} type_spec+
-        | {assign} [lhs]:expr+ [rhs]:expr+
-        | {plus_assign} [lhs]: expr [rhs]:expr
+        | {assign} [lhs]:expr+ [rhs]:expr+ //TODO: Handle assigning values to aliases
+        | {plus_assign} [lhs]: expr [rhs]:expr //TODO: Typecheck this
         | {minus_assign} [lhs]: expr [rhs]:expr
         | {star_assign} [lhs]: expr [rhs]:expr
         | {slash_assign} [lhs]: expr [rhs]:expr
@@ -664,7 +642,6 @@ Abstract Syntax Tree
         | {expr} expr
         | {print} expr*
         | {println} expr*
->>>>>>> mods
         | {continue}
         | {break}
         | {return} expr?
@@ -727,14 +704,9 @@ Abstract Syntax Tree
         | {append} id expr //TODO: Add weeding pass to check for returns on EVERY path in a function
         | {type_cast} type_expr expr //TODO: Pull out alias/custom type casts -- BIG problems (see TODO in TypeChecker.java)
         | {array_elem} [array]:expr [index]:expr
-<<<<<<< HEAD
-        | {field} expr id 
-        | {variable} id 
-=======
         | {field} expr id
         | {blank}
         | {variable} id
->>>>>>> mods
         | {int_lit} int_lit
         | {oct_lit} oct_lit
         | {hex_lit} hex_lit

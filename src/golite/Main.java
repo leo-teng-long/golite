@@ -131,9 +131,7 @@ class Main {
             Lexer lexer = new GoLiteLexer(new PushbackReader(new FileReader(inPath), 1024));
             Parser parser = new Parser(lexer);
             Start tree = parser.parse();
-
             String filename = inPath.substring(0, inPath.indexOf('.'));
-            
             PrettyPrinter printer = new PrettyPrinter(filename);
             tree.apply(printer);
         } catch (Exception e) {
@@ -145,7 +143,7 @@ class Main {
     * Weed a GoLite program.
     * @param inPath - Filepath to GoLite program
     */
-    public static boolean weed(String inPath) throws IOException, LexerException, ParserException {
+    public static boolean weed(String inPath) throws IOException {
         try {
             Lexer lexer = new GoLiteLexer(new PushbackReader(new FileReader(inPath), 1024));
             Parser parser = new Parser(lexer);
@@ -154,7 +152,7 @@ class Main {
             Start tree = parser.parse();
             tree.apply(weed);
             System.out.println("VALID");
-        } catch (WeederException e) {
+        } catch (LexerException|ParserException|WeederException e) {
             System.out.println("INVALID");
             if (verbose) {
                 System.err.println("ERROR: " + e);
@@ -169,7 +167,7 @@ class Main {
     * Typecheck a GoLite program.
     * @param inPath - Filepath to GoLite program
     */
-    public static boolean type(String inPath) throws IOException, LexerException, ParserException, WeederException {
+    public static boolean type(String inPath) throws IOException {
         try {
             Lexer lexer = new GoLiteLexer(new PushbackReader(new FileReader(inPath), 1024));
             Parser parser = new Parser(lexer);
@@ -194,7 +192,7 @@ class Main {
                 }
                 System.out.println("\n\n\n");
             }
-        } catch (TypeCheckException e) {
+        } catch (LexerException|ParserException|WeederException|TypeCheckException e) {
             System.out.println("INVALID");
             if (verbose) {
                 System.err.println("ERROR: " + e);
