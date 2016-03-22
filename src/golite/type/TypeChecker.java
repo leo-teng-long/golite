@@ -460,13 +460,13 @@ public class TypeChecker extends DepthFirstAdapter {
             callTypeCheckException(errorNode, "Binary '+': not defined for non-numeric or non-string");
         }
         if (isIntType(left)) {
-            typeTable.put(node, new AIntTypeExpr());
+            typeTable.put(node, new AIntTypeExpr(new TInt()));
         } else if (isFloatType(left)) {
-            typeTable.put(node, new AFloatTypeExpr());
+            typeTable.put(node, new AFloatTypeExpr(new TFloat64()));
         } else if (isRuneType(left)) {
-            typeTable.put(node, new ARuneTypeExpr());
+            typeTable.put(node, new ARuneTypeExpr(new TRune()));
         } else {
-            typeTable.put(node, new AStringTypeExpr());
+            typeTable.put(node, new AStringTypeExpr(new TString()));
         }
     }
 
@@ -482,11 +482,11 @@ public class TypeChecker extends DepthFirstAdapter {
             callTypeCheckException(errorNode, "Binary '-': not defined for non-numeric");
         }
         if (isIntType(left)) {
-            typeTable.put(node, new AIntTypeExpr());
+            typeTable.put(node, new AIntTypeExpr(new TInt()));
         } else if (isFloatType(left)) {
-            typeTable.put(node, new AFloatTypeExpr());
+            typeTable.put(node, new AFloatTypeExpr(new TFloat64()));
         } else {
-            typeTable.put(node, new ARuneTypeExpr());
+            typeTable.put(node, new ARuneTypeExpr(new TRune()));
         }
     }
 
@@ -502,11 +502,11 @@ public class TypeChecker extends DepthFirstAdapter {
             callTypeCheckException(errorNode, "Binary '*': not defined for non-numeric");
         }
         if (isIntType(left)) {
-            typeTable.put(node, new AIntTypeExpr());
+            typeTable.put(node, new AIntTypeExpr(new TInt()));
         } else if (isFloatType(left)) {
-            typeTable.put(node, new AFloatTypeExpr());
+            typeTable.put(node, new AFloatTypeExpr(new TFloat64()));
         } else {
-            typeTable.put(node, new ARuneTypeExpr());
+            typeTable.put(node, new ARuneTypeExpr(new TRune()));
         }
     }
 
@@ -522,11 +522,11 @@ public class TypeChecker extends DepthFirstAdapter {
             callTypeCheckException(errorNode, "Binary '/': not defined for non-numeric");
         }
         if (isIntType(left)) {
-            typeTable.put(node, new AIntTypeExpr());
+            typeTable.put(node, new AIntTypeExpr(new TInt()));
         } else if (isFloatType(left)) {
-            typeTable.put(node, new AFloatTypeExpr());
+            typeTable.put(node, new AFloatTypeExpr(new TFloat64()));
         } else {
-            typeTable.put(node, new ARuneTypeExpr());
+            typeTable.put(node, new ARuneTypeExpr(new TRune()));
         }
     }
 
@@ -542,9 +542,9 @@ public class TypeChecker extends DepthFirstAdapter {
             callTypeCheckException(errorNode, "Binary '%': not defined for non-integer");
         }
         if (isIntType(left)) {
-            typeTable.put(node, new AIntTypeExpr());
+            typeTable.put(node, new AIntTypeExpr(new TInt()));
         } else {
-            typeTable.put(node, new ARuneTypeExpr());
+            typeTable.put(node, new ARuneTypeExpr(new TRune()));
         }
     }
 
@@ -561,9 +561,9 @@ public class TypeChecker extends DepthFirstAdapter {
             callTypeCheckException(errorNode, "Binary '&': not defined for non-integer");
         }
         if (isIntType(left)) {
-            typeTable.put(node, new AIntTypeExpr());
+            typeTable.put(node, new AIntTypeExpr(new TInt()));
         } else {
-            typeTable.put(node, new ARuneTypeExpr());
+            typeTable.put(node, new ARuneTypeExpr(new TRune()));
         }
     }
 
@@ -579,9 +579,9 @@ public class TypeChecker extends DepthFirstAdapter {
             callTypeCheckException(errorNode, "Binary '|': not defined for non-integer");
         }
         if (isIntType(left)) {
-            typeTable.put(node, new AIntTypeExpr());
+            typeTable.put(node, new AIntTypeExpr(new TInt()));
         } else {
-            typeTable.put(node, new ARuneTypeExpr());
+            typeTable.put(node, new ARuneTypeExpr(new TRune()));
         }
     }
 
@@ -597,9 +597,9 @@ public class TypeChecker extends DepthFirstAdapter {
             callTypeCheckException(errorNode, "Binary '^': not defined for non-integer");
         }
         if (isIntType(left)) {
-            typeTable.put(node, new AIntTypeExpr());
+            typeTable.put(node, new AIntTypeExpr(new TInt()));
         } else {
-            typeTable.put(node, new ARuneTypeExpr());
+            typeTable.put(node, new ARuneTypeExpr(new TRune()));
         }
     }
 
@@ -615,9 +615,9 @@ public class TypeChecker extends DepthFirstAdapter {
             callTypeCheckException(errorNode, "Binary '&^': not defined for non-integer");
         }
         if (isIntType(left)) {
-            typeTable.put(node, new AIntTypeExpr());
+            typeTable.put(node, new AIntTypeExpr(new TInt()));
         } else {
-            typeTable.put(node, new ARuneTypeExpr());
+            typeTable.put(node, new ARuneTypeExpr(new TRune()));
         }
     }
 
@@ -633,9 +633,9 @@ public class TypeChecker extends DepthFirstAdapter {
             callTypeCheckException(errorNode, "Binary '<<': not defined for non-integer");
         }
         if (isIntType(left)) {
-            typeTable.put(node, new AIntTypeExpr());
+            typeTable.put(node, new AIntTypeExpr(new TInt()));
         } else {
-            typeTable.put(node, new ARuneTypeExpr());
+            typeTable.put(node, new ARuneTypeExpr(new TRune()));
         }
     }
 
@@ -651,9 +651,9 @@ public class TypeChecker extends DepthFirstAdapter {
             callTypeCheckException(errorNode, "Binary '>>': not defined for non-integer");
         }
         if (isIntType(left)) {
-            typeTable.put(node, new AIntTypeExpr());
+            typeTable.put(node, new AIntTypeExpr(new TInt()));
         } else {
-            typeTable.put(node, new ARuneTypeExpr());
+            typeTable.put(node, new ARuneTypeExpr(new TRune()));
         }
     }
 
@@ -665,11 +665,11 @@ public class TypeChecker extends DepthFirstAdapter {
             callTypeCheckException(node.getExpr(), "Unary '+': not defined for non-numeric");
         }
         if (isIntType(type)) {
-            typeTable.put(node, new AIntTypeExpr());
+            typeTable.put(node, new AIntTypeExpr(new TInt()));
         } else if (isFloatType(type)) {
-            typeTable.put(node, new AFloatTypeExpr());
+            typeTable.put(node, new AFloatTypeExpr(new TFloat64()));
         } else {
-            typeTable.put(node, new ARuneTypeExpr());
+            typeTable.put(node, new ARuneTypeExpr(new TRune()));
         }
     }
 
@@ -680,11 +680,11 @@ public class TypeChecker extends DepthFirstAdapter {
             callTypeCheckException(node.getExpr(), "Unary '-': not defined for non-numeric");
         }
         if (isIntType(type)) {
-            typeTable.put(node, new AIntTypeExpr());
+            typeTable.put(node, new AIntTypeExpr(new TInt()));
         } else if (isFloatType(type)) {
-            typeTable.put(node, new AFloatTypeExpr());
+            typeTable.put(node, new AFloatTypeExpr(new TFloat64()));
         } else {
-            typeTable.put(node, new ARuneTypeExpr());
+            typeTable.put(node, new ARuneTypeExpr(new TRune()));
         }
     }
 
@@ -695,9 +695,9 @@ public class TypeChecker extends DepthFirstAdapter {
             callTypeCheckException(node.getExpr(), "Unary '^': not defined for non-integer");
         }
         if (isIntType(type)) {
-            typeTable.put(node, new AIntTypeExpr());
+            typeTable.put(node, new AIntTypeExpr(new TInt()));
         } else {
-            typeTable.put(node, new ARuneTypeExpr());
+            typeTable.put(node, new ARuneTypeExpr(new TRune()));
         }
     }
 
@@ -707,7 +707,7 @@ public class TypeChecker extends DepthFirstAdapter {
         if (!isBoolType(type)) {
             callTypeCheckException(node.getExpr(), "Unary '!': not defined for non-boolean");
         }
-        typeTable.put(node, new ABoolTypeExpr());
+        typeTable.put(node, new ABoolTypeExpr(new TBool()));
     }
 
     /* Type check relational operands */
@@ -722,7 +722,7 @@ public class TypeChecker extends DepthFirstAdapter {
             Node errorNode = !isComparableType(left) ? node.getLeft() : node.getRight();
             callTypeCheckException(errorNode, "Relational '==': not defined for non-comparable");
         }
-        typeTable.put(node, new ABoolTypeExpr());
+        typeTable.put(node, new ABoolTypeExpr(new TBool()));
     }
 
     @Override
@@ -736,7 +736,7 @@ public class TypeChecker extends DepthFirstAdapter {
             Node errorNode = !isComparableType(left) ? node.getLeft() : node.getRight();
             callTypeCheckException(errorNode, "Relational '!=': not defined for non-comparable");
         }
-        typeTable.put(node, new ABoolTypeExpr());
+        typeTable.put(node, new ABoolTypeExpr(new TBool()));
     }
 
     @Override
@@ -750,7 +750,7 @@ public class TypeChecker extends DepthFirstAdapter {
             Node errorNode = !isOrderedType(left) ? node.getLeft() : node.getRight();
             callTypeCheckException(errorNode, "Relational '<': not defined for non-ordered");
         }
-        typeTable.put(node, new ABoolTypeExpr());
+        typeTable.put(node, new ABoolTypeExpr(new TBool()));
     }
 
     @Override
@@ -764,7 +764,7 @@ public class TypeChecker extends DepthFirstAdapter {
             Node errorNode = !isOrderedType(left) ? node.getLeft() : node.getRight();
             callTypeCheckException(errorNode, "Relational '<=': not defined for non-ordered");
         }
-        typeTable.put(node, new ABoolTypeExpr());
+        typeTable.put(node, new ABoolTypeExpr(new TBool()));
     }
 
     @Override
@@ -778,7 +778,7 @@ public class TypeChecker extends DepthFirstAdapter {
             Node errorNode = !isOrderedType(left) ? node.getLeft() : node.getRight();
             callTypeCheckException(errorNode, "Relational '>': not defined for non-ordered");
         }
-        typeTable.put(node, new ABoolTypeExpr());
+        typeTable.put(node, new ABoolTypeExpr(new TBool()));
     }
 
     @Override
@@ -792,7 +792,7 @@ public class TypeChecker extends DepthFirstAdapter {
             Node errorNode = !isOrderedType(left) ? node.getLeft() : node.getRight();
             callTypeCheckException(errorNode, "Relational '>=': not defined for non-ordered");
         }
-        typeTable.put(node, new ABoolTypeExpr());
+        typeTable.put(node, new ABoolTypeExpr(new TBool()));
     }
 
     /* Type check conditional operators */
@@ -804,7 +804,7 @@ public class TypeChecker extends DepthFirstAdapter {
             Node errorNode = !isBoolType(left) ? node.getLeft() : node.getRight();
             callTypeCheckException(errorNode, "Conditional '&&': not defined for non-boolean");
         }
-        typeTable.put(node, new ABoolTypeExpr());
+        typeTable.put(node, new ABoolTypeExpr(new TBool()));
     }
 
     @Override
@@ -815,7 +815,7 @@ public class TypeChecker extends DepthFirstAdapter {
             Node errorNode = !isBoolType(left) ? node.getLeft() : node.getRight();
             callTypeCheckException(errorNode, "Conditional '||': not defined for non-boolean");
         }
-        typeTable.put(node, new ABoolTypeExpr());
+        typeTable.put(node, new ABoolTypeExpr(new TBool()));
     }
 
     /* Type check variables */
@@ -828,38 +828,38 @@ public class TypeChecker extends DepthFirstAdapter {
     /* Type check numeric literals */
     @Override
     public void outAIntLitExpr(AIntLitExpr node) {
-        typeTable.put(node, new AIntTypeExpr());
+        typeTable.put(node, new AIntTypeExpr(new TInt()));
     }
 
     @Override
     public void outAOctLitExpr(AOctLitExpr node) {
-        typeTable.put(node, new AIntTypeExpr());
+        typeTable.put(node, new AIntTypeExpr(new TInt()));
     }
 
     @Override
     public void outAHexLitExpr(AHexLitExpr node) {
-        typeTable.put(node, new AIntTypeExpr());
+        typeTable.put(node, new AIntTypeExpr(new TInt()));
     }
 
     @Override
     public void outAFloatLitExpr(AFloatLitExpr node) {
-        typeTable.put(node, new AFloatTypeExpr());
+        typeTable.put(node, new AFloatTypeExpr(new TFloat64()));
     }
 
     @Override
     public void outARuneLitExpr(ARuneLitExpr node) {
-        typeTable.put(node, new ARuneTypeExpr());
+        typeTable.put(node, new ARuneTypeExpr(new TRune()));
     }
 
     /* Type check string literals */
     @Override
     public void outAInterpretedStringLitExpr(AInterpretedStringLitExpr node) {
-        typeTable.put(node, new AStringTypeExpr());
+        typeTable.put(node, new AStringTypeExpr(new TString()));
     }
 
     @Override
     public void outARawStringLitExpr(ARawStringLitExpr node) {
-        typeTable.put(node, new AStringTypeExpr());
+        typeTable.put(node, new AStringTypeExpr(new TString()));
     }
 
     /* Helper methods */
@@ -1062,7 +1062,7 @@ public class TypeChecker extends DepthFirstAdapter {
         {
             boolean sameName = true;
             for (int i=0; i<ids1.size(); i++)
-            { 
+            {
                 String name1 = getIds(node1).get(i).getText();
                 String name2 = getIds(node2).get(i).getText();
                 sameName = name1.equals(name2);
@@ -1231,7 +1231,7 @@ public class TypeChecker extends DepthFirstAdapter {
         } else {
             copy = new ArrayList<TId>(getIds((AShortAssignStmt) node));
         }
-        
+
         for (TId e : copy) {
             if (e.getText().equals(id)) {
                 return e;
