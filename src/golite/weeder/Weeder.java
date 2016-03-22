@@ -10,6 +10,7 @@ import golite.analysis.*;
 /**
  * GoLite Weeder.
  */
+// TODO: Add string of error-causing code in select error messages.
 public class Weeder extends DepthFirstAdapter {
 
     /** Line and position tracker for token AST nodes. */
@@ -208,7 +209,8 @@ public class Weeder extends DepthFirstAdapter {
     public void inAExprStmt(AExprStmt node) {
         PExpr pExpr = node.getExpr();
         if (!(pExpr instanceof AFuncCallExpr || pExpr instanceof AAppendExpr))
-            this.throwWeederException(node, node + " evaluated but not used");
+            // TODO: Add string of error-causing code.
+            this.throwWeederException(node, "Evaluated but not used");
     }
 
     // Throw an error if the number of identifiers on the R.H.S. of a variable specification is not
@@ -256,28 +258,18 @@ public class Weeder extends DepthFirstAdapter {
     @Override
     public void inAIncrStmt(AIncrStmt node) {
         PExpr pExpr = node.getExpr();
-        if (!this.isIncrDecrable(pExpr))
-            this.throwWeederException(node, "Cannot assign to " + pExpr);
+        if (!this.isNonConstant(pExpr))
+            // TODO: Add string of error-causing code.
+            this.throwWeederException(node, "Cannot assign");
     }
 
     // Throw an error if decrement is applied to a non-decrementable.
     @Override
     public void inADecrStmt(ADecrStmt node) {
         PExpr pExpr = node.getExpr();
-        if (!this.isIncrDecrable(pExpr))
-            this.throwWeederException(node, "Cannot assign to " + pExpr);
-    }
-
-    /**
-     * Checks whether the given expression is incrementable/decrementable.
-     *
-     * @param pExpr - Production expression node
-     * @return True if the expression is incrementable/decrementable, false otherwise
-     */
-    private boolean isIncrDecrable(PExpr pExpr) {
-        return (pExpr instanceof AVariableExpr
-            || pExpr instanceof AFieldExpr
-            || pExpr instanceof AArrayElemExpr);
+        if (!this.isNonConstant(pExpr))
+            // TODO: Add string of error-causing code.
+            this.throwWeederException(node, "Cannot assign");
     }
 
     // Throw an error if a switch statement contains multiple default cases.
@@ -351,6 +343,37 @@ public class Weeder extends DepthFirstAdapter {
     public void inATypeCastExpr(ATypeCastExpr node) {
         if (node.getTypeExpr() instanceof AStringTypeExpr)
             this.throwWeederException(node, "Cannot cast to type string");
+    }
+
+    // Throw an error if the object in a field access is not non-constant and not a function call.
+    @Override
+    public void inAFieldExpr(AFieldExpr node) {
+        PExpr obj = node.getExpr();
+        if (!(this.isNonConstant(obj) || obj instanceof AFuncCallExpr))
+            // TODO: Change message to "Invalid operation" + (error-causing code).
+            this.throwWeederException(node, "Invalid field access operation");
+    }    
+
+    // Throw an error if the array in an array access is not non-constant and not a function call. 
+    @Override
+    public void inAArrayElemExpr(AArrayElemExpr node) {
+        PExpr array = node.getArray();
+        if (!(this.isNonConstant(array) || array instanceof AFuncCallExpr))
+            // TODO: Change message to "Invalid operation" + (error-causing code).
+            this.throwWeederException(node, "Invalid array access operation");
+    }
+
+    /**
+     * Checks whether the given expression is non-constant, i.e. a variable,
+     * field, or array element.
+     *
+     * @param pExpr - Production expression node
+     * @return True if the expression is non-constant, false otherwise
+     */
+    private boolean isNonConstant(PExpr pExpr) {
+        return (pExpr instanceof AVariableExpr
+            || pExpr instanceof AFieldExpr
+            || pExpr instanceof AArrayElemExpr);
     }
 
 }
