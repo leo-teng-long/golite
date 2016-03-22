@@ -1760,7 +1760,7 @@ public class PrettyPrinter extends DepthFirstAdapter {
       buffer.append(node.getInterpretedStringLit().getText());
     }
 
-    this.inAInterpretedStringLitExpr(node);
+    this.outAInterpretedStringLitExpr(node);
   }
 
   /**
@@ -1775,7 +1775,7 @@ public class PrettyPrinter extends DepthFirstAdapter {
       buffer.append(node.getRawStringLit().getText());
     }
 
-    this.inARawStringLitExpr(node);
+    this.outARawStringLitExpr(node);
   }
 
   /**************************************************
