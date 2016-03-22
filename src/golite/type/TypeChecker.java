@@ -1102,9 +1102,6 @@ public class TypeChecker extends DepthFirstAdapter {
         }
         message += s;
         throw new TypeCheckException(message);
-        /*TypeCheckException e = new TypeCheckException(message);
-        e.printStackTrace();
-        System.exit(1);*/
     }
 
     /* Change scope when entering and exiting functions */
@@ -1483,9 +1480,9 @@ public class TypeChecker extends DepthFirstAdapter {
             || castType instanceof ARuneTypeExpr
             || castType instanceof ABoolTypeExpr)
             {
-                typeTable.put(node, new ACustomTypeExpr(node.getId())); //Well typed!
-                typeTable.put(decl, new ACustomTypeExpr(node.getId()));
-            }//TODO: Error here?
+                symbolTable.addSymbol(id, decl); //Well typed!
+                typeTable.put(decl, castType);
+            }
         }
     }
 
@@ -1643,10 +1640,6 @@ public class TypeChecker extends DepthFirstAdapter {
         }
         else if (node instanceof AFuncCallExpr)
         {
-            /* TODO:
-             * THIS DOES NOT WORK FOR CUSTOM ALIAS TYPE CASTS!
-             * WHEN A CUSTOM TYPE CAST IS CALLED ON A LITERAL, THE AFuncCallExpr NODE HAS NULL id. :'(
-             */
             String id = (((AFuncCallExpr) node).getId()).getText();
             Node decl = symbolTable.getSymbol(id, node);
             if (decl instanceof AFuncTopDec)
