@@ -2,5 +2,5 @@
 package main
 
 func main() {
-    println((2.0 < 3) || (2 > 3.0))
+    println((2 < 3) || (2 > 3))
 }
