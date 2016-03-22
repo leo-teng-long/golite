@@ -139,10 +139,16 @@ class Main {
             Start tree = parser.parse();
             tree.apply(weeder);
 
-            String filename = inPath.substring(0, inPath.indexOf('.'));
-
-            PrettyPrinter pp = new PrettyPrinter(filename);
+            PrettyPrinter pp = new PrettyPrinter();
             tree.apply(pp);
+
+            String prettyPrint = pp.getPrettyPrint();
+
+            String filename = new File(inPath).getName();
+            String name = filename.substring(0, filename.indexOf('.'));
+            PrintWriter out = new PrintWriter(new FileWriter(name + ".pretty.go"));
+            out.print(prettyPrint);
+            out.close();
         } catch (Exception e) {
             System.err.println("ERROR: " + e);
         }
@@ -162,29 +168,29 @@ class Main {
             Start tree = parser.parse();
             tree.apply(weeder);
 
-            String filename = new File(inPath).getName();
-            String name = filename.substring(0, filename.indexOf('.'));
-
-            TypedPrettyPrinter tpp = new TypedPrettyPrinter(name);
+            TypedPrettyPrinter tpp = new TypedPrettyPrinter();
             tree.apply(tpp);
 
-            String prettyPrint = tpp.getBufferString();
+            String prettyPrint = tpp.getPrettyPrint();
 
-            // TODO: Temporary.
-            // PrintWriter out = new PrintWriter(new FileWriter(name + ".pptype.go"));
-            // out.print(prettyPrint);
-            // out.close();
+            String filename = new File(inPath).getName();
+            String name = filename.substring(0, filename.indexOf('.'));
+            PrintWriter out = new PrintWriter(new FileWriter(name + ".pptype.go"));
+            out.print(prettyPrint);
+            out.close();
 
             System.out.println(prettyPrint);
         } catch (Exception e) {
             System.err.println("ERROR: " + e);
+            // TODO: Debug.
+            e.printStackTrace();
         }
     }
 
     /**
-    * Weed a GoLite program.
-    * @param inPath - Filepath to GoLite program
-    */
+     * Weed a GoLite program.
+     * @param inPath - Filepath to GoLite program
+     */
     public static boolean weed(String inPath) throws IOException {
         try {
             Lexer lexer = new GoLiteLexer(new PushbackReader(new FileReader(inPath), 1024));

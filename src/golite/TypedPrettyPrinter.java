@@ -21,8 +21,16 @@ public class TypedPrettyPrinter extends PrettyPrinter {
   /**
    * Constructor.
    */
-  public TypedPrettyPrinter(String name) {
-    super(name);
+  public TypedPrettyPrinter() {
+    super();
+  }
+
+  /*
+   * Prints the type table to stdout (for debugging).
+   */
+  private void printTypeTable() {
+    for (Node n: this.typeTable.keySet())
+      System.out.println(n + " -> " + this.typeTable.get(n));  
   }
 
   // Initialize type table.
@@ -43,7 +51,6 @@ public class TypedPrettyPrinter extends PrettyPrinter {
   public void defaultOut(Node node) {
     super.defaultOut(node);
 
-
     if (node instanceof PExpr)
       this.annotateType(node);
   }
@@ -51,50 +58,10 @@ public class TypedPrettyPrinter extends PrettyPrinter {
   private void annotateType(Node node) {
     this.buffer.append(" /* ");
 
-    PTypeExpr typeExpr = this.typeTable.get(node); 
+    PTypeExpr typeExpr = this.typeTable.get(node);
     this.buffer.append(typeExpr == null ? "(None)" : typeExpr.toString());
 
-    this.buffer.append(" */");
+    this.buffer.append(" */ ");
   }
-
-  // private String getTypeExprString(PTypeExpr typeExpr) {
-  //   if (typeExpr instanceof ABoolTypeExpr)
-  //     return this.getBoolTypeExprString()
-  // }
-
-  // private String getBoolTypeExprString(ABoolTypeExpr node) {
-  //   return node.getBool().getText();
-  // }
-
-  // private String getIntTypeExprString(AIntTypeExpr node) {
-  //   return node.getInt().getText();
-  // }
-
-  // private String getFloatTypeExprString(AFloatTypeExpr node) {
-  //   return node.getFloat64().getText();
-  // }
-
-  // private String getRuneTypeExprString(ARuneTypeExpr node) {
-  //   return node.getRune().getText();
-  // }
-
-  // private String getStringTypeExprString(AStringTypeExpr node) {
-  //   return node.getString().getText();
-  // }
-
-  // private String getCustomTypeExprString(ACustomTypeExpr node) {
-  //   return node.getId().getText();
-  // }
-
-  // private String getArrayTypeExprString(AArrayTypeExpr node) {
-  //   String s = "["
-  //   if (node.getExpr() != null) {
-  //     node.getExpr().apply(this);
-  //   }
-  //   s += "]";
-  //   if (node.getTypeExpr() != null) {
-  //     node.getTypeExpr().apply(this);
-  //   }
-  // }
 
 }

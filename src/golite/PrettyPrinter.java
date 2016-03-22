@@ -16,25 +16,23 @@ public class PrettyPrinter extends DepthFirstAdapter {
 
   /** Buffer storing pretty printed program. */
   protected StringBuffer buffer;
-  private String fileName;
   /** Stores the tab depth. */
   private int tabDepth;
 
   /**
    * PrettyPrinter Constructor
    */
-  public PrettyPrinter(String fileName) {
+  public PrettyPrinter() {
     this.buffer = new StringBuffer();
-    this.fileName = fileName;
     this.tabDepth = 0;
   }
 
   /**
-   * Returns the buffer string.
+   * Returns the pretty printed program as a string.
    * 
-   * @return Buffer string
+   * @return Pretty printed program as a string.
    **/
-  public String getBufferString() {
+  public String getPrettyPrint() {
     return this.buffer.toString();
   }
 
@@ -42,19 +40,15 @@ public class PrettyPrinter extends DepthFirstAdapter {
    * Write printy-print program to file             *
    **************************************************/
 
-  /**
-   * @Override public void outAProgProg(AProgProg node)
-   *
-   * Write to file
-   */
+  @Override
   public void outAProgProg(AProgProg node) {
-    try {
-      PrintWriter out = new PrintWriter(new FileWriter(fileName + ".pretty.go"));
-      out.println(buffer.toString());
-      out.close();
-    } catch (Exception ex) {
-      System.err.println("ERROR: Failed to pretty print");
-    }
+    // try {
+    //   PrintWriter out = new PrintWriter(new FileWriter(fileName + ".pretty.go"));
+    //   out.println(buffer.toString());
+    //   out.close();
+    // } catch (Exception ex) {
+    //   System.err.println("ERROR: Failed to pretty print");
+    // }
 
     super.defaultOut(node);
   }
