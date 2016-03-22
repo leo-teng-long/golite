@@ -1,4 +1,4 @@
-package golite.weeder;
+package golite;
 
 import java.util.*;
 import golite.exception.*;
@@ -11,7 +11,7 @@ import golite.analysis.*;
  * GoLite Weeder.
  */
 // TODO: Add string of error-causing code in select error messages.
-public class Weeder extends DepthFirstAdapter {
+public class GoLiteWeeder extends DepthFirstAdapter {
 
     /** Line and position tracker for token AST nodes. */
     private LineAndPosTracker lineAndPosTracker = new LineAndPosTracker();
@@ -101,7 +101,7 @@ public class Weeder extends DepthFirstAdapter {
         Integer line = this.lineAndPosTracker.getLine(node);
         Integer pos = this.lineAndPosTracker.getPos(node);
 
-        throw new WeederException("[" + line + "," + pos + "] " + msg);
+        throw new GoLiteWeederException("[" + line + "," + pos + "] " + msg);
     }
 
     /**

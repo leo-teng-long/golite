@@ -4,12 +4,12 @@ import golite.node.*;
 
 
 /**
- * Weeder exception.
+ * GoLiteWeeder exception.
  */
 @SuppressWarnings("serial")
 public class WeederException extends RuntimeException {
 
-    public WeederException(String message) {
+    public GoLiteWeederException(String message) {
         super(message);
     }
 

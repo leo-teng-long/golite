@@ -16,8 +16,12 @@ logging.basicConfig(format="%(levelname)s: [%(asctime)s] %(message)s",
 # Path to programs directory.
 PROGS_DIRPATH = os.path.join("..", "programs")
 
-# Path to valid programs directory.
+# Path to valid programs directories.
 VALID_PROGS_DIRPATH = os.path.join(PROGS_DIRPATH, "valid")
+VALID_ACTUAL_PROGS_DIRPATH = os.path.join(VALID_PROGS_DIRPATH, "actual")
+VALID_GENERAL_PROGS_DIRPATH = os.path.join(VALID_PROGS_DIRPATH, "general")
+VALID_SYNTAX_PROGS_DIRPATH = os.path.join(VALID_PROGS_DIRPATH, "syntax")
+
 # Path to invalid programs directory (Only syntax for now).
 INVALID_PROGS_DIRPATH = os.path.join(PROGS_DIRPATH, os.path.join("invalid",
 	"syntax"))
@@ -185,12 +189,12 @@ def to_template_marker(in_str):
 	return "<<<" + in_str + ">>>"
 
 
-def create_test(test_name, progs_dirpath, tpe, out_path):
+def create_test(test_name, progs_dirpaths, tpe, out_path):
 	"""
 	Creates the source string for a test and saves it to file.
 
 	@param test_name - Test name (Becomes the class name of the test)
-	@param progs_dirpath - Directory path to input test programs folder
+	@param progs_dirpaths - Directory paths to input test programs folders
 	@param tpe - 'valid_parse' for testing the correcting parsing of the
 		program, 'invalid_parse' for testing no parse is produced for the
 		program, or 'pretty' for testing the pretty printer on the program
@@ -211,16 +215,17 @@ def create_test(test_name, progs_dirpath, tpe, out_path):
 	test_method_strs = []
 
 	# Create a test method for each program.
-	for parent, subdirs, fnames in os.walk(progs_dirpath):
-		for fname in fnames:
-			if not fname.endswith('.go'):
-				continue
+	for progs_dirpath in progs_dirpaths:
+		for parent, subdirs, fnames in os.walk(progs_dirpath):
+			for fname in fnames:
+				if not fname.endswith('.go'):
+					continue
 
-			test_prog_path = os.path.join(parent, fname)
+				test_prog_path = os.path.join(parent, fname)
 
-			if not test_prog_path in tests_to_ignore:
-				test_method_strs.append(create_test_method_str(fname,
-					test_prog_path, tpe))
+				if not test_prog_path in tests_to_ignore:
+					test_method_strs.append(create_test_method_str(fname,
+						test_prog_path, tpe))
 
 	# Read the test template source.
 	with open(TEST_CLASS_TEMPALTE_FPATH) as fin:
@@ -246,19 +251,22 @@ def main():
 	# List of test method strings.
 	test_method_strs = []
 
+	valid_progs_dirpaths = [VALID_ACTUAL_PROGS_DIRPATH,
+		VALID_GENERAL_PROGS_DIRPATH, VALID_SYNTAX_PROGS_DIRPATH]
+
 	# Create the parser test for syntactically valid programs.
 	logging.info("Creating parser test for syntactically valid programs...")
-	create_test(OUT_VALID_PARSE_TNAME, VALID_PROGS_DIRPATH, 'valid_parse',
+	create_test(OUT_VALID_PARSE_TNAME, valid_progs_dirpaths, 'valid_parse',
 		os.path.join(OUT_TEST_DIRPATH, '%s.java' % OUT_VALID_PARSE_TNAME))
 
 	# Create the parser test for syntactically invalid programs.
 	logging.info("Creating parser test for syntactically invalid programs...")
-	create_test(OUT_INVALID_PARSE_TNAME, INVALID_PROGS_DIRPATH, 'invalid_parse',
+	create_test(OUT_INVALID_PARSE_TNAME, [INVALID_PROGS_DIRPATH], 'invalid_parse',
 		os.path.join(OUT_TEST_DIRPATH, '%s.java' % OUT_INVALID_PARSE_TNAME))
 
 	# Create the pretty printer test.
 	logging.info("Creating pretty printer tests...")
-	create_test(OUT_PRETTY_TNAME, VALID_PROGS_DIRPATH, 'pretty',
+	create_test(OUT_PRETTY_TNAME, valid_progs_dirpaths, 'pretty',
 		os.path.join(OUT_TEST_DIRPATH, '%s.java' % OUT_PRETTY_TNAME))
 
 	# Read in the test suite template.
@@ -270,7 +278,7 @@ def main():
 		to_template_marker("INSERT TEST CLASSES HERE"),
 		"%s.class,\n\t%s.class,\n\t%s.class" % (OUT_VALID_PARSE_TNAME,
 			OUT_INVALID_PARSE_TNAME, OUT_PRETTY_TNAME))
-	
+
 	# Save the test suite source to file.
 	with open(OUT_SUITE_FPATH, 'w') as fout:
 		fout.write(suite_str)
