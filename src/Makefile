@@ -20,7 +20,15 @@ test_type_valid: build
 test_type_invalid: build
 	for f in ../programs/invalid/type/*.go; do echo $$f; java golite/Main -symbol $$f; done
 
+test_type_valid_v: build
+	for f in ../programs/valid/type/*.go; do echo $$f; java golite/Main -symbolv $$f; done
+
+test_type_invalid_v: build
+	for f in ../programs/invalid/type/*.go; do echo $$f; java golite/Main -symbolv $$f; done
+
 test_type: build test_type_valid test_type_invalid
+
+test_type_v: build test_type_valid_v test_type_invalid_v
 
 clean:
 	rm -rf golite/*.class golite/lexer golite/parser golite/node golite/analysis

@@ -16,8 +16,9 @@ import java.util.*;
  * Main.
  */
 class Main {
-
+    private static boolean verbose;
     public static void main(String args[]) {
+        verbose = false;
         try {
             if (args.length < 2 || args.length > 2)
                 printUsage();
@@ -42,6 +43,9 @@ class Main {
             } else if (args[0].equals("-weed")) {
                 weed(args[1]);
             } else if (args[0].equals("-symbol")) {
+                symbol(args[1]);
+            } else if (args[0].equals("-symbolv")) {
+                verbose = true;
                 symbol(args[1]);
             } else {
                 printUsage();
@@ -160,9 +164,24 @@ class Main {
             HashMap<Node, PTypeExpr> typeTable = symbolBuilder.getTypeTable();
             TypeChecker typeChecker = new TypeChecker(symbolTable, typeTable);
             start.apply(typeChecker);
+            System.out.println("VALID");
+            if (verbose)
+            {
+                System.out.println("###SYMBOL TABLE:###");
+                symbolTable.printSymbols();
+                System.out.println("###TYPE TABLE:###");
+                for (Node n: typeTable.keySet())
+                {
+                    System.out.println("Node: " + n + " Key: " + n.getClass() + " Value: " + typeTable.get(n).getClass());
+                }
+                System.out.println("\n\n\n");
+            }
         } catch (Exception e) {
-            System.err.println("ERROR: " + e);
-            e.printStackTrace();
+            System.out.println("INVALID");
+            if (verbose) {
+                System.err.println("ERROR: " + e);
+                e.printStackTrace();
+            }
             return false;
         }
         return true;

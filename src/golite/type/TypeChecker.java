@@ -39,14 +39,6 @@ public class TypeChecker extends DepthFirstAdapter {
     {
         symbolTable.exitScope();
         symbolTable.exitScope();
-        System.out.println("###SYMBOL TABLE:###");
-        symbolTable.printSymbols();
-        System.out.println("###TYPE TABLE:###");
-        for (Node n: typeTable.keySet())
-        {
-            System.out.println("Node: " + n + " Key: " + n.getClass() + " Value: " + typeTable.get(n).getClass());
-        }
-        System.out.println("\n\n\n");
     }
 
     // (need to be verified)
@@ -920,6 +912,10 @@ public class TypeChecker extends DepthFirstAdapter {
         if (isSameType && node1 instanceof ACustomTypeExpr) {
             return isSameCustomType((ACustomTypeExpr) node1, (ACustomTypeExpr) node2);
         }
+        else if (isSameType && node1 instanceof AStructTypeExpr)
+        {
+            return isSameStruct((AStructTypeExpr) node1, (AStructTypeExpr) node2);
+        }
         return isSameType;
     }
 
@@ -927,7 +923,8 @@ public class TypeChecker extends DepthFirstAdapter {
     {
         PTypeExpr t1 = getType(node1);
         PTypeExpr t2 = getType(node2);
-        if (isSameType(t1, t2))
+        boolean theSame = isSameType(t1, t2);
+        if (theSame)
         {
             if (t1 instanceof AStructTypeExpr)
             {
@@ -942,7 +939,12 @@ public class TypeChecker extends DepthFirstAdapter {
     {
         String name1 = ((ASpecTypeSpec) node1.parent()).getId().getText();
         String name2 = ((ASpecTypeSpec) node2.parent()).getId().getText();
-        return name1.equals(name2);
+        boolean sameName = name1.equals(name2);
+        if (!sameName)
+        {
+            return false;
+        }
+        return sameName;
     }
 
     private boolean isAssignable(PExpr node) {
@@ -1124,6 +1126,38 @@ public class TypeChecker extends DepthFirstAdapter {
 
     /* Type check assignment statements */
 
+    private boolean isSameFields(AStructTypeExpr lhs, AStructTypeExpr rhs)
+    {
+        int lhsLen = ((List<PArgGroup>) lhs.getArgGroup()).size();
+        int rhsLen = ((List<PArgGroup>) rhs.getArgGroup()).size();
+        if (lhsLen == rhsLen)
+        {
+            List<PArgGroup> aRhs = rhs.getArgGroup();
+            List<PArgGroup> aLhs = lhs.getArgGroup();
+            for (int i=0; i<lhsLen; i++)
+            {
+                AArgArgGroup a1 = (AArgArgGroup) aRhs.get(i);
+                AArgArgGroup a2 = (AArgArgGroup) aLhs.get(i);
+                if(!isSameType(a1.getTypeExpr(), a2.getTypeExpr()))
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+        return false;   
+    }
+
+    private boolean isSameFields(AStructTypeExpr lhs, ACustomTypeExpr custom)
+    {
+        PTypeExpr rhs = getType(custom);
+        if (rhs instanceof AStructTypeExpr)
+        {
+            return isSameFields(lhs, (AStructTypeExpr) rhs);
+        }
+        return false;
+    }
+
     @Override
     public void outAAssignStmt(AAssignStmt node)
     {
@@ -1132,9 +1166,22 @@ public class TypeChecker extends DepthFirstAdapter {
         int length = ids.size();
         for (int i=0; i < length; i++)
         {
-            if (getType(ids.get(i)).getClass() != getType(exprs.get(i)).getClass())
+            PTypeExpr lhs = getType(ids.get(i));
+            PTypeExpr rhs = getType(exprs.get(i));
+            if (!isSameType(lhs, rhs))
             {
-                callTypeCheckException(node, "Types on left hand and right hand sides of assignment statements must be assignment compatable");
+                if (lhs instanceof AStructTypeExpr && rhs instanceof ACustomTypeExpr)
+                {
+                    boolean sameFields = isSameFields((AStructTypeExpr) lhs, (ACustomTypeExpr) rhs);
+                    if (!sameFields)
+                    {
+                        callTypeCheckException(node, "Struct on right side must be assignment compatable with field");
+                    }
+                }
+                else
+                {
+                    callTypeCheckException(node, "Types on left and right sides of assignment statements must be assignment compatable");
+                }
             }
         }
     }
@@ -1160,7 +1207,6 @@ public class TypeChecker extends DepthFirstAdapter {
             PTypeExpr exprType = getType(node.getExpr());
             if (sliceElementType.getClass() == exprType.getClass())
             {
-                System.out.println(sliceElementType.getClass());
                 if (sliceElementType instanceof ASliceTypeExpr)
                 {
                     if (!(getDimension((ASliceTypeExpr) sliceElementType) == getDimension((ASliceTypeExpr) exprType)))
