@@ -9,7 +9,7 @@ import golite.node.*;
 @SuppressWarnings("serial")
 public class WeederException extends RuntimeException {
 
-    public GoLiteWeederException(String message) {
+    public WeederException(String message) {
         super(message);
     }
 
