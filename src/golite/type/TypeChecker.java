@@ -41,7 +41,7 @@ public class TypeChecker extends DepthFirstAdapter {
         symbolTable.exitScope();
     }
 
-    // (need to be verified)
+    // TODO: (need to be verified)
     @Override
     public void caseAVarsTopDec(AVarsTopDec node) {
         // taken care of by SymbolTableBuilder
@@ -301,9 +301,9 @@ public class TypeChecker extends DepthFirstAdapter {
             }
             node.getExpr().apply(this);
             PTypeExpr type = typeTable.get(node.getExpr());
-            // ##################################################
-            // (numeric return type might need special attention)
-            // ##################################################
+            // ########################################################
+            // TODO: (numeric return type might need special attention)
+            // ########################################################
             if (!isSameType(type, funcDec.getTypeExpr())) {
                 callTypeCheckException(node.getExpr(), "Return: expression returned not matched function return type");
             }
@@ -712,9 +712,9 @@ public class TypeChecker extends DepthFirstAdapter {
     public void outAEqExpr(AEqExpr node) {
         PTypeExpr left = typeTable.get(node.getLeft());
         PTypeExpr right = typeTable.get(node.getRight());
-        // ##################################################
-        // Array & Slice are comparable (not yet implemented)
-        // ##################################################
+        // ########################################################
+        // TODO: Array & Slice are comparable (not yet implemented)
+        // ########################################################
         if (!isSameType(left, right)) {
             callTypeCheckException(node.getLeft(), "Relational '==': mismatched operand type");
         }
@@ -729,9 +729,9 @@ public class TypeChecker extends DepthFirstAdapter {
     public void outANeqExpr(ANeqExpr node) {
         PTypeExpr left = typeTable.get(node.getLeft());
         PTypeExpr right = typeTable.get(node.getRight());
-        // ##################################################
-        // Array & Slice are comparable (not yet implemented)
-        // ##################################################
+        // ########################################################
+        // TODO: Array & Slice are comparable (not yet implemented)
+        // ########################################################
         if (!isSameType(left, right)) {
             callTypeCheckException(node.getLeft(), "Relational '!=': mismatched operand type");
         }
@@ -931,7 +931,59 @@ public class TypeChecker extends DepthFirstAdapter {
         {
             return isSameStruct((AStructTypeExpr) node1, (AStructTypeExpr) node2);
         }
+        else if (isSameType && node1 instanceof AArrayTypeExpr)
+        {
+            String length1 = getNum(((AArrayTypeExpr) node1).getExpr());
+            String length2 = getNum(((AArrayTypeExpr) node2).getExpr());
+            int dimension1 = getDimension((AArrayTypeExpr) node1);
+            int dimension2 = getDimension((AArrayTypeExpr) node2);
+            boolean recursive = true;
+            if (dimension1 > 0)
+            {
+                recursive = isSameType(((AArrayTypeExpr) node1).getTypeExpr(), ((AArrayTypeExpr) node2).getTypeExpr());
+            }
+            return (length1.equals(length2) && dimension1 == dimension2 && recursive && (isSameType(((AArrayTypeExpr) node1).getTypeExpr(), ((AArrayTypeExpr) node2).getTypeExpr())));
+        }
+        else if (isSameType && node1 instanceof ASliceTypeExpr)
+        {
+            int dimension1 = getDimension((ASliceTypeExpr) node1);
+            int dimension2 = getDimension((ASliceTypeExpr) node2);
+            return ((dimension1 == dimension2) && (isSameType(((ASliceTypeExpr) node1).getTypeExpr(), ((ASliceTypeExpr) node2).getTypeExpr())));
+        }
         return isSameType;
+    }
+
+    private String getNum(PExpr node)
+    {
+        if (node instanceof AOctLitExpr)
+        {
+            return getNum((AOctLitExpr) node);
+        }
+        else if (node instanceof AHexLitExpr)
+        {
+            return getNum((AHexLitExpr) node);
+        }
+        else if (node instanceof AIntLitExpr)
+        {
+            return getNum((AIntLitExpr) node);
+        }
+        callTypeCheckException(node, "Invalid array length");
+        return null;
+    }
+
+    private String getNum(AOctLitExpr node)
+    {
+        return node.getOctLit().getText();
+    }
+
+    private String getNum(AIntLitExpr node)
+    {
+        return node.getIntLit().getText();
+    }
+
+    private String getNum(AHexLitExpr node)
+    {
+        return node.getHexLit().getText();
     }
 
     private boolean isSameCustomType(ACustomTypeExpr node1, ACustomTypeExpr node2)
@@ -1059,7 +1111,6 @@ public class TypeChecker extends DepthFirstAdapter {
 
     private void putTypeExpr(String name, PTypeExpr node)
     {
-        //TODO: Handle other types of type expressions
         if (isStructType(node))
         {
             for (PArgGroup a: ((AStructTypeExpr) node).getArgGroup())
@@ -1097,8 +1148,8 @@ public class TypeChecker extends DepthFirstAdapter {
     @Override
     public void outAFieldExpr(AFieldExpr node)
     {
-        //Check that Expr is well typed with Struct type
-        //Check that Struct type has a field named id
+        //TODO: Check that Expr is well typed with Struct type
+        //TODO: Check that Struct type has a field named id
         PTypeExpr type = getType(node.getExpr());
         String id = node.getId().getText();
         if (type instanceof AStructTypeExpr)
@@ -1212,6 +1263,16 @@ public class TypeChecker extends DepthFirstAdapter {
         return 0;
     }
 
+    private int getDimension(AArrayTypeExpr node)
+    {
+        PTypeExpr elementType = node.getTypeExpr();
+        if (elementType instanceof AArrayTypeExpr)
+        {
+            return 1 + getDimension((AArrayTypeExpr) elementType);
+        }
+        return 0;
+    }
+
     @Override
     public void outAAppendExpr(AAppendExpr node)
     {
@@ -1296,6 +1357,10 @@ public class TypeChecker extends DepthFirstAdapter {
                     argTypes.add(argType);
                 }
             }
+            if (paramTypes.size() != argTypes.size())
+            {
+                callTypeCheckException(node, "Wrong number of parameters passed to function call");
+            }
             for (int i = 0; i<argTypes.size(); i++)
             {
                 if (argTypes.get(i).getClass() == getType(paramTypes.get(i)).getClass())
@@ -1325,7 +1390,7 @@ public class TypeChecker extends DepthFirstAdapter {
             {
                 typeTable.put(node, new ACustomTypeExpr(node.getId())); //Well typed!
                 typeTable.put(decl, new ACustomTypeExpr(node.getId()));
-            }
+            }//TODO: Error here?
         }
     }
 
