@@ -84,8 +84,7 @@ public class SymbolTable {
         }
         message += s;
         SymbolException e = new SymbolException(message);
-        e.printStackTrace();
-        System.exit(1);
+        throw e;
     }
 
     /*

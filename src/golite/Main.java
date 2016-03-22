@@ -60,7 +60,7 @@ class Main {
                 printUsage();
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            e.printStackTrace(System.out);
         }
     }
 
@@ -192,7 +192,7 @@ class Main {
                 }
                 System.out.println("\n\n\n");
             }
-        } catch (LexerException|ParserException|WeederException|TypeCheckException e) {
+        } catch (LexerException|ParserException|SymbolException|WeederException|TypeCheckException e) {
             System.out.println("INVALID");
             if (verbose) {
                 System.err.println("ERROR: " + e);
