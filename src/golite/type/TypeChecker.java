@@ -41,13 +41,11 @@ public class TypeChecker extends DepthFirstAdapter {
         symbolTable.exitScope();
     }
 
-    // TODO: (need to be verified)
     @Override
     public void caseAVarsTopDec(AVarsTopDec node) {
         // taken care of by SymbolTableBuilder
     }
 
-    // (need to be verified)
     @Override
     public void caseATypesTopDec(ATypesTopDec node) {
         // taken care of by SymbolTableBuilder
@@ -301,9 +299,6 @@ public class TypeChecker extends DepthFirstAdapter {
             }
             node.getExpr().apply(this);
             PTypeExpr type = typeTable.get(node.getExpr());
-            // ########################################################
-            // TODO: (numeric return type might need special attention)
-            // ########################################################
             if (!isSameType(type, funcDec.getTypeExpr())) {
                 callTypeCheckException(node.getExpr(), "Return: expression returned not matched function return type");
             }
@@ -756,9 +751,6 @@ public class TypeChecker extends DepthFirstAdapter {
     public void outAEqExpr(AEqExpr node) {
         PTypeExpr left = typeTable.get(node.getLeft());
         PTypeExpr right = typeTable.get(node.getRight());
-        // ########################################################
-        // TODO: Array & Slice are comparable (not yet implemented)
-        // ########################################################
         if (!isSameType(left, right)) {
             callTypeCheckException(node.getLeft(), "Relational '==': mismatched operand type");
         }
@@ -773,9 +765,6 @@ public class TypeChecker extends DepthFirstAdapter {
     public void outANeqExpr(ANeqExpr node) {
         PTypeExpr left = typeTable.get(node.getLeft());
         PTypeExpr right = typeTable.get(node.getRight());
-        // ########################################################
-        // TODO: Array & Slice are comparable (not yet implemented)
-        // ########################################################
         if (!isSameType(left, right)) {
             callTypeCheckException(node.getLeft(), "Relational '!=': mismatched operand type");
         }
@@ -943,7 +932,7 @@ public class TypeChecker extends DepthFirstAdapter {
     }
 
     private boolean isComparableType(PTypeExpr node) {
-        return isBoolType(node) || isOrderedType(node);
+        return isBoolType(node) || isOrderedType(node) || isArrayType(node);
     }
 
     private boolean isBaseType(PTypeExpr node) {
@@ -1192,8 +1181,6 @@ public class TypeChecker extends DepthFirstAdapter {
     @Override
     public void outAFieldExpr(AFieldExpr node)
     {
-        //TODO: Check that Expr is well typed with Struct type
-        //TODO: Check that Struct type has a field named id
         PTypeExpr type = getType(node.getExpr());
         String id = node.getId().getText();
         if (type instanceof AStructTypeExpr)
