@@ -19,8 +19,8 @@ class Main {
     private static boolean verbose;
 
     public static void main(String args[]) {
-        this.verbose = false;
-        
+        verbose = false;
+
         try {
             if (args.length < 2 || args.length > 2)
                 printUsage();
