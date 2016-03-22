@@ -36,7 +36,7 @@ func compute(op int, a float64, b float64) float64 {
     return -a
   default:
     println("Invalid operator")
-    break
+    // break // Error: break must only occur in a loop.
   }
   return -1
 }

@@ -7,8 +7,8 @@ func f(){
 	}
 	var z []person;
 	var w [20]person;
-	var _ float64 // invalid
-
+	var _ float64 // invalid // Error: Actually valid.
+	var
 	return "Damn Daniel..."
 }
 

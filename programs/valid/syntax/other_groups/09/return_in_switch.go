@@ -10,7 +10,7 @@ func plus(a, b int) int{
         return 0
     default:
         return 0
-        ;;;
+        // ;;; Error: Can't trail a return statement.
     }
 
 }

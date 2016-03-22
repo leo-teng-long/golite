@@ -8,18 +8,10 @@
 ../programs/valid/syntax/other_groups/09/funccall.go
 # Need to support arbitary nesting of function call callers and argument lists in parentheses.
 ../programs/valid/syntax/other_groups/09/set2square.go
-# Array size expressions that do not evaluate to a constant are checked in the weeder.
-../programs/invalid/syntax/other_groups/01/#16.2.go
-# Expression statements that do not evaluate to a void function call are checked in the weeder.
-../programs/invalid/syntax/other_groups/01/#19.1.go
-# Variable declarations with multiple assignments are checked for LHS and RHS size compatibility in the weeder.
-../programs/invalid/syntax/other_groups/02/invalid_var_assign.go
 # Return type checks are performed in the type checker.
 ../programs/invalid/syntax/other_groups/03/invalid_funcdecl.go
 # Need to check LHS of a short assignment is not a underscore.
 ../programs/invalid/syntax/other_groups/03/invalid_vardecl_6.go
-# Variable declarations with no initialization and using an underscore are valid.
-../programs/invalid/syntax/other_groups/03/invalid_vardecl_7.go
 # Switch with underscore as the initializer or expression needs to be checked in the weeder.
 ../programs/invalid/syntax/other_groups/03/invalid_switch10.go
 # Array size and access expressions are checked in type checker.
@@ -30,50 +22,12 @@
 ../programs/invalid/syntax/other_groups/04/33.go
 # Same as previous.
 ../programs/invalid/syntax/other_groups/04/39.go
-# Need to check the last part in a three part for loop is not a declaration.
-../programs/invalid/syntax/other_groups/04/54.go
-# Need to check the LHS of increment or decrement operator is incrementable/decrementable.
-../programs/invalid/syntax/other_groups/04/73.go
-# Same as previous.
-../programs/invalid/syntax/other_groups/04/74.go
-# Expression statements that do not evaluate to a void function call are checked in the weeder.
-../programs/invalid/syntax/other_groups/04/76.go
-# Variable declarations with multiple assignments are checked for LHS and RHS size compatibility in the weeder.
-../programs/invalid/syntax/other_groups/04/77.go
-# Same as previous.
-../programs/invalid/syntax/other_groups/04/78.go
-# Same as previous.
-../programs/invalid/syntax/other_groups/04/80.go
-# Same as previous.
-../programs/invalid/syntax/other_groups/04/81.go
-# Expression statements that do not evaluate to a void function call are checked in the weeder.
-../programs/invalid/syntax/other_groups/04/82.go
-# Same as previous.
-../programs/invalid/syntax/other_groups/04/83.go
-# Variable declarations with multiple assignments are checked for LHS and RHS size compatibility in the weeder.
-../programs/invalid/syntax/other_groups/04/92.go
-# Same as previous.
-../programs/invalid/syntax/other_groups/04/93.go
-# Same as previous.
-../programs/invalid/syntax/other_groups/06/invalid2.go
 # Pretty sure an expression that evaluates to a constant for an array size is valid.
 ../programs/invalid/syntax/other_groups/07/invalid_goLiteArrayDeclIndexing.go
 # Same as previous.
 ../programs/invalid/syntax/other_groups/07/invalid_only_intconst_array_decl.go
-# Checking type casting with string is done in the weeder. 
-../programs/invalid/syntax/other_groups/07/typecast_string.go
-# Need to check the LHS of increment or decrement operator is incrementable/decrementable.
-../programs/invalid/syntax/other_groups/08/badLvalueIncDec.go
-# Variable declarations with multiple assignments are checked for LHS and RHS size compatibility in the weeder.
-../programs/invalid/syntax/other_groups/08/badAssignNumberofIds.go
-# Pretty sure an expression that evaluates to a constant for an array size is valid.
-../programs/invalid/syntax/other_groups/08/badArrayDec.go
-# Need to check the last part in a three part for loop is not a declaration.
-../programs/invalid/syntax/other_groups/08/badForPostStmt.go
-# Variable declarations with multiple assignments are checked for LHS and RHS size compatibility in the weeder.
-../programs/invalid/syntax/other_groups/08/badNumberofIds.go
 # Same as previous.
-../programs/invalid/syntax/other_groups/08/badShortDeclNumberOfIds.go
+../programs/invalid/syntax/other_groups/08/badArrayDec.go
 # Need to check package is not underscore in weeder.
 ../programs/invalid/syntax/other_groups/09/blank_package.go
 # Need to check argument to function call is not underscore in weeder.
@@ -82,14 +36,10 @@
 ../programs/invalid/syntax/other_groups/09/blanktype.go
 # break outside of loops will be checked in weeder.
 ../programs/invalid/syntax/other_groups/09/break_not_in_loop.go
-# continue outside of loops will be checked in weeder.
-../programs/invalid/syntax/other_groups/09/continue_outside_loop.go
 # Underscore assignments will be checked in the weeder.
 ../programs/invalid/syntax/other_groups/09/blank_assignements.go
 # Underscore function call will be checked in weeder.
 ../programs/invalid/syntax/other_groups/09/blank_funccall.go
-# Variable declarations with multiple assignments are checked for LHS and RHS size compatibility in the weeder.
-../programs/invalid/syntax/other_groups/09/assignment_mismatch.go
 # Underscore field will be checked in weeder.
 ../programs/invalid/syntax/other_groups/09/blank_field.go
 # Underscore return type will be checked in weeder.
@@ -102,16 +52,10 @@
 ../programs/invalid/syntax/other_groups/09/blank_append.go
 # Underscore as array access will be checked in weeder.
 ../programs/invalid/syntax/other_groups/09/blank_index_int.go
-# Return at end of function will be checked in weeder.
-../programs/invalid/syntax/other_groups/09/missing_return.go
 # Underscore as selector will be checked in weeder.
 ../programs/invalid/syntax/other_groups/09/blank_selector.go
 # Underscore passed to print will be checked in weeder.
 ../programs/invalid/syntax/other_groups/09/blank_print.go
-# Variable declarations with multiple assignments are checked for LHS and RHS size compatibility in the weeder.
-../programs/invalid/syntax/other_groups/09/assignment_mismatch_short.go
-# Need to check the last part in a three part for loop is not a declaration.
-../programs/invalid/syntax/other_groups/09/for_clause_errors.go
 # Underscore passed to type cast needs to be checked in weeder.
 ../programs/invalid/syntax/other_groups/09/blank_conversion.go
 # Underscore array variable in access will be checked in weeder.
@@ -122,19 +66,7 @@
 ../programs/invalid/syntax/other_groups/11/test11.go
 # Parenthesized type expressions are valid.
 ../programs/invalid/syntax/other_groups/14/0350_array_type_parens.go
-# Array size expressions that do not evaluate to a constant are checked in the weeder.
+# Pretty sure an expression that evaluates to a constant for an array size is valid.
 ../programs/invalid/syntax/other_groups/14/0303_expr_array_decl.go
-# Expression statements that do not evaluate to a void function call are checked in the weeder.
-../programs/invalid/syntax/other_groups/14/2050_expression_stmt_id.go
-# Variable declarations with multiple assignments are checked for LHS and RHS size compatibility in the weeder.
-../programs/invalid/syntax/other_groups/15/assignment1.go
-# Same as previous
-../programs/invalid/syntax/other_groups/15/assignment2.go
-# Expression statements that do not evaluate to a void function call are checked in the weeder.
-../programs/invalid/syntax/other_groups/15/weeding2.go
-# break outside of loops will be checked in weeder.
-../programs/invalid/syntax/other_groups/15/weeding3.go
 # Not sure why this one's invalid.
 ../programs/invalid/syntax/other_groups/15/weeding4.go
-# Multiple default cases in a switch will be checked in weeder.
-../programs/invalid/syntax/other_groups/15/weeding5.go

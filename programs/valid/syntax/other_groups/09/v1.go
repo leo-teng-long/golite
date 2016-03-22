@@ -4,7 +4,7 @@ func main() {
 	a := (a).test
 	switch os := runtime.GOOS; os {
 	case 1:
-		break;
+		// break; // Error: break can only occur in a loop.
 	case "linux":
 	default:
 		// freebsd, openbsd,

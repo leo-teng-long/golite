@@ -27,7 +27,7 @@ func operate(op instruction, st state) state {
             st.stk[st.sp] = 2
             st.sp++
         case ADD:
-            if st.sp == 0 { break; }
+            // if st.sp == 0 { break; } // Break outside loop.
             st.stk[st.sp - 1] += st.stk[st.sp]
             st.sp--
         case PRINT:

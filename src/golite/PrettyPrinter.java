@@ -799,7 +799,7 @@ public class PrettyPrinter extends DepthFirstAdapter {
    *
    * Pretty print for loop
    */
-  public void caseAForLoopStmt(AForLoopStmt node) {
+  public void caseALoopStmt(ALoopStmt node) {
     buffer.append("for");
     if (node.getInit() != null) {
       addSpace();
@@ -825,26 +825,26 @@ public class PrettyPrinter extends DepthFirstAdapter {
     }
   }
 
-  /**
-   * @Override public void AWhileLoopStmt(AWhileLoopStmt node)
-   *
-   * Pretty print while loop
-   */
-  public void caseAWhileLoopStmt(AWhileLoopStmt node) {
-    buffer.append("for");
-    if (node.getExpr() != null) {
-      addSpace();
-      node.getExpr().apply(this);
-    }
-    {
-      beforeCodeBlock();
-      List<PStmt> copy = new ArrayList<PStmt>(node.getBlock());
-      for (PStmt e : copy) {
-        prettyPrintStatement(e);
-      }
-      afterCodeBlock();
-    }
-  }
+  // /**
+  //  * @Override public void AWhileLoopStmt(AWhileLoopStmt node)
+  //  *
+  //  * Pretty print while loop
+  //  */
+  // public void caseAWhileLoopStmt(AWhileLoopStmt node) {
+  //   buffer.append("for");
+  //   if (node.getExpr() != null) {
+  //     addSpace();
+  //     node.getExpr().apply(this);
+  //   }
+  //   {
+  //     beforeCodeBlock();
+  //     List<PStmt> copy = new ArrayList<PStmt>(node.getBlock());
+  //     for (PStmt e : copy) {
+  //       prettyPrintStatement(e);
+  //     }
+  //     afterCodeBlock();
+  //   }
+  // }
 
   /**************************************************
    * Types                                          *

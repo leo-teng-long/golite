@@ -10,7 +10,7 @@ func main() {
 
 	case otherCondition:
 	default:
-		break;
+		// break; // Error: break must only occur in a loop.
 	}
 
 	// single line

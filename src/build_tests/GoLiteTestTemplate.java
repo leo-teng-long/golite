@@ -1,10 +1,12 @@
 package test;
 
+import golite.GoLiteLexer;
+import golite.PrettyPrinter;
+import golite.GoLiteWeeder;
+import golite.exception.*;
 import golite.lexer.*;
 import golite.parser.*;
 import golite.node.*;
-import golite.GoLiteLexer;
-import golite.PrettyPrinter;
 
 import java.io.*;
 
@@ -25,9 +27,12 @@ public class <<<INSERT NAME HERE>>> {
         try {
             Lexer lexer = new GoLiteLexer(new PushbackReader(new FileReader(inPath), 1024));
             Parser p = new Parser(lexer);
-            p.parse();
+            GoLiteWeeder weeder = new GoLiteWeeder();
+
+            Start ast = p.parse();
+            ast.apply(weeder);
         }
-        catch (LexerException|ParserException e) {
+        catch (LexerException|ParserException|GoLiteWeederException e) {
             return false;
         }
 
