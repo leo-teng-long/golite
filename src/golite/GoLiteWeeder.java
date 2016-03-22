@@ -10,6 +10,7 @@ import golite.analysis.*;
 /**
  * GoLite Weeder.
  */
+// TODO: Add string of error-causing code in select error messages.
 public class GoLiteWeeder extends DepthFirstAdapter {
 
     /** Line and position tracker for token AST nodes. */
@@ -256,7 +257,7 @@ public class GoLiteWeeder extends DepthFirstAdapter {
     @Override
     public void inAIncrStmt(AIncrStmt node) {
         PExpr pExpr = node.getExpr();
-        if (!this.isIncrDecrable(pExpr))
+        if (!this.isNonConstant(pExpr))
             this.throwWeederException(node, "Cannot assign to " + pExpr);
     }
 
@@ -264,20 +265,8 @@ public class GoLiteWeeder extends DepthFirstAdapter {
     @Override
     public void inADecrStmt(ADecrStmt node) {
         PExpr pExpr = node.getExpr();
-        if (!this.isIncrDecrable(pExpr))
+        if (!this.isNonConstant(pExpr))
             this.throwWeederException(node, "Cannot assign to " + pExpr);
-    }
-
-    /**
-     * Checks whether the given expression is incrementable/decrementable.
-     *
-     * @param pExpr - Production expression node
-     * @return True if the expression is incrementable/decrementable, false otherwise
-     */
-    private boolean isIncrDecrable(PExpr pExpr) {
-        return (pExpr instanceof AVariableExpr
-            || pExpr instanceof AFieldExpr
-            || pExpr instanceof AArrayElemExpr);
     }
 
     // Throw an error if a switch statement contains multiple default cases.
@@ -351,6 +340,28 @@ public class GoLiteWeeder extends DepthFirstAdapter {
     public void inATypeCastExpr(ATypeCastExpr node) {
         if (node.getTypeExpr() instanceof AStringTypeExpr)
             this.throwWeederException(node, "Cannot cast to type string");
+    }
+
+    // Throw an error if the array in an array access is not non-constant and
+    // not a function call. 
+    @Override
+    public void inAArrayElemExpr(AArrayElemExpr node) {
+        PExpr array = node.getArray();
+        if (!(this.isNonConstant(array) || array instanceof AFuncCallExpr))
+            this.throwWeederException(node, "Invalid array access operation");
+    }
+
+    /**
+     * Checks whether the given expression is non-constant, i.e. a variable,
+     * field, or array element.
+     *
+     * @param pExpr - Production expression node
+     * @return True if the expression is non-constant, false otherwise
+     */
+    private boolean isNonConstant(PExpr pExpr) {
+        return (pExpr instanceof AVariableExpr
+            || pExpr instanceof AFieldExpr
+            || pExpr instanceof AArrayElemExpr);
     }
 
 }
