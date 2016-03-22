@@ -992,16 +992,80 @@ public class TypeChecker extends DepthFirstAdapter {
         return false;
     }
 
+    private ArrayList<TId> getIds(Node node)
+    {
+        if (node instanceof ASpecVarSpec)
+        {
+            ArrayList<POptId> optIds = new ArrayList<POptId>(((ASpecVarSpec) node).getOptId());
+            ArrayList<TId> ids = new ArrayList<TId>();
+            for (POptId o: optIds)
+            {
+                if (o instanceof AIdOptId)
+                {
+                    ids.add(((AIdOptId) o).getId());
+                }
+            }
+            return ids;
+        }
+        else if (node instanceof ASpecTypeSpec)
+        {
+            POptId optId = ((ASpecTypeSpec) node).getOptId();
+            ArrayList<TId> ids = new ArrayList<TId>();
+            if (optId instanceof AIdOptId)
+            {
+                ids.add(((AIdOptId) optId).getId());
+            }
+            return ids;
+        }
+        else if (node instanceof AShortAssignStmt)
+        {
+            ArrayList<POptId> optIds = new ArrayList<POptId>(((AShortAssignStmt) node).getOptId());
+            ArrayList<TId> ids = new ArrayList<TId>();
+            for (POptId o: optIds)
+            {
+                if (o instanceof AIdOptId)
+                {
+                    ids.add(((AIdOptId) o).getId());
+                }
+            }
+            return ids;
+        }
+        else if (node instanceof AStructSubStructSub)
+        {
+            ArrayList<POptId> optIds = new ArrayList<POptId>(((AStructSubStructSub) node).getOptId());
+            ArrayList<TId> ids = new ArrayList<TId>();
+            for (POptId o: optIds)
+            {
+                if (o instanceof AIdOptId)
+                {
+                    ids.add(((AIdOptId) o).getId());
+                }
+            }
+            return ids;
+        }
+        return new ArrayList<TId>();
+    }
+
     private boolean isSameStruct(AStructTypeExpr node1, AStructTypeExpr node2)
     {
-        String name1 = ((ASpecTypeSpec) node1.parent()).getId().getText();
-        String name2 = ((ASpecTypeSpec) node2.parent()).getId().getText();
-        boolean sameName = name1.equals(name2);
-        if (!sameName)
+        ArrayList<TId> ids1 = getIds(node1);
+        ArrayList<TId> ids2 = getIds(node2);
+        boolean sameLength = ids1.size() == ids2.size();
+        if(sameLength)
         {
-            return false;
+            boolean sameName = true;
+            for (int i=0; i<ids1.size(); i++)
+            { 
+                String name1 = getIds(node1).get(i).getText();
+                String name2 = getIds(node2).get(i).getText();
+                sameName = name1.equals(name2);
+                if (!sameName)
+                {
+                    return sameName;
+                }
+            }
         }
-        return sameName;
+        return sameLength;
     }
 
     private boolean isAssignable(PExpr node) {
@@ -1066,7 +1130,7 @@ public class TypeChecker extends DepthFirstAdapter {
     public void outASpecVarSpec(ASpecVarSpec node)
     {
         {
-            List<TId> ids = new ArrayList<TId>(node.getId());
+            List<TId> ids = new ArrayList<TId>(getIds(node));
             List<PExpr> exprs = node.getExpr();
             for (TId e: ids)
             {
@@ -1103,7 +1167,7 @@ public class TypeChecker extends DepthFirstAdapter {
         {
             for (PStructSub a: ((AStructTypeExpr) node).getStructSub())
             {
-                for (TId id: ((AStructSubStructSub) a).getId())
+                for (TId id: (getIds((AStructSubStructSub) a)))
                 {
                     String newName = name + "." + id.getText();
                     symbolTable.addSymbol(newName, a);
@@ -1117,16 +1181,19 @@ public class TypeChecker extends DepthFirstAdapter {
     @Override
     public void inASpecTypeSpec(ASpecTypeSpec node)
     {
-        String name = node.getId().getText();
-        symbolTable.addSymbol(name, node.getTypeExpr());
-        putTypeExpr(name, node.getTypeExpr());
+        for (TId t: getIds(node))
+        {
+            String name = t.getText();
+            symbolTable.addSymbol(name, node.getTypeExpr());
+            putTypeExpr(name, node.getTypeExpr());
+        }
     }
 
     @Override
     public void outAShortAssignStmt(AShortAssignStmt node)
     {
         {
-            List<TId> ids = new ArrayList<TId>(node.getId());
+            List<TId> ids = new ArrayList<TId>(getIds(node));
             List<PExpr> exprs = new ArrayList<PExpr>(node.getExpr());
             int length = ids.size();
             for(int i=0; i < length; i++)
@@ -1149,7 +1216,7 @@ public class TypeChecker extends DepthFirstAdapter {
             for (PStructSub a: ((AStructTypeExpr) type).getStructSub())
             {
                 PTypeExpr argType = ((AStructSubStructSub) a).getTypeExpr();
-                for (TId argId: ((AStructSubStructSub) a).getId())
+                for (TId argId: (getIds((AStructSubStructSub) a)))
                 {
                     if (argId.getText().equals(id))
                     {
@@ -1166,7 +1233,7 @@ public class TypeChecker extends DepthFirstAdapter {
                 for (PStructSub a: ((AStructTypeExpr) subType).getStructSub())
                 {
                     PTypeExpr argType = ((AStructSubStructSub) a).getTypeExpr();
-                    for (TId argId: ((AStructSubStructSub) a).getId())
+                    for (TId argId: getIds((AStructSubStructSub) a))
                     {
                         if (argId.getText().equals(id))
                         {
@@ -1440,7 +1507,7 @@ public class TypeChecker extends DepthFirstAdapter {
             if (declaration instanceof ASpecVarSpec)
             {
                 ASpecVarSpec dec = (ASpecVarSpec) declaration;
-                int idx = dec.getId().indexOf(id);
+                int idx = getIds(dec).indexOf(id);
                 PTypeExpr typeExpr = getType(declaration);
                 if (typeExpr != null)
                 {
@@ -1463,11 +1530,11 @@ public class TypeChecker extends DepthFirstAdapter {
             else if (declaration instanceof AShortAssignStmt)
             {
                 AShortAssignStmt dec = (AShortAssignStmt) declaration;
-                for (TId i: dec.getId())
+                for (TId i: getIds(dec))
                 {
                     if (i.getText().equals(id))
                     {
-                        int idx = dec.getId().indexOf(i);
+                        int idx = getIds(dec).indexOf(i);
                         return typeTable.get(dec.getExpr().get(idx));
                     }
                 }
