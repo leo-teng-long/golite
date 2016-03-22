@@ -1,7 +1,7 @@
 package main
 
 func main() {
-    i := 0
+    var i int = 0
     /* Error: int cannot be condition */
     if i {
 
