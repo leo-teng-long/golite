@@ -57,6 +57,14 @@ public class SymbolTable {
     }
 
     /*
+     * Remove identifier from the current scope (needed for short assign)
+     */
+    public void removeSymbol(String id) {
+        checkScopesSize();
+        scopes.peek().remove(id);
+    }
+
+    /*
      * Get the symbol associated with the given identifier
      */
     public Node getSymbol(String id, Node node) {
@@ -72,7 +80,15 @@ public class SymbolTable {
     }
 
     /*
-     *
+     * Check if given identifier exists in the current scrope
+     */
+    public boolean containsId(String id) {
+        checkScopesSize();
+        return scopes.peek().containsKey(id);
+    }
+
+    /*
+     * Throw SymbolException with given message, then exit
      */
     private void callSymbolException(Node node, String s) {
         String message = "";
@@ -84,8 +100,7 @@ public class SymbolTable {
         }
         message += s;
         SymbolException e = new SymbolException(message);
-        e.printStackTrace();
-        System.exit(1);
+        throw e;
     }
 
     /*

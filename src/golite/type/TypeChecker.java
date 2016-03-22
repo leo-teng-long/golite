@@ -1197,18 +1197,47 @@ public class TypeChecker extends DepthFirstAdapter {
     }
 
     @Override
-    public void outAShortAssignStmt(AShortAssignStmt node)
-    {
-        {
-            List<TId> ids = new ArrayList<TId>(getIds(node));
-            List<PExpr> exprs = new ArrayList<PExpr>(node.getExpr());
-            int length = ids.size();
-            for(int i=0; i < length; i++)
-            {
-                symbolTable.addSymbol(ids.get(i).getText(), node);
-                typeTable.put(ids.get(i), getType(exprs.get(i)));
+    public void outAShortAssignStmt(AShortAssignStmt node) {
+        List<TId> ids = new ArrayList<TId>(getIds(node));
+        List<PExpr> exprs = new ArrayList<PExpr>(node.getExpr());
+        boolean hasNewId = false;
+        for (int i = 0; i < ids.size(); i++) {
+            if (symbolTable.containsId(ids.get(i).getText())) {
+                String identifier = ids.get(i).getText();
+                TId idNode = getIdentifierTIdNode(identifier, symbolTable.getSymbol(identifier, node));
+                PTypeExpr idType = typeTable.get(idNode);
+                PTypeExpr exprType = typeTable.get(exprs.get(i));
+                if (!isSameType(idType, exprType)) {
+                    callTypeCheckException(exprs.get(i), "Short assign ':=': mismatched expression type");
+                }
+                symbolTable.removeSymbol(ids.get(i).getText());
+                typeTable.remove(idNode);
+            } else {
+                hasNewId = true;
+            }
+            symbolTable.addSymbol(ids.get(i).getText(), node);
+            typeTable.put(ids.get(i), getType(exprs.get(i)));
+        }
+        if (!hasNewId) {
+            callTypeCheckException(node, "Short assign ':=': no new variables declared");
+        }
+    }
+
+    /* Help method for handling short assign */
+    private TId getIdentifierTIdNode(String id, Node node) {
+        List<TId> copy;
+        if (node instanceof ASpecVarSpec) {
+            copy = new ArrayList<TId>(getIds((ASpecVarSpec) node));
+        } else {
+            copy = new ArrayList<TId>(getIds((AShortAssignStmt) node));
+        }
+        
+        for (TId e : copy) {
+            if (e.getText().equals(id)) {
+                return e;
             }
         }
+        return null;
     }
 
     /* Type Check Field Expressions */

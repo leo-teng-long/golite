@@ -60,7 +60,7 @@ class Main {
                 printUsage();
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            e.printStackTrace(System.out);
         }
     }
 
@@ -112,7 +112,7 @@ class Main {
             Start ast = p.parse();
             ast.apply(weeder);
         }
-        catch (LexerException|ParserException|GoLiteWeederException e) {
+        catch (LexerException|ParserException|WeederException e) {
             if (verbose) {
                 System.err.println("ERROR: " + e);
             }
@@ -191,7 +191,7 @@ class Main {
             Start tree = parser.parse();
             tree.apply(weed);
             System.out.println("VALID");
-        } catch (LexerException|ParserException|GoLiteWeederException e) {
+        } catch (LexerException|ParserException|WeederException e) {
             System.out.println("INVALID");
             if (verbose) {
                 System.err.println("ERROR: " + e);
@@ -231,7 +231,7 @@ class Main {
                 }
                 System.out.println("\n\n\n");
             }
-        } catch (LexerException|ParserException|GoLiteWeederException|TypeCheckException e) {
+        } catch (LexerException|ParserException|SymbolException|WeederException|TypeCheckException e) {
             System.out.println("INVALID");
             if (verbose) {
                 System.err.println("ERROR: " + e);
