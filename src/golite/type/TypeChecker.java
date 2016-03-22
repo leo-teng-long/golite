@@ -28,6 +28,13 @@ public class TypeChecker extends DepthFirstAdapter {
         lineAndPos = new LineAndPos();
     }
 
+    /**
+     * Getter.
+     */
+    public HashMap<Node, PTypeExpr> getTypeTable() {
+        return this.typeTable;
+    }
+
     @Override
     public void inStart(Start node)
     {
