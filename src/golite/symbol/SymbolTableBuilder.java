@@ -55,7 +55,7 @@ public class SymbolTableBuilder extends DepthFirstAdapter
         putTypeExpr(name, node.getTypeExpr());
     }
 
-    private void putArgGroup(String name, AArgArgGroup node) {
+    private void putStructSub(String name, AStructSubStructSub node) {
         for (TId id: node.getId())
         {
             String newName = name + "." + id.getText();
@@ -70,9 +70,9 @@ public class SymbolTableBuilder extends DepthFirstAdapter
         //TODO: Handle other types of type expressions
         if (isStructType(node))
         {
-            for (PArgGroup a: ((AStructTypeExpr) node).getArgGroup())
+            for (PStructSub a: ((AStructTypeExpr) node).getStructSub())
             {
-                putArgGroup(name, (AArgArgGroup) a);
+                putStructSub(name, (AStructSubStructSub) a);
             }
         }
     }

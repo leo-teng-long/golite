@@ -34,6 +34,12 @@ class Main {
                     System.out.println("VALID");
                 else
                     System.out.println("INVALID");
+            } else if (args[0].equals("-parsev")) {
+                verbose = true;
+                if (parse(args[1]))
+                    System.out.println("VALID");
+                else
+                    System.out.println("INVALID");
             // Print scanner tokens to stdout.
             } else if (args[0].equals("-pretty")) {
                 prettyPrint(args[1]);
@@ -42,11 +48,14 @@ class Main {
                 displayTokens(args[1]);
             } else if (args[0].equals("-weed")) {
                 weed(args[1]);
-            } else if (args[0].equals("-symbol")) {
-                symbol(args[1]);
-            } else if (args[0].equals("-symbolv")) {
+            } else if (args[0].equals("-weedv")) {
                 verbose = true;
-                symbol(args[1]);
+                weed(args[1]);
+            } else if (args[0].equals("-type")) {
+                type(args[1]);
+            } else if (args[0].equals("-typev")) {
+                verbose = true;
+                type(args[1]);
             } else {
                 printUsage();
             }
@@ -59,7 +68,7 @@ class Main {
      * Prints the command-line usage to stderr.
      */
     public static void printUsage() {
-        System.err.println("Usage: Main -[scan | parse | pretty | printTokens | weed | symbol] filename");
+        System.err.println("Usage: Main -[scan | parse | pretty | printTokens | weed | weedv | type | typev ] filename");
     }
 
     /**
@@ -97,13 +106,15 @@ class Main {
         try {
             Lexer lexer = new GoLiteLexer(new PushbackReader(new FileReader(inPath), 1024));
             Parser p = new Parser(lexer);
-            GoLiteWeeder weeder = new GoLiteWeeder();
+            Weeder weeder = new Weeder();
 
             Start ast = p.parse();
             ast.apply(weeder);
         }
-        catch (LexerException|ParserException|GoLiteWeederException e) {
-            System.err.println("ERROR: " + e);
+        catch (LexerException|ParserException|WeederException e) {
+            if (verbose) {
+                System.err.println("ERROR: " + e);
+            }
             return false;
         }
 
@@ -134,7 +145,7 @@ class Main {
     * Weed a GoLite program.
     * @param inPath - Filepath to GoLite program
     */
-    public static boolean weed(String inPath) {
+    public static boolean weed(String inPath) throws IOException, LexerException, ParserException {
         try {
             Lexer lexer = new GoLiteLexer(new PushbackReader(new FileReader(inPath), 1024));
             Parser parser = new Parser(lexer);
@@ -142,19 +153,23 @@ class Main {
 
             Start tree = parser.parse();
             tree.apply(weed);
-
-        } catch (Exception e) {
-            System.err.println("ERROR: " + e);
+            System.out.println("VALID");
+        } catch (WeederException e) {
+            System.out.println("INVALID");
+            if (verbose) {
+                System.err.println("ERROR: " + e);
+                e.printStackTrace();
+            }
             return false;
         }
         return true;
     }
 
     /**
-    * Build a symbol table for a GoLite program.
+    * Typecheck a GoLite program.
     * @param inPath - Filepath to GoLite program
     */
-    public static boolean symbol(String inPath) {
+    public static boolean type(String inPath) throws IOException, LexerException, ParserException, WeederException {
         try {
             Lexer lexer = new GoLiteLexer(new PushbackReader(new FileReader(inPath), 1024));
             Parser parser = new Parser(lexer);
@@ -179,7 +194,7 @@ class Main {
                 }
                 System.out.println("\n\n\n");
             }
-        } catch (Exception e) {
+        } catch (TypeCheckException e) {
             System.out.println("INVALID");
             if (verbose) {
                 System.err.println("ERROR: " + e);

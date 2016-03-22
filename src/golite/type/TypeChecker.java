@@ -324,13 +324,6 @@ public class TypeChecker extends DepthFirstAdapter {
             }
             symbolTable.exitScope();
         }
-        symbolTable.exitScope();
-        {
-            List<PElseif> copy = new ArrayList<PElseif>(node.getElseif());
-            for (PElseif e : copy) {
-                e.apply(this);
-            }
-        }
         {
             symbolTable.enterScope();
             List<PStmt> copy = new ArrayList<PStmt>(node.getElseBlock());
@@ -339,23 +332,6 @@ public class TypeChecker extends DepthFirstAdapter {
             }
             symbolTable.exitScope();
         }
-    }
-
-    @Override
-    public void caseAElifElseif(AElifElseif node) {
-        symbolTable.enterScope();
-        if (node.getCondition() != null) {
-            node.getCondition().apply(this);
-        }
-        {
-            symbolTable.enterScope();
-            List<PStmt> copy = new ArrayList<PStmt>(node.getBlock());
-            for (PStmt e : copy) {
-                e.apply(this);
-            }
-            symbolTable.exitScope();
-        }
-        symbolTable.enterScope();
     }
 
     @Override
@@ -438,9 +414,11 @@ public class TypeChecker extends DepthFirstAdapter {
 
     /* Type check loop (for & while) statements */
     @Override
-    public void caseAForLoopStmt(AForLoopStmt node) {
+    public void caseALoopStmt(ALoopStmt node)
+    {
         symbolTable.enterScope();
-        if (node.getInit() != null) {
+        if (node.getInit() != null)
+        {
             node.getInit().apply(this);
         }
         if (node.getExpr() != null) {
@@ -454,33 +432,12 @@ public class TypeChecker extends DepthFirstAdapter {
             node.getEnd().apply(this);
         }
         {
-            symbolTable.enterScope();
             List<PStmt> copy = new ArrayList<PStmt>(node.getBlock());
             for (PStmt e : copy) {
                 e.apply(this);
             }
-            symbolTable.exitScope();
         }
         symbolTable.exitScope();
-    }
-
-    @Override
-    public void caseAWhileLoopStmt(AWhileLoopStmt node) {
-        if (node.getExpr() != null) {
-            node.getExpr().apply(this);
-            PTypeExpr type = typeTable.get(node.getExpr());
-            if (!isBoolType(type)) {
-                callTypeCheckException(node.getExpr(), "For: loop expression not evaluated to bool type");
-            }
-        }
-        {
-            symbolTable.enterScope();
-            List<PStmt> copy = new ArrayList<PStmt>(node.getBlock());
-            for (PStmt e : copy) {
-                e.apply(this);
-            }
-            symbolTable.exitScope();
-        }
     }
 
     /* Type check binary arithemic operators */
@@ -1059,6 +1016,13 @@ public class TypeChecker extends DepthFirstAdapter {
         return (AFuncTopDec) parent;
     }
 
+    /**
+     * Throws a type check exception after annotating the message with line and position information.
+     *
+     * @param node - AST node
+     * @param s - Error message
+     * @throws TypeCheckException
+     */
     private void callTypeCheckException(Node node, String s) {
         String message = "";
         if (node != null) {
@@ -1066,9 +1030,10 @@ public class TypeChecker extends DepthFirstAdapter {
             message += "[" + lineAndPos.getLine(node) + "," + lineAndPos.getPos(node) + "] ";
         }
         message += s;
-        TypeCheckException e = new TypeCheckException(message);
+        throw new TypeCheckException(message);
+        /*TypeCheckException e = new TypeCheckException(message);
         e.printStackTrace();
-        System.exit(1);
+        System.exit(1);*/
     }
 
     /* Change scope when entering and exiting functions */
@@ -1132,23 +1097,19 @@ public class TypeChecker extends DepthFirstAdapter {
         }
     }
 
-    private void putArgGroup(String name, AArgArgGroup node) {
-        for (TId id: node.getId())
-        {
-            String newName = name + "." + id.getText();
-            symbolTable.addSymbol(newName, node);
-            typeTable.put(node, getType(node));
-            putTypeExpr(newName, node.getTypeExpr());
-        }
-    }
-
     private void putTypeExpr(String name, PTypeExpr node)
     {
         if (isStructType(node))
         {
-            for (PArgGroup a: ((AStructTypeExpr) node).getArgGroup())
+            for (PStructSub a: ((AStructTypeExpr) node).getStructSub())
             {
-                putArgGroup(name, (AArgArgGroup) a);
+                for (TId id: ((AStructSubStructSub) a).getId())
+                {
+                    String newName = name + "." + id.getText();
+                    symbolTable.addSymbol(newName, a);
+                    typeTable.put(a, getType(a));
+                    putTypeExpr(newName, ((AStructSubStructSub) a).getTypeExpr());
+                }
             }
         }
     }
@@ -1185,10 +1146,10 @@ public class TypeChecker extends DepthFirstAdapter {
         String id = node.getId().getText();
         if (type instanceof AStructTypeExpr)
         {
-            for (PArgGroup a: ((AStructTypeExpr) type).getArgGroup())
+            for (PStructSub a: ((AStructTypeExpr) type).getStructSub())
             {
-                PTypeExpr argType = ((AArgArgGroup) a).getTypeExpr();
-                for (TId argId: ((AArgArgGroup) a).getId())
+                PTypeExpr argType = ((AStructSubStructSub) a).getTypeExpr();
+                for (TId argId: ((AStructSubStructSub) a).getId())
                 {
                     if (argId.getText().equals(id))
                     {
@@ -1202,10 +1163,10 @@ public class TypeChecker extends DepthFirstAdapter {
             PTypeExpr subType = getType(((ACustomTypeExpr) type).getId());
             if (subType instanceof AStructTypeExpr)
             {
-                for (PArgGroup a: ((AStructTypeExpr) subType).getArgGroup())
+                for (PStructSub a: ((AStructTypeExpr) subType).getStructSub())
                 {
-                    PTypeExpr argType = ((AArgArgGroup) a).getTypeExpr();
-                    for (TId argId: ((AArgArgGroup) a).getId())
+                    PTypeExpr argType = ((AStructSubStructSub) a).getTypeExpr();
+                    for (TId argId: ((AStructSubStructSub) a).getId())
                     {
                         if (argId.getText().equals(id))
                         {
@@ -1225,16 +1186,16 @@ public class TypeChecker extends DepthFirstAdapter {
 
     private boolean isSameFields(AStructTypeExpr lhs, AStructTypeExpr rhs)
     {
-        int lhsLen = ((List<PArgGroup>) lhs.getArgGroup()).size();
-        int rhsLen = ((List<PArgGroup>) rhs.getArgGroup()).size();
+        int lhsLen = ((List<PStructSub>) lhs.getStructSub()).size();
+        int rhsLen = ((List<PStructSub>) rhs.getStructSub()).size();
         if (lhsLen == rhsLen)
         {
-            List<PArgGroup> aRhs = rhs.getArgGroup();
-            List<PArgGroup> aLhs = lhs.getArgGroup();
+            List<PStructSub> aRhs = rhs.getStructSub();
+            List<PStructSub> aLhs = lhs.getStructSub();
             for (int i=0; i<lhsLen; i++)
             {
-                AArgArgGroup a1 = (AArgArgGroup) aRhs.get(i);
-                AArgArgGroup a2 = (AArgArgGroup) aLhs.get(i);
+                AStructSubStructSub a1 = (AStructSubStructSub) aRhs.get(i);
+                AStructSubStructSub a2 = (AStructSubStructSub) aLhs.get(i);
                 if(!isSameType(a1.getTypeExpr(), a2.getTypeExpr()))
                 {
                     return false;
@@ -1511,6 +1472,10 @@ public class TypeChecker extends DepthFirstAdapter {
                     }
                 }
             }
+            else if (declaration instanceof AStructSubStructSub)
+            {
+                return typeTable.get(declaration);
+            }
             else if (declaration instanceof AArgArgGroup)
             {
                 return typeTable.get(declaration);
@@ -1548,6 +1513,10 @@ public class TypeChecker extends DepthFirstAdapter {
         else if (node instanceof AStructTypeExpr)
         {
             return (AStructTypeExpr) node;
+        }
+        else if (node instanceof AStructSubStructSub)
+        {
+            return ((AStructSubStructSub) node).getTypeExpr();
         }
         else if (node instanceof AArgArgGroup)
         {
