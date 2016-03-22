@@ -51,8 +51,7 @@ public class TypedPrettyPrinter extends PrettyPrinter {
   private void annotateType(Node node) {
     this.buffer.append(" /* ");
 
-    PTypeExpr typeExpr = typeExpr = this.typeTable.get(node); 
-
+    PTypeExpr typeExpr = this.typeTable.get(node); 
     this.buffer.append(typeExpr == null ? "(None)" : typeExpr.toString());
 
     this.buffer.append(" */");
