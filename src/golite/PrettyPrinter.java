@@ -8,33 +8,31 @@ import java.io.*;
 /**
  * GoLite PrettyPrinter
  *
- * Pretty print "foo.go" to re-formatted "foo.pretty.go"
  */
-
+// TODO: Convert to 4-space tabs.
+// TODO: Fix Override designations.
+// TODO: Create superclass for pretty printers.
 public class PrettyPrinter extends DepthFirstAdapter {
 
-  /**
-   * Class variables
-   */
-  private StringBuffer buffer;
-  private String fileName;
-  private int numTabs;
+  /** Buffer storing pretty printed program. */
+  protected StringBuffer buffer;
+  /** Stores the tab depth. */
+  private int tabDepth;
 
   /**
    * PrettyPrinter Constructor
    */
-  public PrettyPrinter(String fileName) {
+  public PrettyPrinter() {
     this.buffer = new StringBuffer();
-    this.fileName = fileName;
-    this.numTabs = 0;
+    this.tabDepth = 0;
   }
 
   /**
-   * Returns the buffer string.
+   * Returns the pretty printed program as a string.
    * 
-   * @return Buffer string
+   * @return Pretty printed program as a string.
    **/
-  public String getBufferString() {
+  public String getPrettyPrint() {
     return this.buffer.toString();
   }
 
@@ -42,19 +40,17 @@ public class PrettyPrinter extends DepthFirstAdapter {
    * Write printy-print program to file             *
    **************************************************/
 
-  /**
-   * @Override public void outAProgProg(AProgProg node)
-   *
-   * Write to file
-   */
+  @Override
   public void outAProgProg(AProgProg node) {
-    try {
-      PrintWriter out = new PrintWriter(new FileWriter(fileName + ".pretty.go"));
-      out.println(buffer.toString());
-      out.close();
-    } catch (Exception ex) {
-      System.err.println("ERROR: Failed to pretty print");
-    }
+    // try {
+    //   PrintWriter out = new PrintWriter(new FileWriter(fileName + ".pretty.go"));
+    //   out.println(buffer.toString());
+    //   out.close();
+    // } catch (Exception ex) {
+    //   System.err.println("ERROR: Failed to pretty print");
+    // }
+
+    super.defaultOut(node);
   }
 
   /**************************************************
@@ -67,6 +63,8 @@ public class PrettyPrinter extends DepthFirstAdapter {
    * Pretty print program
    */
   public void caseAProgProg(AProgProg node) {
+    this.inAProgProg(node);
+
     if (node.getId() != null) {
       buffer.append("package " + node.getId().getText());
       addNewLines(2);
@@ -81,7 +79,8 @@ public class PrettyPrinter extends DepthFirstAdapter {
         }
       }
     }
-    outAProgProg(node);
+    
+    this.outAProgProg(node);
   }
 
   /**************************************************
@@ -151,9 +150,10 @@ public class PrettyPrinter extends DepthFirstAdapter {
     buffer.append("var");
     {
       addSpace();
-      List<TId> copy = new ArrayList<TId>(node.getId());
-      for (TId e : copy) {
-        buffer.append(e.getText());
+      List<POptId> copy = new ArrayList<POptId>(node.getOptId());
+      for (POptId e : copy) {
+        // buffer.append(e.getText()); // TODO
+        e.apply(this);
         addComma();
       }
       if (copy.size() > 0) {
@@ -204,15 +204,16 @@ public class PrettyPrinter extends DepthFirstAdapter {
    */
   public void caseASpecTypeSpec(ASpecTypeSpec node) {
     buffer.append("type");
-    if (node.getId() != null) {
+    if (node.getOptId() != null) {
       addSpace();
-      buffer.append(node.getId().getText());
+      node.getOptId().apply(this);
     }
     if (node.getTypeExpr() != null) {
       addSpace();
-      /*if (node.getTypeExpr() instanceof AStructTypeExpr) {
-        buffer.append("struct");
-      }*/
+      // if (node.getTypeExpr() instanceof AStructTypeExpr) {
+      //   buffer.append("struct");
+      // }
+
       node.getTypeExpr().apply(this);
     }
   }
@@ -279,9 +280,10 @@ public class PrettyPrinter extends DepthFirstAdapter {
    */
   public void caseAShortAssignStmt(AShortAssignStmt node) {
     {
-      List<TId> copy = new ArrayList<TId>(node.getId());
-      for (TId e : copy) {
-        buffer.append(e.getText());
+      List<POptId> copy = new ArrayList<POptId>(node.getOptId());
+      for (POptId e : copy) {
+        // buffer.append(e.getText()); // TODO
+        e.apply(this);
         addComma();
       }
       if (copy.size() > 0) {
@@ -654,19 +656,24 @@ public class PrettyPrinter extends DepthFirstAdapter {
       }
       afterCodeBlock();
     }
-    {
-      List<PElseif> copy = new ArrayList<PElseif>(node.getElseif());
-      for (PElseif e : copy) {
-        e.apply(this);
+    
+    List<PStmt> copy = new ArrayList<PStmt>(node.getElseBlock());
+
+    // Return if block is empty.
+    boolean isEmpty = true;
+    for (PStmt e : copy) {
+      if (!(e instanceof AEmptyStmt)) {
+        isEmpty = false;
+        break;
       }
     }
-    if (node.getElseBlock().size() == 0) {
+
+    if (isEmpty)
       return;
-    }
+
     buffer.append("else");
     {
       beforeCodeBlock();
-      List<PStmt> copy = new ArrayList<PStmt>(node.getElseBlock());
       for (PStmt e : copy) {
         prettyPrintStatement(e);
       }
@@ -679,21 +686,21 @@ public class PrettyPrinter extends DepthFirstAdapter {
    *
    * Pretty PRINT elif statement
    */
-  public void caseAElifElseif(AElifElseif node) {
-    buffer.append("else if");
-    if (node.getCondition() != null) {
-      addSpace();
-      node.getCondition().apply(this);
-    }
-    {
-      beforeCodeBlock();
-      List<PStmt> copy = new ArrayList<PStmt>(node.getBlock());
-      for (PStmt e : copy) {
-        prettyPrintStatement(e);
-      }
-      afterCodeBlock();
-    }
-  }
+  // public void caseAElifElseif(AElifElseif node) {
+  //   buffer.append("else if");
+  //   if (node.getCondition() != null) {
+  //     addSpace();
+  //     node.getCondition().apply(this);
+  //   }
+  //   {
+  //     beforeCodeBlock();
+  //     List<PStmt> copy = new ArrayList<PStmt>(node.getBlock());
+  //     for (PStmt e : copy) {
+  //       prettyPrintStatement(e);
+  //     }
+  //     afterCodeBlock();
+  //   }
+  // }
 
   /**
    * @Override public void caseAConditionCondition(AConditionCondition node)
@@ -791,7 +798,7 @@ public class PrettyPrinter extends DepthFirstAdapter {
   }
 
   /**************************************************
-   * For & While Loop                               *
+   * For Loop                                       *
    **************************************************/
 
   /**
@@ -799,46 +806,48 @@ public class PrettyPrinter extends DepthFirstAdapter {
    *
    * Pretty print for loop
    */
-  public void caseAForLoopStmt(AForLoopStmt node) {
+  public void caseALoopStmt(ALoopStmt node) {
     buffer.append("for");
-    if (node.getInit() != null) {
-      addSpace();
+    addSpace();
+
+    if (node.getInit() != null)
       node.getInit().apply(this);
-      addSemi();
-    }
-    if (node.getExpr() != null) {
-      addSpace();
+
+    addSemi();
+    addSpace();
+    
+    if (node.getExpr() != null)
       node.getExpr().apply(this);
-      addSemi();
-    }
-    if (node.getEnd() != null) {
-      addSpace();
+
+    addSemi();
+    addSpace();
+    
+    if (node.getEnd() != null && !(node.getEnd() instanceof AEmptyStmt)) {
       node.getEnd().apply(this);
+      addSpace();
     }
-    {
-      beforeCodeBlock();
-      List<PStmt> copy = new ArrayList<PStmt>(node.getBlock());
-      for (PStmt e : copy) {
-        prettyPrintStatement(e);
-      }
-      afterCodeBlock();
+
+    beforeBlock();
+    List<PStmt> copy = new ArrayList<PStmt>(node.getBlock());
+    for (PStmt e : copy) {
+      prettyPrintStatement(e);
     }
+    afterCodeBlock();
   }
 
+  /**************************************************
+   * Block                                          *
+   **************************************************/
+
   /**
-   * @Override public void AWhileLoopStmt(AWhileLoopStmt node)
+   * @Override public void caseABlockStmt(ABlockStmt node)
    *
-   * Pretty print while loop
+   * Pretty print block statement
    */
-  public void caseAWhileLoopStmt(AWhileLoopStmt node) {
-    buffer.append("for");
-    if (node.getExpr() != null) {
-      addSpace();
-      node.getExpr().apply(this);
-    }
+  public void caseABlockStmt(ABlockStmt node) {
     {
-      beforeCodeBlock();
-      List<PStmt> copy = new ArrayList<PStmt>(node.getBlock());
+      beforeBlock();
+      List<PStmt> copy = new ArrayList<PStmt>(node.getStmt());
       for (PStmt e : copy) {
         prettyPrintStatement(e);
       }
@@ -953,11 +962,33 @@ public class PrettyPrinter extends DepthFirstAdapter {
   public void caseAStructTypeExpr(AStructTypeExpr node) {
     buffer.append("struct");
     beforeCodeBlock();
-    List<PArgGroup> copy = new ArrayList<PArgGroup>(node.getArgGroup());
-    for (PArgGroup e : copy) {
-      prettyPrintArgGroup(e);
+    List<PStructSub> copy = new ArrayList<PStructSub>(node.getStructSub());
+    for (PStructSub e : copy) {
+      prettyPrintStructSub(e);
     }
     afterCodeBlock();
+  }
+
+  /**
+   * @Override public void caseAStructSubStructSub(AStructSubStructSub node)
+   *
+   * Pretty print struct sub
+   */
+  public void caseAStructSubStructSub(AStructSubStructSub node) {
+    List<POptId> copy = node.getOptId();
+    for (POptId e : copy) {
+      e.apply(this);
+      addComma();
+      addSpace();
+    }
+
+    if (copy.size() > 0) {
+      deleteLastChar();
+      deleteLastChar();
+    }
+
+    addSpace();
+    node.getTypeExpr().apply(this);
   }
 
   /**************************************************
@@ -983,6 +1014,8 @@ public class PrettyPrinter extends DepthFirstAdapter {
     * Pretty print add ('+') operator
     */
   public void caseAAddExpr(AAddExpr node) {
+    this.inAAddExpr(node);
+
     addLeftParen();
     if (node.getLeft() != null) {
       node.getLeft().apply(this);
@@ -992,6 +1025,8 @@ public class PrettyPrinter extends DepthFirstAdapter {
       node.getRight().apply(this);
     }
     addRightParen();
+
+    this.outAAddExpr(node);
   }
 
   /**
@@ -1000,6 +1035,8 @@ public class PrettyPrinter extends DepthFirstAdapter {
    * Pretty print subtract ('-') operator
    */
   public void caseASubtractExpr(ASubtractExpr node) {
+    this.inASubtractExpr(node);
+
     addLeftParen();
     if (node.getLeft() != null) {
       node.getLeft().apply(this);
@@ -1009,6 +1046,8 @@ public class PrettyPrinter extends DepthFirstAdapter {
       node.getRight().apply(this);
     }
     addRightParen();
+
+    this.outASubtractExpr(node);
   }
 
   /**
@@ -1017,6 +1056,8 @@ public class PrettyPrinter extends DepthFirstAdapter {
    * Pretty print multiply ('*') operator
    */
   public void caseAMultExpr(AMultExpr node) {
+    this.inAMultExpr(node);
+
     addLeftParen();
     if (node.getLeft() != null) {
       node.getLeft().apply(this);
@@ -1026,6 +1067,8 @@ public class PrettyPrinter extends DepthFirstAdapter {
       node.getRight().apply(this);
     }
     addRightParen();
+
+    this.outAMultExpr(node);
   }
 
   /**
@@ -1034,6 +1077,8 @@ public class PrettyPrinter extends DepthFirstAdapter {
    * Pretty print divide ('/') operator
    */
   public void caseADivExpr(ADivExpr node) {
+    this.inADivExpr(node);
+
     addLeftParen();
     if (node.getLeft() != null) {
       node.getLeft().apply(this);
@@ -1043,6 +1088,8 @@ public class PrettyPrinter extends DepthFirstAdapter {
       node.getRight().apply(this);
     }
     addRightParen();
+
+    this.outADivExpr(node);
   }
 
   /**
@@ -1051,6 +1098,8 @@ public class PrettyPrinter extends DepthFirstAdapter {
    * Pretty print module ('%') operator
    */
   public void caseAModExpr(AModExpr node) {
+    this.inAModExpr(node);
+
     addLeftParen();
     if (node.getLeft() != null) {
       node.getLeft().apply(this);
@@ -1060,6 +1109,8 @@ public class PrettyPrinter extends DepthFirstAdapter {
       node.getRight().apply(this);
     }
     addRightParen();
+
+    this.outAModExpr(node);
   }
 
   /**************************************************
@@ -1072,6 +1123,8 @@ public class PrettyPrinter extends DepthFirstAdapter {
    * Pretty print bit and ('&') operator
    */
   public void caseABitAndExpr(ABitAndExpr node) {
+    this.inABitAndExpr(node);
+
     addLeftParen();
     if (node.getLeft() != null) {
       node.getLeft().apply(this);
@@ -1081,6 +1134,8 @@ public class PrettyPrinter extends DepthFirstAdapter {
       node.getRight().apply(this);
     }
     addRightParen();
+
+    this.outABitAndExpr(node);
   }
 
   /**
@@ -1089,6 +1144,8 @@ public class PrettyPrinter extends DepthFirstAdapter {
    * Pretty print bit or ('|') operator
    */
   public void caseABitOrExpr(ABitOrExpr node) {
+    this.inABitOrExpr(node);
+
     addLeftParen();
     if (node.getLeft() != null) {
       node.getLeft().apply(this);
@@ -1098,6 +1155,8 @@ public class PrettyPrinter extends DepthFirstAdapter {
       node.getRight().apply(this);
     }
     addRightParen();
+
+    this.outABitOrExpr(node);
   }
 
   /**
@@ -1106,6 +1165,8 @@ public class PrettyPrinter extends DepthFirstAdapter {
    * Pretty print bit xor ('^') operator
    */
   public void caseABitXorExpr(ABitXorExpr node) {
+    this.inABitXorExpr(node);
+
     addLeftParen();
     if (node.getLeft() != null) {
       node.getLeft().apply(this);
@@ -1115,6 +1176,8 @@ public class PrettyPrinter extends DepthFirstAdapter {
       node.getRight().apply(this);
     }
     addRightParen();
+
+    this.outABitXorExpr(node);
   }
 
   /**
@@ -1123,6 +1186,8 @@ public class PrettyPrinter extends DepthFirstAdapter {
    * Pretty print bit clear ('&^') operator
    */
   public void caseABitClearExpr(ABitClearExpr node) {
+    this.inABitClearExpr(node);
+
     addLeftParen();
     if (node.getLeft() != null) {
       node.getLeft().apply(this);
@@ -1132,6 +1197,8 @@ public class PrettyPrinter extends DepthFirstAdapter {
       node.getRight().apply(this);
     }
     addRightParen();
+
+    this.outABitClearExpr(node);
   }
 
   /**
@@ -1140,6 +1207,8 @@ public class PrettyPrinter extends DepthFirstAdapter {
    * Pretty print bit left shift ('<<') operator
    */
   public void caseABitLshiftExpr(ABitLshiftExpr node) {
+    this.inABitLshiftExpr(node);
+
     addLeftParen();
     if (node.getLeft() != null) {
       node.getLeft().apply(this);
@@ -1149,6 +1218,8 @@ public class PrettyPrinter extends DepthFirstAdapter {
       node.getRight().apply(this);
     }
     addRightParen();
+
+    this.outABitLshiftExpr(node);
   }
 
   /**
@@ -1157,6 +1228,8 @@ public class PrettyPrinter extends DepthFirstAdapter {
    * Pretty print bit right shift ('>>') operator
    */
   public void caseABitRshiftExpr(ABitRshiftExpr node) {
+    this.inABitRshiftExpr(node);
+
     addLeftParen();
     if (node.getLeft() != null) {
       node.getLeft().apply(this);
@@ -1166,6 +1239,8 @@ public class PrettyPrinter extends DepthFirstAdapter {
       node.getRight().apply(this);
     }
     addRightParen();
+
+    this.outABitRshiftExpr(node);
   }
 
   /**************************************************
@@ -1178,12 +1253,16 @@ public class PrettyPrinter extends DepthFirstAdapter {
    * Pretty print unary plus ('+') operator
    */
   public void caseAPosExpr(APosExpr node) {
+    this.inAPosExpr(node);
+
     addLeftParen();
     buffer.append('+');
     if (node.getExpr() != null) {
       node.getExpr().apply(this);
     }
     addRightParen();
+
+    this.outAPosExpr(node);
   }
 
   /**
@@ -1192,12 +1271,16 @@ public class PrettyPrinter extends DepthFirstAdapter {
    * Pretty print unary minus ('-') operator
    */
   public void caseANegExpr(ANegExpr node) {
+    this.inANegExpr(node);
+
     addLeftParen();
     buffer.append('-');
     if (node.getExpr() != null) {
       node.getExpr().apply(this);
     }
     addRightParen();
+
+    this.outANegExpr(node);
   }
 
   /**
@@ -1206,12 +1289,16 @@ public class PrettyPrinter extends DepthFirstAdapter {
    * Pretty print bit complement ('^') operator
    */
   public void caseABitCompExpr(ABitCompExpr node) {
+    this.inABitCompExpr(node);
+
     addLeftParen();
     buffer.append('^');
     if (node.getExpr() != null) {
       node.getExpr().apply(this);
     }
     addRightParen();
+
+    this.outABitCompExpr(node);
   }
 
   /**
@@ -1220,12 +1307,16 @@ public class PrettyPrinter extends DepthFirstAdapter {
    * Pretty print negate ('!') operator
    */
   public void caseANotExpr(ANotExpr node) {
+    this.inANotExpr(node);
+
     addLeftParen();
     buffer.append('!');
     if (node.getExpr() != null) {
       node.getExpr().apply(this);
     }
     addRightParen();
+
+    this.outANotExpr(node);
   }
 
   /**************************************************
@@ -1238,6 +1329,8 @@ public class PrettyPrinter extends DepthFirstAdapter {
    * Pretty print equal ('==') operator
    */
   public void caseAEqExpr(AEqExpr node) {
+    this.inAEqExpr(node);
+
     addLeftParen();
     if (node.getLeft() != null) {
       node.getLeft().apply(this);
@@ -1247,6 +1340,8 @@ public class PrettyPrinter extends DepthFirstAdapter {
       node.getRight().apply(this);
     }
     addRightParen();
+
+    this.outAEqExpr(node);
   }
 
   /**
@@ -1255,6 +1350,8 @@ public class PrettyPrinter extends DepthFirstAdapter {
    * Pretty print not equal ('!=') operator
    */
   public void caseANeqExpr(ANeqExpr node) {
+    this.inANeqExpr(node);
+
     addLeftParen();
     if (node.getLeft() != null) {
       node.getLeft().apply(this);
@@ -1264,6 +1361,8 @@ public class PrettyPrinter extends DepthFirstAdapter {
       node.getRight().apply(this);
     }
     addRightParen();
+
+    this.outANeqExpr(node);
   }
 
   /**
@@ -1272,6 +1371,8 @@ public class PrettyPrinter extends DepthFirstAdapter {
    * Pretty print less than ('<') operator
    */
   public void caseALtExpr(ALtExpr node) {
+    this.inALtExpr(node);
+
     addLeftParen();
     if (node.getLeft() != null) {
       node.getLeft().apply(this);
@@ -1281,6 +1382,8 @@ public class PrettyPrinter extends DepthFirstAdapter {
       node.getRight().apply(this);
     }
     addRightParen();
+
+    this.outALtExpr(node);
   }
 
   /**
@@ -1289,6 +1392,8 @@ public class PrettyPrinter extends DepthFirstAdapter {
    * Pretty print less than or equal to ('<=') operator
    */
   public void caseALteExpr(ALteExpr node) {
+    this.inALteExpr(node);
+
     addLeftParen();
     if (node.getLeft() != null) {
       node.getLeft().apply(this);
@@ -1298,6 +1403,8 @@ public class PrettyPrinter extends DepthFirstAdapter {
       node.getRight().apply(this);
     }
     addRightParen();
+
+    this.outALteExpr(node);
   }
 
   /**
@@ -1306,6 +1413,8 @@ public class PrettyPrinter extends DepthFirstAdapter {
    * Pretty print greater than ('>') operator
    */
   public void caseAGtExpr(AGtExpr node) {
+    this.inAGtExpr(node);
+
     addLeftParen();
     if (node.getLeft() != null) {
       node.getLeft().apply(this);
@@ -1315,6 +1424,8 @@ public class PrettyPrinter extends DepthFirstAdapter {
       node.getRight().apply(this);
     }
     addRightParen();
+
+    this.outAGtExpr(node);
   }
 
   /**
@@ -1323,6 +1434,8 @@ public class PrettyPrinter extends DepthFirstAdapter {
    * Pretty print greater than or equal to ('>=') operator
    */
   public void caseAGteExpr(AGteExpr node) {
+    this.inAGteExpr(node);
+
     addLeftParen();
     if (node.getLeft() != null) {
       node.getLeft().apply(this);
@@ -1332,6 +1445,8 @@ public class PrettyPrinter extends DepthFirstAdapter {
       node.getRight().apply(this);
     }
     addRightParen();
+
+    this.outAGteExpr(node);
   }
 
   /**************************************************
@@ -1344,6 +1459,8 @@ public class PrettyPrinter extends DepthFirstAdapter {
    * Pretty print AND ('&&') operator
    */
   public void caseAAndExpr(AAndExpr node) {
+    this.inAAndExpr(node);
+
     addLeftParen();
     if (node.getLeft() != null) {
       node.getLeft().apply(this);
@@ -1353,6 +1470,8 @@ public class PrettyPrinter extends DepthFirstAdapter {
       node.getRight().apply(this);
     }
     addRightParen();
+
+    this.outAAndExpr(node);
   }
 
   /**
@@ -1361,6 +1480,8 @@ public class PrettyPrinter extends DepthFirstAdapter {
    * Pretty print OR ('||') operator
    */
   public void caseAOrExpr(AOrExpr node) {
+    this.inAOrExpr(node);
+
     addLeftParen();
     if (node.getLeft() != null) {
       node.getLeft().apply(this);
@@ -1370,6 +1491,8 @@ public class PrettyPrinter extends DepthFirstAdapter {
       node.getRight().apply(this);
     }
     addRightParen();
+
+    this.outAOrExpr(node);
   }
 
   /**************************************************
@@ -1382,6 +1505,8 @@ public class PrettyPrinter extends DepthFirstAdapter {
    * Pretty print function calls
    */
   public void caseAFuncCallExpr(AFuncCallExpr node) {
+    this.inAFuncCallExpr(node);
+
     if (node.getId() != null) {
       buffer.append(node.getId().getText());
     }
@@ -1397,6 +1522,8 @@ public class PrettyPrinter extends DepthFirstAdapter {
       }
     }
     addRightParen();
+
+    this.outAFuncCallExpr(node);
   }
 
   /**************************************************
@@ -1409,6 +1536,8 @@ public class PrettyPrinter extends DepthFirstAdapter {
    * Pretty print append function
    */
   public void caseAAppendExpr(AAppendExpr node) {
+    this.inAAppendExpr(node);
+
     buffer.append("append");
     addLeftParen();
     if (node.getId() != null) {
@@ -1419,6 +1548,8 @@ public class PrettyPrinter extends DepthFirstAdapter {
       node.getExpr().apply(this);
     }
     addRightParen();
+
+    this.outAAppendExpr(node);
   }
 
   /**
@@ -1427,6 +1558,8 @@ public class PrettyPrinter extends DepthFirstAdapter {
    * Pretty print type casting expression
    */
   public void caseATypeCastExpr(ATypeCastExpr node) {
+    this.inATypeCastExpr(node);
+
     if (node.getTypeExpr() != null) {
       node.getTypeExpr().apply(this);
     }
@@ -1435,6 +1568,8 @@ public class PrettyPrinter extends DepthFirstAdapter {
       node.getExpr().apply(this);
     }
     addRightParen();
+
+    this.outATypeCastExpr(node);
   }
 
   /**************************************************
@@ -1447,6 +1582,8 @@ public class PrettyPrinter extends DepthFirstAdapter {
    * Pretty print array/slice elements
    */
   public void caseAArrayElemExpr(AArrayElemExpr node) {
+    this.inAArrayElemExpr(node);
+
     if (node.getArray() != null) {
       node.getArray().apply(this);
     }
@@ -1455,6 +1592,8 @@ public class PrettyPrinter extends DepthFirstAdapter {
       node.getIndex().apply(this);
     }
     addRightBracket();
+
+    this.outAArrayElemExpr(node);
   }
 
   /**
@@ -1463,6 +1602,8 @@ public class PrettyPrinter extends DepthFirstAdapter {
    * Pretty print struct fields
    */
   public void caseAFieldExpr(AFieldExpr node) {
+    this.inAFieldExpr(node);
+
     if (node.getExpr() != null) {
       node.getExpr().apply(this);
     }
@@ -1470,6 +1611,8 @@ public class PrettyPrinter extends DepthFirstAdapter {
     if (node.getId() != null) {
       buffer.append(node.getId().getText());
     }
+
+    this.outAFieldExpr(node);
   }
 
   /**************************************************
@@ -1482,8 +1625,45 @@ public class PrettyPrinter extends DepthFirstAdapter {
    * Pretty print variables
    */
   public void caseAVariableExpr(AVariableExpr node) {
+    this.inAVariableExpr(node);
+
     if (node.getId() != null) {
       buffer.append(node.getId().getText());
+    }
+
+    this.outAVariableExpr(node);
+  }
+
+  /**
+   * @Override public void caseABlankExpr(ABlankExpr node)
+   *
+   * Pretty print blank expression
+   */
+  public void caseABlankExpr(ABlankExpr node) {
+    this.inABlankExpr(node);
+
+    buffer.append("_");
+
+    this.outABlankExpr(node);
+  }
+
+  /**
+   * @Override public void caseABlankOptId(ABlankOptId node)
+   *
+   * Pretty print blank Id
+   */
+  public void caseABlankOptId(ABlankOptId node) {
+    buffer.append("_");
+  }
+
+  /**
+   * @Override public void caseAIdOptId(AIdOptId node)
+   *
+   * Pretty print Id
+   */
+  public void caseAIdOptId(AIdOptId node) {
+    if (node.getId() != null) {
+      buffer.append(node.getId().getText()); 
     }
   }
 
@@ -1497,9 +1677,13 @@ public class PrettyPrinter extends DepthFirstAdapter {
    * Pretty print int literals
    */
   public void caseAIntLitExpr(AIntLitExpr node) {
+    this.inAIntLitExpr(node);
+
     if (node.getIntLit() != null) {
       buffer.append(node.getIntLit().getText());
     }
+
+    this.outAIntLitExpr(node);
   }
 
   /**
@@ -1508,9 +1692,13 @@ public class PrettyPrinter extends DepthFirstAdapter {
    * Pretty print oct literals
    */
   public void caseAOctLitExpr(AOctLitExpr node) {
+    this.inAOctLitExpr(node);
+
     if (node.getOctLit() != null) {
       buffer.append(node.getOctLit().getText());
     }
+
+    this.outAOctLitExpr(node);
   }
 
   /**
@@ -1530,9 +1718,13 @@ public class PrettyPrinter extends DepthFirstAdapter {
    * Pretty print float literals
    */
   public void caseAFloatLitExpr(AFloatLitExpr node) {
+    this.inAFloatLitExpr(node);
+
     if (node.getFloatLit() != null) {
       buffer.append(node.getFloatLit().getText());
     }
+
+    this.outAFloatLitExpr(node);
   }
 
   /**
@@ -1541,9 +1733,13 @@ public class PrettyPrinter extends DepthFirstAdapter {
    * Pretty print run literals
    */
   public void caseARuneLitExpr(ARuneLitExpr node) {
+    this.inARuneLitExpr(node);
+
     if (node.getRuneLit() != null) {
       buffer.append(node.getRuneLit().getText());
     }
+
+    this.outARuneLitExpr(node);
   }
 
   /**
@@ -1552,9 +1748,13 @@ public class PrettyPrinter extends DepthFirstAdapter {
    * Pretty print interpreted string literals
    */
   public void caseAInterpretedStringLitExpr(AInterpretedStringLitExpr node) {
+    this.inAInterpretedStringLitExpr(node);
+
     if (node.getInterpretedStringLit() != null) {
       buffer.append(node.getInterpretedStringLit().getText());
     }
+
+    this.outAInterpretedStringLitExpr(node);
   }
 
   /**
@@ -1563,9 +1763,13 @@ public class PrettyPrinter extends DepthFirstAdapter {
    * Pretty print raw string literals
    */
   public void caseARawStringLitExpr(ARawStringLitExpr node) {
+    this.inARawStringLitExpr(node);
+
     if (node.getRawStringLit() != null) {
       buffer.append(node.getRawStringLit().getText());
     }
+
+    this.outARawStringLitExpr(node);
   }
 
   /**************************************************
@@ -1587,7 +1791,7 @@ public class PrettyPrinter extends DepthFirstAdapter {
    * Add tab
    */
   private void addTabs() {
-    for (int i = 0; i < numTabs; i++) {
+    for (int i = 0; i < this.tabDepth; i++) {
       buffer.append('\t');
     }
   }
@@ -1711,7 +1915,18 @@ public class PrettyPrinter extends DepthFirstAdapter {
     addSpace();
     addLeftBrace();
     addNewLines(1);
-    numTabs++;
+    this.tabDepth++;
+  }
+
+  /**
+   * @Private method
+   *
+   * Formatting before entering statement block
+   */
+  private void beforeBlock() {
+    addLeftBrace();
+    addNewLines(1);
+    this.tabDepth++;
   }
 
   /**
@@ -1720,7 +1935,7 @@ public class PrettyPrinter extends DepthFirstAdapter {
    * Formatting after exiting statement block
    */
   private void afterCodeBlock() {
-    numTabs--;
+    this.tabDepth--;
     addTabs();
     addRightBrace();
     addSpace();
@@ -1733,7 +1948,7 @@ public class PrettyPrinter extends DepthFirstAdapter {
    */
   private void beforeCaseBlock() {
     addNewLines(1);
-    numTabs++;
+    this.tabDepth++;
   }
 
   /**
@@ -1742,7 +1957,7 @@ public class PrettyPrinter extends DepthFirstAdapter {
    * Formatting after exiting case block
    */
   private void afterCaseBlock() {
-    numTabs--;
+    this.tabDepth--;
   }
 
   /**
@@ -1754,7 +1969,7 @@ public class PrettyPrinter extends DepthFirstAdapter {
     addSpace();
     addLeftParen();
     addNewLines(1);
-    numTabs++;
+    this.tabDepth++;
   }
 
   /**
@@ -1763,7 +1978,7 @@ public class PrettyPrinter extends DepthFirstAdapter {
    * Formatting after exiting declaration block
    */
   private void afterDecBlock() {
-    numTabs--;
+    this.tabDepth--;
     addTabs();
     addRightParen();
     addSpace();
@@ -1816,12 +2031,21 @@ public class PrettyPrinter extends DepthFirstAdapter {
   /**
    * @Private method
    *
+   * Formatting argument group for struct declaration
+   */
+  public void prettyPrintStructSub(PStructSub e) {
+    addTabs();
+    e.apply(this);
+    addNewLines(1);
+  }
+
+  /**
+   * @Private method
+   *
    * Formatting statement
    */
   private void prettyPrintStatement(PStmt e) {
-    if (e instanceof AVarDecStmt) {
-      e.apply(this);
-    } else if (e instanceof ATypeDecStmt) {
+    if (e instanceof AVarDecStmt || e instanceof ATypeDecStmt || e instanceof AEmptyStmt) {
       e.apply(this);
     } else {
       addTabs();

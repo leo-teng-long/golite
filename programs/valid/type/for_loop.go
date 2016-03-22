@@ -6,7 +6,7 @@ func main() {
     println(i)
     
     for i := 0; i < 10; i++ {
-        var i float64 = 0.0
-        println(i)
+        var j float64 = 0.0
+        println(j)
     }
 }

@@ -2,19 +2,32 @@
 Automatic test generator for the GoLite compiler.
 """
 
+import logging
 import os
 import re
 import sys
 
 
+# Configure logging.
+logging.basicConfig(format="%(levelname)s: [%(asctime)s] %(message)s",
+	level=logging.INFO)
+
+
 # Path to programs directory.
 PROGS_DIRPATH = os.path.join("..", "programs")
 
-# Path to valid programs directory.
+# Path to valid programs directories.
 VALID_PROGS_DIRPATH = os.path.join(PROGS_DIRPATH, "valid")
+VALID_ACTUAL_PROGS_DIRPATH = os.path.join(VALID_PROGS_DIRPATH, "actual")
+VALID_GENERAL_PROGS_DIRPATH = os.path.join(VALID_PROGS_DIRPATH, "general")
+VALID_SYNTAX_PROGS_DIRPATH = os.path.join(VALID_PROGS_DIRPATH, "syntax")
+
 # Path to invalid programs directory (Only syntax for now).
 INVALID_PROGS_DIRPATH = os.path.join(PROGS_DIRPATH, os.path.join("invalid",
 	"syntax"))
+
+# Directory name for tests from other groups.
+OTHER_GROUPS_PROGS_DIRNAME = "other_groups"
 
 
 # Filepath to test class template.
@@ -24,6 +37,10 @@ TEST_CLASS_TEMPALTE_FPATH = os.path.join("build_tests",
 # Filepath to test suite class template.
 SUITE_TEMPALTE_FPATH = os.path.join("build_tests",
 	"GoLiteTestSuiteTemplate.java")
+
+
+# Filepath to test ignore file, listing filepaths to tests to ignore.
+TEST_IGNORE_PATH = os.path.join("build_tests", "test_ignore.txt")
 
 
 # Assert method names.
@@ -101,11 +118,23 @@ def to_test_name(prog_fname):
 
 	if '2d' in test_name:
 		test_name = test_name.replace('2d', 'TwoDim')
-
-	if '3d' in test_name:
+	elif '3d' in test_name:
 		test_name = test_name.replace('3d', 'ThreeDim')
+	elif test_name[0].isdigit():
+		test_name = '_' + test_name
 
 	return test_name
+
+
+def is_other_groups_test(prog_fpath):
+	"""
+	Checks if the test program is from another group.
+
+	@param prog_fpath - Filepath to program
+	@return True if the program corresponds to another group, false otherwise.
+	"""
+
+	return OTHER_GROUPS_PROGS_DIRNAME in os.path.split(prog_fpath)[0]
 
 
 def create_test_method_str(prog_fname, prog_fpath, tpe):
@@ -122,6 +151,10 @@ def create_test_method_str(prog_fname, prog_fpath, tpe):
 	"""
 
 	test_name = to_test_name(prog_fname)
+
+	if is_other_groups_test(prog_fpath):
+		test_name = "Group" + os.path.basename(os.path.dirname(prog_fpath)) + \
+			capitalize(test_name)
 
 	if tpe == 'valid_parse':
 		assert_method_name = ASSERT_TRUE
@@ -156,31 +189,43 @@ def to_template_marker(in_str):
 	return "<<<" + in_str + ">>>"
 
 
-def create_test(test_name, progs_dirpath, tpe, out_path):
+def create_test(test_name, progs_dirpaths, tpe, out_path):
 	"""
 	Creates the source string for a test and saves it to file.
 
 	@param test_name - Test name (Becomes the class name of the test)
-	@param progs_dirpath - Directory path to input test programs folder
+	@param progs_dirpaths - Directory paths to input test programs folders
 	@param tpe - 'valid_parse' for testing the correcting parsing of the
 		program, 'invalid_parse' for testing no parse is produced for the
 		program, or 'pretty' for testing the pretty printer on the program
 	@param out_path - Output file to test source file
 	"""
 
+	# Load filepaths to tests to ignore, if the test ignore file exists.
+	if os.path.exists(TEST_IGNORE_PATH):
+		logging.info("Reading test ignore file from %s..." % TEST_IGNORE_PATH)
+		with open(TEST_IGNORE_PATH) as fin:
+			tests_to_ignore = set([l.strip() for l in fin
+				if not l.startswith('#')])
+	else:
+		logging.info("No test ignore file at %s." % TEST_IGNORE_PATH)
+		tests_to_ignore = set()
+
 	# List of test method strings.
 	test_method_strs = []
 
-	# Create a test method for each valid program.
-	for parent, subdirs, fnames in os.walk(progs_dirpath):
-		for fname in fnames:
-			if not fname.endswith('.go'):
-				continue
+	# Create a test method for each program.
+	for progs_dirpath in progs_dirpaths:
+		for parent, subdirs, fnames in os.walk(progs_dirpath):
+			for fname in fnames:
+				if not fname.endswith('.go'):
+					continue
 
-			test_prog_path = os.path.join(parent, fname)
+				test_prog_path = os.path.join(parent, fname)
 
-			test_method_strs.append(create_test_method_str(fname,
-				test_prog_path, tpe))
+				if not test_prog_path in tests_to_ignore:
+					test_method_strs.append(create_test_method_str(fname,
+						test_prog_path, tpe))
 
 	# Read the test template source.
 	with open(TEST_CLASS_TEMPALTE_FPATH) as fin:
@@ -206,16 +251,22 @@ def main():
 	# List of test method strings.
 	test_method_strs = []
 
+	valid_progs_dirpaths = [VALID_ACTUAL_PROGS_DIRPATH,
+		VALID_GENERAL_PROGS_DIRPATH, VALID_SYNTAX_PROGS_DIRPATH]
+
 	# Create the parser test for syntactically valid programs.
-	create_test(OUT_VALID_PARSE_TNAME, VALID_PROGS_DIRPATH, 'valid_parse',
+	logging.info("Creating parser test for syntactically valid programs...")
+	create_test(OUT_VALID_PARSE_TNAME, valid_progs_dirpaths, 'valid_parse',
 		os.path.join(OUT_TEST_DIRPATH, '%s.java' % OUT_VALID_PARSE_TNAME))
 
 	# Create the parser test for syntactically invalid programs.
-	create_test(OUT_INVALID_PARSE_TNAME, INVALID_PROGS_DIRPATH, 'invalid_parse',
+	logging.info("Creating parser test for syntactically invalid programs...")
+	create_test(OUT_INVALID_PARSE_TNAME, [INVALID_PROGS_DIRPATH], 'invalid_parse',
 		os.path.join(OUT_TEST_DIRPATH, '%s.java' % OUT_INVALID_PARSE_TNAME))
 
 	# Create the pretty printer test.
-	create_test(OUT_PRETTY_TNAME, VALID_PROGS_DIRPATH, 'pretty',
+	logging.info("Creating pretty printer tests...")
+	create_test(OUT_PRETTY_TNAME, valid_progs_dirpaths, 'pretty',
 		os.path.join(OUT_TEST_DIRPATH, '%s.java' % OUT_PRETTY_TNAME))
 
 	# Read in the test suite template.

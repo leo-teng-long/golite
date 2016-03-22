@@ -5,9 +5,8 @@ import golite.symbol.*;
 import golite.parser.*;
 import golite.lexer.*;
 import golite.node.*;
-import golite.PrettyPrinter;
 import golite.exception.*;
-import golite.weeder.*;
+
 import java.io.*;
 import java.util.*;
 
@@ -16,9 +15,12 @@ import java.util.*;
  * Main.
  */
 class Main {
+    /* Verbose flag. */
     private static boolean verbose;
+
     public static void main(String args[]) {
         verbose = false;
+
         try {
             if (args.length < 2 || args.length > 2)
                 printUsage();
@@ -34,24 +36,34 @@ class Main {
                     System.out.println("VALID");
                 else
                     System.out.println("INVALID");
-            // Print scanner tokens to stdout.
+            } else if (args[0].equals("-parsev")) {
+                verbose = true;
+                if (parse(args[1]))
+                    System.out.println("VALID");
+                else
+                    System.out.println("INVALID");
             } else if (args[0].equals("-pretty")) {
                 prettyPrint(args[1]);
-            }
-            else if (args[0].equals("-printTokens")) {
+            } else if (args[0].equals("-pptype")) {
+                typedPrettyPrint(args[1]);
+            // Print scanner tokens to stdout.
+            } else if (args[0].equals("-printTokens")) {
                 displayTokens(args[1]);
             } else if (args[0].equals("-weed")) {
                 weed(args[1]);
-            } else if (args[0].equals("-symbol")) {
-                symbol(args[1]);
-            } else if (args[0].equals("-symbolv")) {
+            } else if (args[0].equals("-weedv")) {
                 verbose = true;
-                symbol(args[1]);
+                weed(args[1]);
+            } else if (args[0].equals("-type")) {
+                type(args[1]);
+            } else if (args[0].equals("-typev")) {
+                verbose = true;
+                type(args[1]);
             } else {
                 printUsage();
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            e.printStackTrace(System.out);
         }
     }
 
@@ -59,7 +71,8 @@ class Main {
      * Prints the command-line usage to stderr.
      */
     public static void printUsage() {
-        System.err.println("Usage: Main -[scan | parse | pretty | printTokens | weed | symbol] filename");
+        System.err.println("Usage: Main -[scan | parse | pretty | pptype| printTokens | weed | "
+            + "weedv | type | typev ] filename");
     }
 
     /**
@@ -97,10 +110,15 @@ class Main {
         try {
             Lexer lexer = new GoLiteLexer(new PushbackReader(new FileReader(inPath), 1024));
             Parser p = new Parser(lexer);
-            p.parse();
+            GoLiteWeeder weeder = new GoLiteWeeder();
+
+            Start ast = p.parse();
+            ast.apply(weeder);
         }
-        catch (LexerException|ParserException e) {
-            System.err.println("ERROR: " + e);
+        catch (LexerException|ParserException|GoLiteWeederException e) {
+            if (verbose) {
+                System.err.println("ERROR: " + e);
+            }
             return false;
         }
 
@@ -116,46 +134,92 @@ class Main {
         try {
             Lexer lexer = new GoLiteLexer(new PushbackReader(new FileReader(inPath), 1024));
             Parser parser = new Parser(lexer);
-            Start tree = parser.parse();
+            GoLiteWeeder weeder = new GoLiteWeeder();
 
-            String filename = inPath.substring(0, inPath.indexOf('.'));
-            
-            PrettyPrinter printer = new PrettyPrinter(filename);
-            tree.apply(printer);
+            Start tree = parser.parse();
+            tree.apply(weeder);
+
+            PrettyPrinter pp = new PrettyPrinter();
+            tree.apply(pp);
+
+            String prettyPrint = pp.getPrettyPrint();
+
+            String filename = new File(inPath).getName();
+            String name = filename.substring(0, filename.indexOf('.'));
+            PrintWriter out = new PrintWriter(new FileWriter(name + ".pretty.go"));
+            out.print(prettyPrint);
+            out.close();
         } catch (Exception e) {
             System.err.println("ERROR: " + e);
         }
     }
 
     /**
-    * Weed a GoLite program.
-    * @param inPath - Filepath to GoLite program
-    */
-    public static boolean weed(String inPath) {
+     * Type pretty print a GoLite program
+     *
+     * @param inPath - Filepath to GoLite program
+     */
+    public static void typedPrettyPrint(String inPath) throws IOException {
         try {
             Lexer lexer = new GoLiteLexer(new PushbackReader(new FileReader(inPath), 1024));
             Parser parser = new Parser(lexer);
-            Weeder weed = new Weeder();
+            GoLiteWeeder weeder = new GoLiteWeeder();
+
+            Start tree = parser.parse();
+            tree.apply(weeder);
+
+            TypedPrettyPrinter tpp = new TypedPrettyPrinter();
+            tree.apply(tpp);
+
+            String prettyPrint = tpp.getPrettyPrint();
+
+            String filename = new File(inPath).getName();
+            String name = filename.substring(0, filename.indexOf('.'));
+            PrintWriter out = new PrintWriter(new FileWriter(name + ".pptype.go"));
+            out.print(prettyPrint);
+            out.close();
+
+            System.out.println(prettyPrint);
+        } catch (Exception e) {
+            System.err.println("ERROR: " + e);
+            // TODO: Debug.
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Weed a GoLite program.
+     * @param inPath - Filepath to GoLite program
+     */
+    public static boolean weed(String inPath) throws IOException {
+        try {
+            Lexer lexer = new GoLiteLexer(new PushbackReader(new FileReader(inPath), 1024));
+            Parser parser = new Parser(lexer);
+            GoLiteWeeder weed = new GoLiteWeeder();
 
             Start tree = parser.parse();
             tree.apply(weed);
-
-        } catch (Exception e) {
-            System.err.println("ERROR: " + e);
+            System.out.println("VALID");
+        } catch (LexerException|ParserException|GoLiteWeederException e) {
+            System.out.println("INVALID");
+            if (verbose) {
+                System.err.println("ERROR: " + e);
+                e.printStackTrace();
+            }
             return false;
         }
         return true;
     }
 
     /**
-    * Build a symbol table for a GoLite program.
+    * Typecheck a GoLite program.
     * @param inPath - Filepath to GoLite program
     */
-    public static boolean symbol(String inPath) {
+    public static boolean type(String inPath) throws IOException {
         try {
             Lexer lexer = new GoLiteLexer(new PushbackReader(new FileReader(inPath), 1024));
             Parser parser = new Parser(lexer);
-            Weeder weed = new Weeder();
+            GoLiteWeeder weed = new GoLiteWeeder();
             Start start = parser.parse();
             start.apply(weed);
             SymbolTableBuilder symbolBuilder = new SymbolTableBuilder();
@@ -176,7 +240,7 @@ class Main {
                 }
                 System.out.println("\n\n\n");
             }
-        } catch (Exception e) {
+        } catch (LexerException|ParserException|SymbolException|GoLiteWeederException|TypeCheckException e) {
             System.out.println("INVALID");
             if (verbose) {
                 System.err.println("ERROR: " + e);

@@ -50,18 +50,27 @@ public class SymbolTableBuilder extends DepthFirstAdapter
     @Override
     public void inASpecTypeSpec(ASpecTypeSpec node)
     {
-        String name = node.getId().getText();
-        symbolTable.addSymbol(name, node.getTypeExpr());
-        putTypeExpr(name, node.getTypeExpr());
+        if (node.getOptId() instanceof AIdOptId)
+        {
+            String name = ((AIdOptId) node.getOptId()).getId().getText();
+            symbolTable.addSymbol(name, node.getTypeExpr());
+            putTypeExpr(name, node.getTypeExpr());
+        }
     }
 
-    private void putArgGroup(String name, AArgArgGroup node) {
-        for (TId id: node.getId())
+    private void putStructSub(String name, AStructSubStructSub node) {
+        for (POptId n: node.getOptId())
         {
-            String newName = name + "." + id.getText();
-            symbolTable.addSymbol(newName, node);
-            typeTable.put(node, getType(node));
-            putTypeExpr(newName, node.getTypeExpr());
+            if (n instanceof AIdOptId)
+            {
+                TId id = ((AIdOptId) n).getId();
+                {
+                    String newName = name + "." + id.getText();
+                    symbolTable.addSymbol(newName, node);
+                    typeTable.put(node, getType(node));
+                    putTypeExpr(newName, node.getTypeExpr());
+                }
+            }
         }
     }
 
@@ -70,9 +79,9 @@ public class SymbolTableBuilder extends DepthFirstAdapter
         //TODO: Handle other types of type expressions
         if (isStructType(node))
         {
-            for (PArgGroup a: ((AStructTypeExpr) node).getArgGroup())
+            for (PStructSub a: ((AStructTypeExpr) node).getStructSub())
             {
-                putArgGroup(name, (AArgArgGroup) a);
+                putStructSub(name, (AStructSubStructSub) a);
             }
         }
     }
@@ -81,7 +90,7 @@ public class SymbolTableBuilder extends DepthFirstAdapter
     public void outASpecVarSpec(ASpecVarSpec node)
     {
         {
-            List<TId> ids = new ArrayList<TId>(node.getId());
+            List<TId> ids = getIds(node);
             List<PExpr> exprs = node.getExpr();
             for (TId e: ids)
             {
@@ -116,18 +125,72 @@ public class SymbolTableBuilder extends DepthFirstAdapter
     public void caseASpecVarSpec(ASpecVarSpec node)
     {
         {
-            List<TId> copy = new ArrayList<TId>(node.getId());
-            for(TId e : copy)
+            List<TId> ids = getIds(node);
+            for(TId e : ids)
             {
                 symbolTable.addSymbol(e.getText(), node);
             }
         }
     }
 
+    private ArrayList<TId> getIds(Node node)
+    {
+        if (node instanceof ASpecVarSpec)
+        {
+            ArrayList<POptId> optIds = new ArrayList<POptId>(((ASpecVarSpec) node).getOptId());
+            ArrayList<TId> ids = new ArrayList<TId>();
+            for (POptId o: optIds)
+            {
+                if (o instanceof AIdOptId)
+                {
+                    ids.add(((AIdOptId) o).getId());
+                }
+            }
+            return ids;
+        }
+        else if (node instanceof ASpecTypeSpec)
+        {
+            POptId optId = ((ASpecTypeSpec) node).getOptId();
+            ArrayList<TId> ids = new ArrayList<TId>();
+            if (optId instanceof AIdOptId)
+            {
+                ids.add(((AIdOptId) optId).getId());
+            }
+            return ids;
+        }
+        else if (node instanceof AShortAssignStmt)
+        {
+            ArrayList<POptId> optIds = new ArrayList<POptId>(((AShortAssignStmt) node).getOptId());
+            ArrayList<TId> ids = new ArrayList<TId>();
+            for (POptId o: optIds)
+            {
+                if (o instanceof AIdOptId)
+                {
+                    ids.add(((AIdOptId) o).getId());
+                }
+            }
+            return ids;
+        }
+        else if (node instanceof AStructSubStructSub)
+        {
+            ArrayList<POptId> optIds = new ArrayList<POptId>(((AStructSubStructSub) node).getOptId());
+            ArrayList<TId> ids = new ArrayList<TId>();
+            for (POptId o: optIds)
+            {
+                if (o instanceof AIdOptId)
+                {
+                    ids.add(((AIdOptId) o).getId());
+                }
+            }
+            return ids;
+        }
+        return new ArrayList<TId>();
+    }
+
     @Override //Modified
     public void caseASpecTypeSpec(ASpecTypeSpec node)
     {
-        symbolTable.addSymbol(node.getId().getText(), node);
+        symbolTable.addSymbol(getIds(node).get(0).getText(), node);
     }
 
     /* Helper methods */
@@ -205,7 +268,7 @@ public class SymbolTableBuilder extends DepthFirstAdapter
             if (declaration instanceof ASpecVarSpec)
             {
                 ASpecVarSpec dec = (ASpecVarSpec) declaration;
-                int idx = dec.getId().indexOf(id);
+                int idx = dec.getOptId().indexOf(id);
                 PTypeExpr typeExpr = getType(declaration);
                 if (typeExpr != null)
                 {
@@ -229,11 +292,12 @@ public class SymbolTableBuilder extends DepthFirstAdapter
             else if (declaration instanceof AShortAssignStmt)
             {
                 AShortAssignStmt dec = (AShortAssignStmt) declaration;
-                for (TId i: dec.getId())
+                ArrayList<TId> ids = getIds(dec);
+                for (TId i: ids)
                 {
                     if (i.getText().equals(id))
                     {
-                        int idx = dec.getId().indexOf(i);
+                        int idx = ids.indexOf(i);
                         return typeTable.get(dec.getExpr().get(idx));
                     }
                 }

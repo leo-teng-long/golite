@@ -36,10 +36,14 @@ Helpers
     escape_squote = '\' ''';
     escape_dquote = '\"';
 
+    // Alphabet characters.
+    alpha = ['A' .. 'Z'] | ['a' .. 'z'] ;
+    // Underscore.
+    underscore = '_' ;
     // Alphabet characters (plus underscore).
-    alpha = ['A' .. 'Z'] | ['a' .. 'z'] | '_' ;
+    alpha_underscore = alpha | underscore ;
     // Alphanumeric characters (plus underscore).
-    alpha_num = alpha | digit ;
+    alpha_num = alpha_underscore | digit ;
 
 Tokens
     //* Go keywords. *//
@@ -143,15 +147,18 @@ Tokens
     dot = '.' ;
     colon = ':' ;
 
+    // Underscore
+    underscore = '_' ;
+
     // Blank space.
     blank = ' ' | tab ;
     // End-of-line.
     eol = lf | cr | cr lf ;
 
     // Single-line comment and multi-line comments.
-    comment = '//' not_eol* | '/*' ([all - '*'] | '*' [all - '/'])* '*/' ;
+    comment = '//' not_eol* | '/**/' | '/*' '*'* [all - '*']+ '*'+ ([all - ['*' + '/']] [all - '*']* '*'+)* '/' || '//' not_eol* ;
     // Alternative form for handling multi-line comments:
-    // comment = '//' not_eol* | '/*' '*'* [all - '*']+ '*'+ ([all - ['*' + '/']] [all - '*']* '*'+)* '/' ;
+    // comment = '//' not_eol* | '/*' ([all - '*'] | '*' [all - '/'])* '*/' ;
 
     //* Literals. *//
 
@@ -161,7 +168,7 @@ Tokens
     hex_lit = '0' ['x' + 'X'] hex_digit+ ;
 
     // Floating-point.
-    float_lit = ('0' | pos_digit digit*)? '.' digit* | '.' digit+ ;
+    float_lit = digit* '.' digit* | '.' digit+ ;
 
     // Rune.
     rune_lit = squote ([not_eol - [squote + '\']] | escape_squote| escapes) squote ;
@@ -173,7 +180,8 @@ Tokens
     raw_string_lit = bquote [all - bquote]* bquote ;
 
     //* Identifiers. *//
-    id = alpha alpha_num* ;
+
+    id = alpha alpha_num* | underscore alpha_num+ ;
 
 Ignored Tokens
     blank, eol, comment ;
@@ -208,12 +216,12 @@ Productions
     var_spec_stmt {-> var_spec} = var_spec semi {-> var_spec} ;
 
     var_spec {-> var_spec} =
-          {typed} id_list type_expr
-            {-> New var_spec.spec([id_list.id], type_expr, [])}
-        | {init} id_list assign expr_list
-            {-> New var_spec.spec([id_list.id], Null, [expr_list.expr])}
-        | {typed_init} id_list type_expr assign expr_list
-            {-> New var_spec.spec([id_list.id], type_expr, [expr_list.expr])};
+          {typed} opt_id_list type_expr
+            {-> New var_spec.spec([opt_id_list.opt_id], type_expr, [])}
+        | {init} opt_id_list assign expr_list
+            {-> New var_spec.spec([opt_id_list.opt_id], Null, [expr_list.expr])}
+        | {typed_init} opt_id_list type_expr assign expr_list
+            {-> New var_spec.spec([opt_id_list.opt_id], type_expr, [expr_list.expr])};
 
     //* Type declaration. *//
 
@@ -225,7 +233,7 @@ Productions
 
     type_spec_stmt {-> type_spec} = type_spec semi {-> type_spec} ;
 
-    type_spec {-> type_spec} = id type_expr {-> New type_spec.spec(id, type_expr)} ;
+    type_spec {-> type_spec} = opt_id type_expr {-> New type_spec.spec(opt_id, type_expr)} ;
 
     //* Function declaration. *//
 
@@ -248,7 +256,12 @@ Productions
     block {-> stmt*} = lbrace stmt* rbrace {-> [stmt]} ;
 
     stmt {-> stmt} =
-          {simple} simple_sub semi
+          {empty} semi
+            {-> New stmt.empty()}
+        // Expression is checked to be a function call in the weeder.
+        | {expr} expr semi
+            {-> New stmt.expr(expr)}
+        | {simple} simple_sub semi
             {-> simple_sub.stmt}
         | {var_dec} var_dec
             {-> New stmt.var_dec([var_dec.var_spec])}
@@ -266,26 +279,30 @@ Productions
             {-> switcheroo.stmt}
         | {loop} loop semi
             {-> loop.stmt}
+        // The weeder checks only one break appears in a loop.
         | {break} break semi
             {-> New stmt.break()}
+        // The weeder checks only one continue appears in a loop.
         | {continue} continue semi
-            {-> New stmt.continue()} ;
+            {-> New stmt.continue()}
+        | {block} block semi
+            {-> New stmt.block([block.stmt])} ;
 
     simple_sub {-> stmt} =
-          {expr} expr
-            {-> New stmt.expr(expr)}
+          {assign} assignment
+            {-> assignment.stmt}
+        | {short_assign} short_assignment
+            {-> short_assignment.stmt}
         | {incr} expr plus_plus
             {-> New stmt.incr(expr)}
         | {decr} expr minus_minus
-            {-> New stmt.decr(expr)}
-        | {assign} assignment
-            {-> assignment.stmt}
-        | {short_assign} short_assignment
-            {-> short_assignment.stmt} ;
+            {-> New stmt.decr(expr)} ;
+
+    // TODO: L.H.S assignability should be checked in the weeder.
 
     assignment {-> stmt} =
-          {assign} assignable_list assign expr_list
-            {-> New stmt.assign([assignable_list.expr], [expr_list.expr])}
+          {assign} opt_assignable_list assign expr_list
+            {-> New stmt.assign([opt_assignable_list.expr], [expr_list.expr])}
         | {plus_assign} assignable plus_assign expr
             {-> New stmt.plus_assign(assignable.expr, expr)}
         | {minus_assign} assignable minus_assign expr
@@ -315,6 +332,21 @@ Productions
         | {assignables} assignable comma assignable_list
             {-> [assignable.expr, assignable_list.expr]} ;
 
+    opt_assignable_list {-> expr*} =
+          {opt_assignable} opt_assignable
+            {-> [opt_assignable.expr]}
+        | {opt_assignables} opt_assignable comma opt_assignable_list
+            {-> [opt_assignable.expr, opt_assignable_list.expr]} ;
+
+    opt_assignable {-> expr} =
+          {blank} underscore
+            {-> New expr.blank()}
+        | {assignable} assignable
+            {-> assignable.expr} ;
+    // TODO: Add support for parenthesization.
+    //    | {paren} lparen opt_assignable rparen
+    //        {-> opt_assignable.expr} ;
+
     assignable {-> expr} =
           {id} id
             {-> New expr.variable(id)}
@@ -322,14 +354,18 @@ Productions
             {-> field.expr}
         | {array_elem} array_elem
             {-> array_elem.expr} ;
+    // TODO: Add support for parenthesization.
+    //   | {paren} lparen assignable rparen
+    //       {-> assignable.expr} ;
 
-    // Weeding will verify the "dotting" is conducted on a "dottable".
+    // Weeding checks the "dotting" is conducted on a "dottable".
     field {-> expr} = atom dot id {-> New expr.field(atom.expr, id)} ;
 
-    // Weeding will verify the array access is conducted on a "Array accessible".
+    // Weeding verifies the array access is conducted on a "Array accessible".
     array_elem {-> expr} = atom lsquare expr rsquare {-> New expr.array_elem(atom.expr, expr)} ;
 
-    short_assignment {-> stmt} = id_list short_assign expr_list {-> New stmt.short_assign([id_list.id], [expr_list.expr])};
+    // Weeder checks that the L.H.S. is not a single blank.
+    short_assignment {-> stmt} = opt_id_list short_assign expr_list {-> New stmt.short_assign([opt_id_list.opt_id], [expr_list.expr])};
 
     return_stmt {-> stmt} =
           {void} return semi
@@ -338,35 +374,32 @@ Productions
             {-> New stmt.return(expr)} ;
 
     if_else {-> stmt} =
-          {if} if condition block elseif*
-            {-> New stmt.if_else(condition, [block.stmt], [elseif], [])}
-        | {if_else} if condition [if_block]:block elseif* else [else_block]:block
-            {-> New stmt.if_else(condition, [if_block.stmt], [elseif], [else_block.stmt])} ;
-
-    elseif {-> elseif} =
-          {elif} else if condition block
-            {-> New elseif.elif(condition, [block.stmt])} ;
+          {if} if condition block
+            {-> New stmt.if_else(condition, [block.stmt], [])}
+        | {if_else} if condition [if_block]:block else [else_block]:block
+            {-> New stmt.if_else(condition, [if_block.stmt], [else_block.stmt])}
+        | {if_elif} if condition [if_block]:block else if_else
+            {-> New stmt.if_else(condition, [if_block.stmt], [if_else.stmt])} ;
 
     condition {-> condition} =
           {expr} expr
             {-> New condition.condition(Null, expr)}
-        | {stmt_expr} opt_sub semi expr
-            {-> New condition.condition(opt_sub.stmt, expr)} ;
+        | {stmt_expr} opt_simple_sub semi expr
+            {-> New condition.condition(opt_simple_sub.stmt, expr)} ;
 
-    opt_sub {-> stmt} =
-          {empty}
-            {-> New stmt.empty()}
-        | {sub} simple_sub
-            {-> simple_sub.stmt} ;
-
+    // Switch statements are checked for at most one default case in the weeder.
     switcheroo {-> stmt} =
-          {stmt_expr} switch simple_sub semi expr lbrace case_block* rbrace
+          {stmt_and_expr} switch simple_sub semi expr lbrace case_block* rbrace
             {-> New stmt.switch(simple_sub.stmt, expr, [case_block])}
-        | {stmt} switch simple_sub semi lbrace case_block* rbrace
+        | {stmt_only} switch simple_sub semi lbrace case_block* rbrace
             {-> New stmt.switch(simple_sub.stmt, Null, [case_block])}
-        | {expr} switch expr lbrace case_block* rbrace
+        | {expr_only} switch expr lbrace case_block* rbrace
             {-> New stmt.switch(Null, expr, [case_block])}
-        | {nothing} switch lbrace case_block* rbrace
+        | {expr_only_wt_semi} switch semi expr lbrace case_block* rbrace
+            {-> New stmt.switch(Null, expr, [case_block])}
+        | {none} switch lbrace case_block* rbrace
+            {-> New stmt.switch(Null, Null, [case_block])}
+        | {none_wt_semi} switch semi lbrace case_block* rbrace
             {-> New stmt.switch(Null, Null, [case_block])} ;
 
     case_block {-> case_block} =
@@ -376,12 +409,18 @@ Productions
             {-> New case_block.block(New case_condition.default(), [stmt])} ;
 
     loop {-> stmt} =
-          {for} for [init]:opt_sub [first]:semi loop_cond [second]:semi [end]:opt_sub block
-            {-> New stmt.for_loop(init.stmt, loop_cond.expr, end.stmt, [block.stmt])}
+          {for} for [init]:opt_simple_sub [first]:semi loop_cond [second]:semi [end]:opt_simple_sub block
+            {-> New stmt.loop(init.stmt, loop_cond.expr, end.stmt, [block.stmt])}
         | {while_loop} for expr block
-            {-> New stmt.while_loop(expr, [block.stmt])}
+            {-> New stmt.loop(Null, expr, Null, [block.stmt])}
         | {inf_loop} for block
-            {-> New stmt.while_loop(Null, [block.stmt])} ;
+            {-> New stmt.loop(Null, Null, Null, [block.stmt])} ;
+
+    opt_simple_sub {-> stmt} =
+          {empty}
+            {-> New stmt.empty()}
+        | {simple_sub} simple_sub
+            {-> simple_sub.stmt} ;
 
     loop_cond {-> expr} =
           {empty}
@@ -397,6 +436,18 @@ Productions
         | {ids} id comma id_list
             {-> [id, id_list.id]} ;
 
+    opt_id_list {-> opt_id*} =
+          {opt_id} opt_id
+            {-> [opt_id]}
+        | {opt_ids} opt_id comma opt_id_list
+            {-> [opt_id, opt_id_list.opt_id]} ;
+
+    opt_id =
+          {blank} underscore
+            {-> New opt_id.blank()}
+        | {id} id
+            {-> New opt_id.id(id)} ;
+
     //* Types *//
 
     type_expr {-> type_expr} =
@@ -409,7 +460,9 @@ Productions
         | {slice} lsquare rsquare type_expr
             {-> New type_expr.slice(type_expr.type_expr)}
         | {struct} struct lbrace struct_sub_stmt* rbrace
-            {-> New type_expr.struct([struct_sub_stmt.arg_group])};
+            {-> New type_expr.struct([struct_sub_stmt.struct_sub])}
+        | {paren} lparen type_expr rparen
+            {-> type_expr};
 
     prim_type {-> type_expr} =
           {bool} bool
@@ -423,8 +476,8 @@ Productions
         | {string} string
             {-> New type_expr.string(string)} ;
 
-    struct_sub_stmt {-> arg_group} = id_list type_expr semi
-        {-> New arg_group.arg([id_list.id], type_expr)} ;
+    struct_sub_stmt {-> struct_sub} = opt_id_list type_expr semi
+        {-> New struct_sub.struct_sub([opt_id_list.opt_id], type_expr)} ;
 
     //* Expressions. *//
 
@@ -496,14 +549,14 @@ Productions
     term {-> expr} =
           {atom} atom
             {-> atom.expr}
-        | {pos} plus atom
-            {-> New expr.pos(atom.expr)}
-        | {neg} minus atom
-            {-> New expr.neg(atom.expr)}
-        | {not} not atom
-            {-> New expr.not(atom.expr)}
-        | {bit_comp} carot atom
-            {-> New expr.bit_comp(atom.expr)} ;
+        | {pos} plus term
+            {-> New expr.pos(term.expr)}
+        | {neg} minus term
+            {-> New expr.neg(term.expr)}
+        | {not} not term
+            {-> New expr.not(term.expr)}
+        | {bit_comp} carot term
+            {-> New expr.bit_comp(term.expr)} ;
 
     atom {-> expr} =
           {lit} lit
@@ -522,11 +575,11 @@ Productions
     func_call {-> expr} =
           {append} append lparen id comma expr rparen
             {-> New expr.append(id, expr)}
-        // Verification of the target type will be done in weeding phase.
+        // string type casts are excluded by the weeder.
         | {type_cast} prim_type lparen expr rparen
             {-> New expr.type_cast(prim_type.type_expr, expr)}
-        | {custom_func_call} id lparen expr_list rparen
-            {-> New expr.func_call(id, [expr_list.expr])};
+        | {custom} id lparen expr_list rparen
+            {-> New expr.func_call(id, [expr_list.expr])} ;
 
     //* Literals. *//
 
@@ -560,49 +613,53 @@ Abstract Syntax Tree
 
     //* Variable specification. *//
 
-    var_spec = {spec} id+ type_expr? expr* ; 
+    var_spec = {spec} opt_id+ type_expr? expr* ;
 
     //* Type specification. *//
 
-    type_spec = {spec} id type_expr ; 
+    type_spec = {spec} opt_id type_expr ;
 
     //* Argument grouping. *//
 
     arg_group = {arg} id+ type_expr ; 
 
+    //* Optional Id. *//
+    
+    opt_id =
+          {blank}
+        | {id} id ;
+
     //* Statement *//
     //TODO: Don't forget to typecheck multidimensional arrays/slices
     stmt =
           {empty}
-        | {var_dec} var_spec+ 
-        | {short_assign} id+ expr+ 
-        | {type_dec} type_spec+ 
-        | {assign} [lhs]:expr+ [rhs]:expr+ //TODO: Handle assigning values to aliases
-        | {plus_assign} [lhs]: expr [rhs]:expr //TODO: Typecheck this
-        | {minus_assign} [lhs]: expr [rhs]:expr 
-        | {star_assign} [lhs]: expr [rhs]:expr 
-        | {slash_assign} [lhs]: expr [rhs]:expr 
-        | {perc_assign} [lhs]: expr [rhs]:expr 
-        | {and_assign} [lhs]: expr [rhs]:expr 
-        | {pipe_assign} [lhs]: expr [rhs]:expr 
-        | {carot_assign} [lhs]: expr [rhs]:expr 
-        | {amp_carot_assign} [lhs]: expr [rhs]:expr 
-        | {lshift_assign} [lhs]: expr [rhs]:expr 
-        | {rshift_assign} [lhs]: expr [rhs]:expr 
-        | {incr} expr 
-        | {decr} expr 
-        | {expr} expr 
-        | {print} expr* 
-        | {println} expr* 
+        | {var_dec} var_spec+
+        | {short_assign} opt_id+ expr+
+        | {type_dec} type_spec+
+        | {assign} [lhs]:expr+ [rhs]:expr+ // TODO: Handle assigning values to aliases
+        | {plus_assign} [lhs]: expr [rhs]:expr // TODO: Typecheck this
+        | {minus_assign} [lhs]: expr [rhs]:expr
+        | {star_assign} [lhs]: expr [rhs]:expr
+        | {slash_assign} [lhs]: expr [rhs]:expr
+        | {perc_assign} [lhs]: expr [rhs]:expr
+        | {and_assign} [lhs]: expr [rhs]:expr
+        | {pipe_assign} [lhs]: expr [rhs]:expr
+        | {carot_assign} [lhs]: expr [rhs]:expr
+        | {amp_carot_assign} [lhs]: expr [rhs]:expr
+        | {lshift_assign} [lhs]: expr [rhs]:expr
+        | {rshift_assign} [lhs]: expr [rhs]:expr
+        | {incr} expr
+        | {decr} expr
+        | {expr} expr
+        | {print} expr*
+        | {println} expr*
         | {continue}
-        | {break} 
-        | {return} expr? 
-        | {if_else} condition [if_block]:stmt* [elseif]:elseif* [else_block]:stmt* 
-        | {switch} stmt? expr? case_block* 
-        | {for_loop} [init]:stmt expr [end]:stmt [block]:stmt* 
-        | {while_loop} expr? [block]:stmt* ; 
-
-    elseif = {elif} condition [block]:stmt*;
+        | {break}
+        | {return} expr?
+        | {if_else} condition [if_block]:stmt* [else_block]:stmt*
+        | {switch} stmt? expr? case_block*
+        | {loop} [init]:stmt? expr? [end]:stmt? [block]:stmt*
+        | {block} stmt* ;
 
     condition = {condition} stmt? expr ;
 
@@ -621,9 +678,11 @@ Abstract Syntax Tree
         | {rune} rune
         | {string} string
         | {custom} id
-        | {array} expr type_expr 
-        | {slice} type_expr 
-        | {struct} arg_group* ;
+        | {array} expr type_expr
+        | {slice} type_expr
+        | {struct} struct_sub* ;
+
+    struct_sub = {struct_sub} opt_id+ type_expr ;
 
     //* Expression. *//
 
@@ -653,11 +712,12 @@ Abstract Syntax Tree
         | {and} [left]:expr [right]:expr
         | {or} [left]:expr [right]:expr
         | {func_call} id expr*
-        | {append} id expr //TODO: Add weeding pass to check for returns on EVERY path in a function
-        | {type_cast} type_expr expr //TODO: Pull out alias/custom type casts -- BIG problems (see TODO in TypeChecker.java)
+        | {append} id expr // TODO: Add weeding pass to check for returns on EVERY path in a function
+        | {type_cast} type_expr expr // TODO: Pull out alias/custom type casts -- BIG problems (see TODO in TypeChecker.java)
         | {array_elem} [array]:expr [index]:expr
-        | {field} expr id 
-        | {variable} id 
+        | {field} expr id
+        | {blank}
+        | {variable} id
         | {int_lit} int_lit
         | {oct_lit} oct_lit
         | {hex_lit} hex_lit
