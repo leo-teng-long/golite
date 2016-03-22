@@ -10,10 +10,6 @@
 ../programs/valid/syntax/other_groups/09/set2square.go
 # Return type checks are performed in the type checker.
 ../programs/invalid/syntax/other_groups/03/invalid_funcdecl.go
-# Need to check LHS of a short assignment is not a underscore.
-../programs/invalid/syntax/other_groups/03/invalid_vardecl_6.go
-# Switch with underscore as the initializer or expression needs to be checked in the weeder.
-../programs/invalid/syntax/other_groups/03/invalid_switch10.go
 # Array size and access expressions are checked in type checker.
 ../programs/invalid/syntax/other_groups/04/31.go
 # Same as previous.
@@ -28,40 +24,6 @@
 ../programs/invalid/syntax/other_groups/07/invalid_only_intconst_array_decl.go
 # Same as previous.
 ../programs/invalid/syntax/other_groups/08/badArrayDec.go
-# Need to check package is not underscore in weeder.
-../programs/invalid/syntax/other_groups/09/blank_package.go
-# Need to check argument to function call is not underscore in weeder.
-../programs/invalid/syntax/other_groups/09/blank_funccall_arg.go
-# Need to check underscore is not used as a type in weeder.
-../programs/invalid/syntax/other_groups/09/blanktype.go
-# break outside of loops will be checked in weeder.
-../programs/invalid/syntax/other_groups/09/break_not_in_loop.go
-# Underscore assignments will be checked in the weeder.
-../programs/invalid/syntax/other_groups/09/blank_assignements.go
-# Underscore function call will be checked in weeder.
-../programs/invalid/syntax/other_groups/09/blank_funccall.go
-# Underscore field will be checked in weeder.
-../programs/invalid/syntax/other_groups/09/blank_field.go
-# Underscore return type will be checked in weeder.
-../programs/invalid/syntax/other_groups/09/blank_funcsign.go
-# Underscore type will be checked in weeder.
-../programs/invalid/syntax/other_groups/09/blank_exp.go
-# Underscore as return will be checked in weeder.
-../programs/invalid/syntax/other_groups/09/blank_returns.go
-# Underscore inside append function will be checked in weeder.
-../programs/invalid/syntax/other_groups/09/blank_append.go
-# Underscore as array access will be checked in weeder.
-../programs/invalid/syntax/other_groups/09/blank_index_int.go
-# Underscore as selector will be checked in weeder.
-../programs/invalid/syntax/other_groups/09/blank_selector.go
-# Underscore passed to print will be checked in weeder.
-../programs/invalid/syntax/other_groups/09/blank_print.go
-# Underscore passed to type cast needs to be checked in weeder.
-../programs/invalid/syntax/other_groups/09/blank_conversion.go
-# Underscore array variable in access will be checked in weeder.
-../programs/invalid/syntax/other_groups/09/blank_index.go
-# Underscore passed to println will be checked in weeder.
-../programs/invalid/syntax/other_groups/09/blank_println.go
 # Size of integer will be checked for overflow later.
 ../programs/invalid/syntax/other_groups/11/test11.go
 # Parenthesized type expressions are valid.
@@ -70,3 +32,5 @@
 ../programs/invalid/syntax/other_groups/14/0303_expr_array_decl.go
 # Not sure why this one's invalid.
 ../programs/invalid/syntax/other_groups/15/weeding4.go
+# Add support for parenthesized assignables.
+../programs/valid/syntax/parenthesized_assignables_in_assign.go
