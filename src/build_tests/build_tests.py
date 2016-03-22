@@ -270,7 +270,7 @@ def main():
 		to_template_marker("INSERT TEST CLASSES HERE"),
 		"%s.class,\n\t%s.class,\n\t%s.class" % (OUT_VALID_PARSE_TNAME,
 			OUT_INVALID_PARSE_TNAME, OUT_PRETTY_TNAME))
-
+	
 	# Save the test suite source to file.
 	with open(OUT_SUITE_FPATH, 'w') as fout:
 		fout.write(suite_str)
