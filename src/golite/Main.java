@@ -1,18 +1,24 @@
 package golite;
 
-import golite.exception.*;
+import golite.type.*;
+import golite.symbol.*;
 import golite.parser.*;
 import golite.lexer.*;
 import golite.node.*;
+import golite.PrettyPrinter;
+import golite.exception.*;
+import golite.weeder.*;
 import java.io.*;
+import java.util.*;
 
 
 /**
  * Main.
  */
 class Main {
-
+    private static boolean verbose;
     public static void main(String args[]) {
+        verbose = false;
         try {
             if (args.length < 2 || args.length > 2)
                 printUsage();
@@ -29,12 +35,21 @@ class Main {
                 else
                     System.out.println("INVALID");
             // Print scanner tokens to stdout.
-            } else if (args[0].equals("-pretty"))
+            } else if (args[0].equals("-pretty")) {
                 prettyPrint(args[1]);
-            else if (args[0].equals("-printTokens"))
+            }
+            else if (args[0].equals("-printTokens")) {
                 displayTokens(args[1]);
-            else
+            } else if (args[0].equals("-weed")) {
+                weed(args[1]);
+            } else if (args[0].equals("-symbol")) {
+                symbol(args[1]);
+            } else if (args[0].equals("-symbolv")) {
+                verbose = true;
+                symbol(args[1]);
+            } else {
                 printUsage();
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -44,7 +59,7 @@ class Main {
      * Prints the command-line usage to stderr.
      */
     public static void printUsage() {
-        System.err.println("Usage: Main -[scan | parse | pretty | printTokens] filename");
+        System.err.println("Usage: Main -[scan | parse | pretty | printTokens | weed | symbol] filename");
     }
 
     /**
@@ -113,6 +128,66 @@ class Main {
         } catch (Exception e) {
             System.err.println("ERROR: " + e);
         }
+    }
+
+    /**
+    * Weed a GoLite program.
+    * @param inPath - Filepath to GoLite program
+    */
+    public static boolean weed(String inPath) {
+        try {
+            Lexer lexer = new GoLiteLexer(new PushbackReader(new FileReader(inPath), 1024));
+            Parser parser = new Parser(lexer);
+            Weeder weed = new Weeder();
+
+            Start tree = parser.parse();
+            tree.apply(weed);
+
+        } catch (Exception e) {
+            System.err.println("ERROR: " + e);
+            return false;
+        }
+        return true;
+    }
+
+    /**
+    * Build a symbol table for a GoLite program.
+    * @param inPath - Filepath to GoLite program
+    */
+    public static boolean symbol(String inPath) {
+        try {
+            Lexer lexer = new GoLiteLexer(new PushbackReader(new FileReader(inPath), 1024));
+            Parser parser = new Parser(lexer);
+            Weeder weed = new Weeder();
+            Start start = parser.parse();
+            start.apply(weed);
+            SymbolTableBuilder symbolBuilder = new SymbolTableBuilder();
+            start.apply(symbolBuilder);
+            SymbolTable symbolTable = symbolBuilder.getSymbolTable();
+            HashMap<Node, PTypeExpr> typeTable = symbolBuilder.getTypeTable();
+            TypeChecker typeChecker = new TypeChecker(symbolTable, typeTable);
+            start.apply(typeChecker);
+            System.out.println("VALID");
+            if (verbose)
+            {
+                System.out.println("###SYMBOL TABLE:###");
+                symbolTable.printSymbols();
+                System.out.println("###TYPE TABLE:###");
+                for (Node n: typeTable.keySet())
+                {
+                    System.out.println("Node: " + n + " Key: " + n.getClass() + " Value: " + typeTable.get(n).getClass());
+                }
+                System.out.println("\n\n\n");
+            }
+        } catch (Exception e) {
+            System.out.println("INVALID");
+            if (verbose) {
+                System.err.println("ERROR: " + e);
+                e.printStackTrace();
+            }
+            return false;
+        }
+        return true;
     }
 
     /**

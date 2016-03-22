@@ -567,44 +567,44 @@ Abstract Syntax Tree
     top_dec =
           {vars} var_spec*
         | {types} type_spec*
-        | {func} id arg_group* type_expr? stmt* ;
+        | {func} id arg_group* type_expr? stmt* ; 
 
     //* Variable specification. *//
 
-    var_spec = {spec} id+ type_expr? expr* ;
+    var_spec = {spec} id+ type_expr? expr* ; 
 
     //* Type specification. *//
 
-    type_spec = {spec} id type_expr ;
+    type_spec = {spec} id type_expr ; 
 
     //* Argument grouping. *//
 
-    arg_group = {arg} id+ type_expr ;
+    arg_group = {arg} id+ type_expr ; 
 
     //* Statement *//
-
+    //TODO: Don't forget to typecheck multidimensional arrays/slices
     stmt =
           {empty}
-        | {var_dec} var_spec+
-        | {short_assign} id+ expr+
-        | {type_dec} type_spec+
-        | {assign} [lhs]:expr+ [rhs]:expr+
-        | {plus_assign} [lhs]: expr [rhs]:expr
-        | {minus_assign} [lhs]: expr [rhs]:expr
-        | {star_assign} [lhs]: expr [rhs]:expr
-        | {slash_assign} [lhs]: expr [rhs]:expr
-        | {perc_assign} [lhs]: expr [rhs]:expr
-        | {and_assign} [lhs]: expr [rhs]:expr
-        | {pipe_assign} [lhs]: expr [rhs]:expr
-        | {carot_assign} [lhs]: expr [rhs]:expr
-        | {amp_carot_assign} [lhs]: expr [rhs]:expr
-        | {lshift_assign} [lhs]: expr [rhs]:expr
-        | {rshift_assign} [lhs]: expr [rhs]:expr
-        | {incr} expr
-        | {decr} expr
-        | {expr} expr
-        | {print} expr*
-        | {println} expr*
+        | {var_dec} var_spec+ 
+        | {short_assign} id+ expr+ 
+        | {type_dec} type_spec+ 
+        | {assign} [lhs]:expr+ [rhs]:expr+ //TODO: Handle assigning values to aliases
+        | {plus_assign} [lhs]: expr [rhs]:expr //TODO: Typecheck this
+        | {minus_assign} [lhs]: expr [rhs]:expr 
+        | {star_assign} [lhs]: expr [rhs]:expr 
+        | {slash_assign} [lhs]: expr [rhs]:expr 
+        | {perc_assign} [lhs]: expr [rhs]:expr 
+        | {and_assign} [lhs]: expr [rhs]:expr 
+        | {pipe_assign} [lhs]: expr [rhs]:expr 
+        | {carot_assign} [lhs]: expr [rhs]:expr 
+        | {amp_carot_assign} [lhs]: expr [rhs]:expr 
+        | {lshift_assign} [lhs]: expr [rhs]:expr 
+        | {rshift_assign} [lhs]: expr [rhs]:expr 
+        | {incr} expr 
+        | {decr} expr 
+        | {expr} expr 
+        | {print} expr* 
+        | {println} expr* 
         | {continue}
         | {break}
         | {return} expr?
@@ -664,11 +664,11 @@ Abstract Syntax Tree
         | {and} [left]:expr [right]:expr
         | {or} [left]:expr [right]:expr
         | {func_call} id expr*
-        | {append} id expr
-        | {type_cast} type_expr expr
+        | {append} id expr //TODO: Add weeding pass to check for returns on EVERY path in a function
+        | {type_cast} type_expr expr //TODO: Pull out alias/custom type casts -- BIG problems (see TODO in TypeChecker.java)
         | {array_elem} [array]:expr [index]:expr
-        | {field} expr id
-        | {variable} id
+        | {field} expr id 
+        | {variable} id 
         | {int_lit} int_lit
         | {oct_lit} oct_lit
         | {hex_lit} hex_lit
