@@ -15,9 +15,12 @@ import java.util.*;
  * Main.
  */
 class Main {
+    /* Verbose flag. */
     private static boolean verbose;
+
     public static void main(String args[]) {
-        verbose = false;
+        this.verbose = false;
+        
         try {
             if (args.length < 2 || args.length > 2)
                 printUsage();
