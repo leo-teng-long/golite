@@ -151,9 +151,10 @@ public class PrettyPrinter extends DepthFirstAdapter {
     buffer.append("var");
     {
       addSpace();
-      List<TId> copy = new ArrayList<TId>(node.getId());
-      for (TId e : copy) {
-        buffer.append(e.getText());
+      List<POptId> copy = new ArrayList<POptId>(node.getOptId());
+      for (POptId e : copy) {
+        // buffer.append(e.getText()); // TODO
+        buffer.append("Id");
         addComma();
       }
       if (copy.size() > 0) {
@@ -204,9 +205,10 @@ public class PrettyPrinter extends DepthFirstAdapter {
    */
   public void caseASpecTypeSpec(ASpecTypeSpec node) {
     buffer.append("type");
-    if (node.getId() != null) {
+    if (node.getOptId() != null) {
       addSpace();
-      buffer.append(node.getId().getText());
+      // buffer.append(node.getOptId().getText()); // TODO
+      buffer.append("Id");
     }
     if (node.getTypeExpr() != null) {
       addSpace();
@@ -279,9 +281,10 @@ public class PrettyPrinter extends DepthFirstAdapter {
    */
   public void caseAShortAssignStmt(AShortAssignStmt node) {
     {
-      List<TId> copy = new ArrayList<TId>(node.getId());
-      for (TId e : copy) {
-        buffer.append(e.getText());
+      List<POptId> copy = new ArrayList<POptId>(node.getOptId());
+      for (POptId e : copy) {
+        // buffer.append(e.getText()); // TODO
+        buffer.append("Id");
         addComma();
       }
       if (copy.size() > 0) {

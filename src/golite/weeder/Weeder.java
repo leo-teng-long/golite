@@ -113,16 +113,6 @@ public class Weeder extends DepthFirstAdapter {
         throwWeederException(node, "Missing return");
     }
 
-    /**
-     * Checks whether the given Id token is blank, i.e. an underscore.
-     *
-     * @param id - Id token
-     * @return True if the id is underscore, false otherwise.
-     */
-    private boolean isUnderscore(TId id) {
-        return id.getText().equals("_");
-    }
-
     // Gather line and position information.
     @Override 
     public void inStart(Start node) {
@@ -225,7 +215,7 @@ public class Weeder extends DepthFirstAdapter {
     // equal to the number of expressions on the L.H.S.
     @Override
     public void inASpecVarSpec(ASpecVarSpec node) {
-        int idListLength = node.getId().size();
+        int idListLength = node.getOptId().size();
         int exprListLength = node.getExpr().size();
         
         if (exprListLength > 0 && idListLength != exprListLength)
@@ -234,19 +224,19 @@ public class Weeder extends DepthFirstAdapter {
     }
 
     // Throw an error if the number of identifiers on the R.H.S. of a short assignment is not equal
-    // to the number of expressions on the L.H.S.
+    // to the number of expressions on the L.H.S. or the L.H.S. is a sole blank.
     @Override
     public void inAShortAssignStmt(AShortAssignStmt node) {
-        LinkedList<TId> ids = node.getId();
+        LinkedList<POptId> optIds = node.getOptId();
         
-        int idListLength = ids.size();
+        int optIdListLength = optIds.size();
         int exprListLength = node.getExpr().size();
         
-        if (exprListLength > 0 && idListLength != exprListLength)
+        if (exprListLength > 0 && optIdListLength != exprListLength)
             this.throwWeederException(node,
-                "L.H.S and R.H.S. of short assignment don't match");    
+                "Assignment count mismatch: " + optIdListLength + " = " + exprListLength);    
 
-        if (idListLength == 1 && this.isUnderscore(ids.getFirst()))
+        if (optIdListLength == 1 && optIds.getFirst() instanceof ABlankOptId)
             this.throwWeederException(node, "No new variables declared on the left side of :=");
     }
 
