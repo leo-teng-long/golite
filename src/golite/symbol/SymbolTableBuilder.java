@@ -24,15 +24,15 @@ public class SymbolTableBuilder extends DepthFirstAdapter
     }
 
     @Override
-    public void inStart(Start node) 
+    public void inStart(Start node)
     {
         symbolTable = new SymbolTable();
         lineAndPos = new LineAndPos();
         typeTable = new HashMap<Node, PTypeExpr>();
         symbolTable.enterScope();
         //Initialize boolean types
-        symbolTable.addSymbol("true", new ABoolTypeExpr());
-        symbolTable.addSymbol("false", new ABoolTypeExpr());
+        symbolTable.addSymbol("true", new ABoolTypeExpr(new TBool()));
+        symbolTable.addSymbol("false", new ABoolTypeExpr(new TBool()));
     }
 
     @Override
