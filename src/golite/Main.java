@@ -5,8 +5,8 @@ import golite.symbol.*;
 import golite.parser.*;
 import golite.lexer.*;
 import golite.node.*;
-import golite.PrettyPrinter;
 import golite.exception.*;
+
 import java.io.*;
 import java.util.*;
 
@@ -39,11 +39,12 @@ class Main {
                     System.out.println("VALID");
                 else
                     System.out.println("INVALID");
-            // Print scanner tokens to stdout.
             } else if (args[0].equals("-pretty")) {
                 prettyPrint(args[1]);
-            }
-            else if (args[0].equals("-printTokens")) {
+            } else if (args[0].equals("-pptype")) {
+                typedPrettyPrint(args[1]);
+            // Print scanner tokens to stdout.
+            } else if (args[0].equals("-printTokens")) {
                 displayTokens(args[1]);
             } else if (args[0].equals("-weed")) {
                 weed(args[1]);
@@ -67,7 +68,8 @@ class Main {
      * Prints the command-line usage to stderr.
      */
     public static void printUsage() {
-        System.err.println("Usage: Main -[scan | parse | pretty | printTokens | weed | weedv | type | typev ] filename");
+        System.err.println("Usage: Main -[scan | parse | pretty | pptype| printTokens | weed | "
+            + "weedv | type | typev ] filename");
     }
 
     /**
@@ -129,10 +131,48 @@ class Main {
         try {
             Lexer lexer = new GoLiteLexer(new PushbackReader(new FileReader(inPath), 1024));
             Parser parser = new Parser(lexer);
+            GoLiteWeeder weeder = new GoLiteWeeder();
+
             Start tree = parser.parse();
+            tree.apply(weeder);
+
             String filename = inPath.substring(0, inPath.indexOf('.'));
-            PrettyPrinter printer = new PrettyPrinter(filename);
-            tree.apply(printer);
+
+            PrettyPrinter pp = new PrettyPrinter(filename);
+            tree.apply(pp);
+        } catch (Exception e) {
+            System.err.println("ERROR: " + e);
+        }
+    }
+
+    /**
+     * Type pretty print a GoLite program
+     *
+     * @param inPath - Filepath to GoLite program
+     */
+    public static void typedPrettyPrint(String inPath) throws IOException {
+        try {
+            Lexer lexer = new GoLiteLexer(new PushbackReader(new FileReader(inPath), 1024));
+            Parser parser = new Parser(lexer);
+            GoLiteWeeder weeder = new GoLiteWeeder();
+
+            Start tree = parser.parse();
+            tree.apply(weeder);
+
+            String filename = new File(inPath).getName();
+            String name = filename.substring(0, filename.indexOf('.'));
+
+            TypedPrettyPrinter tpp = new TypedPrettyPrinter(name);
+            tree.apply(tpp);
+
+            String prettyPrint = tpp.getBufferString();
+
+            // TODO: Temporary.
+            // PrintWriter out = new PrintWriter(new FileWriter(name + ".pptype.go"));
+            // out.print(prettyPrint);
+            // out.close();
+
+            System.out.println(prettyPrint);
         } catch (Exception e) {
             System.err.println("ERROR: " + e);
         }
