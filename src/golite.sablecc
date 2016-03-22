@@ -343,6 +343,9 @@ Productions
             {-> New expr.blank()}
         | {assignable} assignable
             {-> assignable.expr} ;
+    // TODO: Add support for parenthesization.
+    //    | {paren} lparen opt_assignable rparen
+    //        {-> opt_assignable.expr} ;
 
     assignable {-> expr} =
           {id} id
@@ -351,6 +354,9 @@ Productions
             {-> field.expr}
         | {array_elem} array_elem
             {-> array_elem.expr} ;
+    // TODO: Add support for parenthesization.
+    //   | {paren} lparen assignable rparen
+    //       {-> assignable.expr} ;
 
     // Weeding checks the "dotting" is conducted on a "dottable".
     field {-> expr} = atom dot id {-> New expr.field(atom.expr, id)} ;
