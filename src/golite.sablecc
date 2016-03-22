@@ -180,6 +180,7 @@ Tokens
     raw_string_lit = bquote [all - bquote]* bquote ;
 
     //* Identifiers. *//
+
     id = alpha alpha_num* | underscore alpha_num+ ;
 
 Ignored Tokens
@@ -257,7 +258,7 @@ Productions
     stmt {-> stmt} =
           {empty} semi
             {-> New stmt.empty()}
-        // Check expression is a function call in weeder.
+        // Expression is checked to be a function call in the weeder.
         | {expr} expr semi
             {-> New stmt.expr(expr)}
         | {simple} simple_sub semi
@@ -278,10 +279,10 @@ Productions
             {-> switcheroo.stmt}
         | {loop} loop semi
             {-> loop.stmt}
-        // Check break only appears in a loop in weeder.
+        // The weeder checks only one break appears in a loop.
         | {break} break semi
             {-> New stmt.break()}
-        // Check break only appears in a loop in weeder.
+        // The weeder checks only one continue appears in a loop.
         | {continue} continue semi
             {-> New stmt.continue()}
         | {block} block semi
@@ -349,10 +350,10 @@ Productions
         | {array_elem} array_elem
             {-> array_elem.expr} ;
 
-    // Weeding will verify the "dotting" is conducted on a "dottable".
+    // Weeding checks the "dotting" is conducted on a "dottable".
     field {-> expr} = atom dot id {-> New expr.field(atom.expr, id)} ;
 
-    // Weeding will verify the array access is conducted on a "Array accessible".
+    // Weeding verifies the array access is conducted on a "Array accessible".
     array_elem {-> expr} = atom lsquare expr rsquare {-> New expr.array_elem(atom.expr, expr)} ;
 
     // Weeder checks that the L.H.S. is not a single blank.
@@ -378,6 +379,7 @@ Productions
         | {stmt_expr} opt_simple_sub semi expr
             {-> New condition.condition(opt_simple_sub.stmt, expr)} ;
 
+    // Switch statements are checked for at most one default case in the weeder.
     switcheroo {-> stmt} =
           {stmt_and_expr} switch simple_sub semi expr lbrace case_block* rbrace
             {-> New stmt.switch(simple_sub.stmt, expr, [case_block])}
@@ -565,7 +567,7 @@ Productions
     func_call {-> expr} =
           {append} append lparen id comma expr rparen
             {-> New expr.append(id, expr)}
-        // Verification of the target type will be done in weeding phase.
+        // string type casts are excluded by the weeder.
         | {type_cast} prim_type lparen expr rparen
             {-> New expr.type_cast(prim_type.type_expr, expr)}
         | {custom} id lparen expr_list rparen
