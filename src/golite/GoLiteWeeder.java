@@ -209,7 +209,8 @@ public class GoLiteWeeder extends DepthFirstAdapter {
     public void inAExprStmt(AExprStmt node) {
         PExpr pExpr = node.getExpr();
         if (!(pExpr instanceof AFuncCallExpr || pExpr instanceof AAppendExpr))
-            this.throwWeederException(node, node + " evaluated but not used");
+            // TODO: Add string of error-causing code.
+            this.throwWeederException(node, "Evaluated but not used");
     }
 
     // Throw an error if the number of identifiers on the R.H.S. of a variable specification is not
@@ -258,7 +259,8 @@ public class GoLiteWeeder extends DepthFirstAdapter {
     public void inAIncrStmt(AIncrStmt node) {
         PExpr pExpr = node.getExpr();
         if (!this.isNonConstant(pExpr))
-            this.throwWeederException(node, "Cannot assign to " + pExpr);
+            // TODO: Add string of error-causing code.
+            this.throwWeederException(node, "Cannot assign");
     }
 
     // Throw an error if decrement is applied to a non-decrementable.
@@ -266,7 +268,8 @@ public class GoLiteWeeder extends DepthFirstAdapter {
     public void inADecrStmt(ADecrStmt node) {
         PExpr pExpr = node.getExpr();
         if (!this.isNonConstant(pExpr))
-            this.throwWeederException(node, "Cannot assign to " + pExpr);
+            // TODO: Add string of error-causing code.
+            this.throwWeederException(node, "Cannot assign");
     }
 
     // Throw an error if a switch statement contains multiple default cases.
@@ -342,12 +345,21 @@ public class GoLiteWeeder extends DepthFirstAdapter {
             this.throwWeederException(node, "Cannot cast to type string");
     }
 
-    // Throw an error if the array in an array access is not non-constant and
-    // not a function call. 
+    // Throw an error if the object in a field access is not non-constant and not a function call.
+    @Override
+    public void inAFieldExpr(AFieldExpr node) {
+        PExpr obj = node.getExpr();
+        if (!(this.isNonConstant(obj) || obj instanceof AFuncCallExpr))
+            // TODO: Change message to "Invalid operation" + (error-causing code).
+            this.throwWeederException(node, "Invalid field access operation");
+    }    
+
+    // Throw an error if the array in an array access is not non-constant and not a function call. 
     @Override
     public void inAArrayElemExpr(AArrayElemExpr node) {
         PExpr array = node.getArray();
         if (!(this.isNonConstant(array) || array instanceof AFuncCallExpr))
+            // TODO: Change message to "Invalid operation" + (error-causing code).
             this.throwWeederException(node, "Invalid array access operation");
     }
 
