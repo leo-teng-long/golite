@@ -24,7 +24,7 @@
 
 * Unzip SableCC 3.7 in `./src` directory
 * `cd src` and then `make build`
-* `java golite.Main -[scan | parse | pretty | printTokens | weed] [filename]`
+* `java golite.Main -[scan | parse | pretty | pptype| printTokens | dumpsymtab] [filename]`
 
 ### Sources
 
