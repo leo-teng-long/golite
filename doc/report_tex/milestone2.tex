@@ -11,8 +11,6 @@
 
 \section*{Design Decisions}
 
-(\textbf{TODO}: Elaborate on the following:
-
 \begin{itemize}
 \item Implemented weeder to handle the errors that are not captured by our scanner and parser. Example includes balancing ids and expressions for short assign, ensuring that break and continue only appear in for loop, etc.
 \item Implemented symbol table building and type checker in SableCC3
@@ -24,7 +22,6 @@
 \item The hash table contained expression types is later used by TypePrettyPrinter to annotate the type information for each expression.
 \item Discuss special cases of nodes that cannot be handled simply through bottom-up traversal (if any)
 \end{itemize}
-)
 
 \section*{Scoping Rules}
 
