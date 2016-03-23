@@ -14,12 +14,14 @@
 (\textbf{TODO}: Elaborate on the following:
 
 \begin{itemize}
-\item Implemented symbol table building and type checker in SableCC 3
+\item Implemented weeder to handle the errors that are not captured by our scanner and parser. Example includes balancing ids and expressions for short assign, ensuring that break and continue only appear in for loop, etc.
+\item Implemented symbol table building and type checker in SableCC3
 \item Symbol table is built before type checking is started
-\item Symbol table is built through a single bottom-up traversal of the AST
-\item Symbol table is build using the standard cactus stack of hash tables, except our hash tables map strings to type (discuss shortcomings we learned from this approach)
-\item The node to type mapping is stored in an auxiliary hash table, given SableCC 3 doesn't offer straight forward extension of AST node classes (for the purpose of adding fields such as type)
-\item Type checking is done through a single bottom-up traversal of the AST
+\item Symbol table is built using a two-pass approach. The first pass collects the type information associated with all top-level declarations, as they can appear in any order.
+\item Symbol table is build using the standard cactus stack of frames, which are represented by hash tables. However instead of creating a separate symbol class, our symbol table simply maps an identifier directly to its corresponding AST node, which turns out to be an extremely poor design decision. Later during the type checking phase, whenever we need to retrieve the type information of an id, we have to traverse a subtree of the AST where that id comes from. As a result, we wrote a lot of helper methods. And some parts of the type checker implementation can be a little messy.
+\item The type information of expressions is stored in an auxiliary hash table that maps from AST nodes to each type class, given that SableCC3 does not provide straight-forward extension for adding extra fields such as type to the AST node classes.
+\item Type checking is done through a single bottom-up traversal of the AST. As the type checker is traversing through the AST, the type information of each expression is gradually added to the type hash table.
+\item The hash table contained expression types is later used by TypePrettyPrinter to annotate the type information for each expression.
 \item Discuss special cases of nodes that cannot be handled simply through bottom-up traversal (if any)
 \end{itemize}
 )
@@ -99,7 +101,7 @@ He primarily worked independently and constributed to a new grammar, the weeder,
     \item Brainstormed, planned, and designed the symbol table and type checking rules with Leo.
     \item Worked with Leo to implement the symbol table.
     \item Worked with Leo to implement the type checker.
-    \item Implemented alot of type checking tests (both valid and invalid).
+    \item Implemented a lot of type checking tests (both valid and invalid).
 \end{itemize}
 
 \subsection*{Leo}
@@ -108,7 +110,7 @@ He primarily worked independently and constributed to a new grammar, the weeder,
     \item Brainstormed, planned, and designed the symbol table and type checking rules with Ethan.
     \item Worked with Ethan to implement the symbol table.
     \item Worked with Ethan to implement the type checker.
-    \item Implemented alot of type checking tests (both valid and invalid).
+    \item Implemented a lot of type checking tests (both valid and invalid).
     \item Made some fixes to the typed pretty printer and helped with testing.
 \end{itemize}
 
