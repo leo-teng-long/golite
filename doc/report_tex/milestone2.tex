@@ -11,45 +11,64 @@
 
 \section*{Design Decisions}
 
+(\textbf{TODO}: Elaborate on the following:
+
+\begin{itemize}
+\item Implemented symbol table building and type checker in SableCC 3
+\item Symbol table is built before type checking is started
+\item Symbol table is built through a single bottom-up traversal of the AST
+\item Symbol table is build using the standard cactus stack of hash tables, except our hash tables map strings to type (discuss shortcomings we learned from this approach)
+\item The node to type mapping is stored in an auxiliary hash table, given SableCC 3 doesn't offer straight forward extension of AST node classes (for the purpose of adding fields such as type)
+\item Type checking is done through a single bottom-up traversal of the AST
+\item Discuss special cases of nodes that cannot be handled simply through bottom-up traversal (if any)
+\end{itemize}
+)
+
 \section*{Scoping Rules}
 
-\textbf{(TODO)}
+Our type checker obeys standard scoping rules:
+
+\begin{itemize}
+    \item Blocks (e.g. in if-statements, in a for loop) define a scope.
+    \item Referring to a variable that was previously declared in the current scope or one of the outer scopes is legal.
+    \item Declarations using an already-defined identifier in the current scope is illegal (but those from outer scopes is legal).
+\end{itemize}
 
 \section*{Type Checks}
 
 Here, we enumerate the type checks and give the correspondence of each type check to the test programs used to demonstrate the type error.
 
-\subsection*{Statements}
+\subsection*{Declaration}
 
 \subsubsection*{Variable declaration}
-\subsubsection*{Short assignment}
 \subsubsection*{Type declaration}
-\subsubsection*{Assignment}
-\subsubsection*{Operator assignment}
-\subsubsection*{Increment/Decrement}
+\subsubsection*{Function declaration}
+
+\subsection*{Statements}
+
 \subsubsection*{Expression}
-\subsubsection*{\texttt{print} and \texttt{println}}
 \subsubsection*{Return}
-\subsubsection*{If-Else}
-\subsubsection*{Switch}
-\subsubsection*{Loop}
+\subsubsection*{Short declaration}
+\subsubsection*{Assignment}
+\subsubsection*{Op-assignment}
 \subsubsection*{Block}
+\subsubsection*{\texttt{print} and \texttt{println}}
+\subsubsection*{For loop}
+\subsubsection*{If Statement}
+\subsubsection*{Switch Statement}
+\subsubsection*{Increment/Decrement}
 
 \subsection*{Expressions}
 
-\subsubsection*{Binary arithmetic operations}
-\subsubsection*{Binary logical operations}
-\subsubsection*{Unary arithmetic operations}
-\subsubsection*{Unary logical operations}
+\subsubsection*{Literals}
+\subsubsection*{Identifiers}
+\subsubsection*{Unary expressions}
+\subsubsection*{Binary expressions}
 \subsubsection*{Function call}
-\subsubsection*{Append}
+\subsubsection*{Indexing}
+\subsubsection*{Field selection}
+\subsubsection*{\texttt{append}}
 \subsubsection*{Type cast}
-\subsubsection*{Array access}
-\subsubsection*{Field access}
-\subsubsection*{Variable}
-\subsubsection*{Literal}
-
-\subsection*{Function declaration}
 
 \section*{Contributions}
 
