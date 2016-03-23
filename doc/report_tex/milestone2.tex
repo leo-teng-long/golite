@@ -12,7 +12,7 @@
 \section{Design Decisions}
 
 \begin{itemize}
-\item Implemented weeder to handle the errors that are not captured by our scanner and parser. Example includes balancing ids and expressions for short assign, ensuring that break and continue only appear in for loop, etc.
+\item Implemented weeder to handle the errors that are not captured by our scanner and parser. Example includes balancing ids and expressions for short assign, ensuring that break and continue only appear in a loop, etc.
 \item Implemented symbol table building and type checker in SableCC3
 \item Symbol table is built before type checking is started
 \item Symbol table is built using a two-pass approach. The first pass collects the type information associated with all top-level declarations, as they can appear in any order.
