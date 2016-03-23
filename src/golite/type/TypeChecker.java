@@ -1567,12 +1567,22 @@ public class TypeChecker extends DepthFirstAdapter {
         }
         else if (node instanceof TId)
         {
-            String id = ((TId) node).getText();
-            Node declaration = symbolTable.getSymbol(id, node);
+            TId id = (TId) node;
+            Node declaration = symbolTable.getSymbol(id.getText(), node);
             if (declaration instanceof ASpecVarSpec)
             {
                 ASpecVarSpec dec = (ASpecVarSpec) declaration;
-                int idx = getIds(dec).indexOf(id);
+                int idx = 0;
+                for (TId i: getIds(dec))
+                {
+                    if(i.getText().equals(id.getText())){
+                        break;
+                    }
+                    else
+                    {
+                        idx++;
+                    }
+                }
                 PTypeExpr typeExpr = getType(declaration);
                 if (typeExpr != null)
                 {
@@ -1597,7 +1607,7 @@ public class TypeChecker extends DepthFirstAdapter {
                 AShortAssignStmt dec = (AShortAssignStmt) declaration;
                 for (TId i: getIds(dec))
                 {
-                    if (i.getText().equals(id))
+                    if (i.getText().equals(id.getText()))
                     {
                         int idx = getIds(dec).indexOf(i);
                         return typeTable.get(dec.getExpr().get(idx));
