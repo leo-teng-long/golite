@@ -1,0 +1,98 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+
+\title{Comp 520: Milestone \#2}
+\author{The Heapsters}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section*{Design Decisions}
+
+\section*{Scoping Rules}
+
+\textbf{(TODO)}
+
+\section*{Type Checks}
+
+Here, we enumerate the type checks and give the correspondence of each type check to the test programs used to demonstrate the type error.
+
+\subsection*{Statements}
+
+\subsubsection*{Variable declaration}
+\subsubsection*{Short assignment}
+\subsubsection*{Type declaration}
+\subsubsection*{Assignment}
+\subsubsection*{Operator assignment}
+\subsubsection*{Increment/Decrement}
+\subsubsection*{Expression}
+\subsubsection*{\texttt{print} and \texttt{println}}
+\subsubsection*{Return}
+\subsubsection*{If-Else}
+\subsubsection*{Switch}
+\subsubsection*{Loop}
+\subsubsection*{Block}
+
+\subsection*{Expressions}
+
+\subsubsection*{Binary arithmetic operations}
+\subsubsection*{Binary logical operations}
+\subsubsection*{Unary arithmetic operations}
+\subsubsection*{Unary logical operations}
+\subsubsection*{Function call}
+\subsubsection*{Append}
+\subsubsection*{Type cast}
+\subsubsection*{Array access}
+\subsubsection*{Field access}
+\subsubsection*{Variable}
+\subsubsection*{Literal}
+
+\subsection*{Function declaration}
+
+\section*{Contributions}
+
+The bulk of the workload for this milestone was carried out by Ethan and Leo, most of which was dedicated to the planning, design, implementation, and testing of the type checking rules.
+They held a total of \textbf{(TODO)} meetings over the course of the milestone, with the first few dedicated to designing the symbol table and type checker.
+Hardik was absent during most of these meetings, only participating in the last few scrum-like meeting.
+He primarily worked independently and constributed to a new grammar, the weeder, and the typed pretty printer.
+
+\subsection*{Ethan}
+
+\begin{itemize}
+    \item Implemented the first pass for the weeder.
+    \item Brainstormed, planned, and designed the symbol table and type checking rules with Leo.
+    \item Worked with Leo to implement the symbol table.
+    \item Worked with Leo to implement the type checker.
+    \item Implemented alot of type checking tests (both valid and invalid).
+\end{itemize}
+
+\subsection*{Leo}
+
+\begin{itemize}
+    \item Brainstormed, planned, and designed the symbol table and type checking rules with Ethan.
+    \item Worked with Ethan to implement the symbol table.
+    \item Worked with Ethan to implement the type checker.
+    \item Implemented alot of type checking tests (both valid and invalid).
+    \item Made some fixes to the typed pretty printer and helped with testing.
+\end{itemize}
+
+\subsection*{Hardik}
+
+\begin{itemize}
+    \item Implemented an automatic test suite generator for tests on syntax.
+    \item Catalogued failed parsing tests from other groups and corrected the grammar accordingly.
+    \item Modified the pretty printer to accomodate the new grammar.
+    \item Built on Ethan's weeder and added more weeding rules.
+    \item Implemented weeder tests.
+    \item Implemented and tests typed pretty printer.
+\end{itemize}
+
+\subsection*{Everyone}
+
+\begin{itemize}
+    \item Contributed to this document.
+\end{itemize}
+
+\end{document}
