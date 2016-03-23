@@ -63,12 +63,27 @@ Here, we enumerate the type checks and give the correspondence of each type chec
 \subsubsection*{Literals}
 \subsubsection*{Identifiers}
 \subsubsection*{Unary expressions}
+
+\begin{itemize}
+\item Incorrect operand: \texttt{bit_complement_float_type.go}, \texttt{boolean_not_rune_type.go}
+\end{itemize}
+
 \subsubsection*{Binary expressions}
+
+\begin{itemize}
+\item Incorrect operands: \texttt{add_bool_and_bool.go}, \texttt{add_string_and_rune.go}, \texttt{add_int_and_float.go}, \texttt{conditional_and_int_type.go}, \texttt{float_less_than_int.go}, \texttt{float_mod_int.go}
+\item Comparing non-comparables: \texttt{array_comparable_1.go}, \texttt{array_comparable_2.go}, \texttt{array_comparable_3.go}, \texttt{array_comparable_4.go}
+\end{itemize}
+
 \subsubsection*{Function call}
 \subsubsection*{Indexing}
 \subsubsection*{Field selection}
 \subsubsection*{\texttt{append}}
 \subsubsection*{Type cast}
+
+\begin{itemize}
+\item Uncastable: \texttt{array_index_not_prim_param.go}
+\end{itemize}
 
 \section*{Contributions}
 
