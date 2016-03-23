@@ -21,8 +21,8 @@ public class TypedPrettyPrinter extends PrettyPrinter {
   /**
    * Constructor.
    */
-  public TypedPrettyPrinter() {
-    super();
+  public TypedPrettyPrinter(HashMap<Node, PTypeExpr> typeTable) {
+      this.typeTable = typeTable;
   }
 
   /*
@@ -30,37 +30,20 @@ public class TypedPrettyPrinter extends PrettyPrinter {
    */
   private void printTypeTable() {
     for (Node n: this.typeTable.keySet())
-      System.out.println(n + " -> " + this.typeTable.get(n));  
-  }
-
-  // Initialize type table.
-  @Override 
-  public void inStart(Start node) {
-    SymbolTableBuilder symbolBuilder = new SymbolTableBuilder();
-    node.apply(symbolBuilder);
-    SymbolTable symbolTable = symbolBuilder.getSymbolTable();
-
-    HashMap<Node, PTypeExpr> typeTable = symbolBuilder.getTypeTable();
-    TypeChecker typeChecker = new TypeChecker(symbolTable, typeTable);
-    node.apply(typeChecker);
-
-    this.typeTable = typeChecker.getTypeTable();
+      System.out.println(n + " -> " + this.typeTable.get(n));
   }
 
   @Override
   public void defaultOut(Node node) {
     super.defaultOut(node);
-
     if (node instanceof PExpr)
       this.annotateType(node);
   }
 
   private void annotateType(Node node) {
     this.buffer.append(" /* ");
-
     PTypeExpr typeExpr = this.typeTable.get(node);
     this.buffer.append(typeExpr == null ? "(None)" : typeExpr.toString());
-
     this.buffer.append(" */ ");
   }
 

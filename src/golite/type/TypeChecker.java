@@ -36,21 +36,32 @@ public class TypeChecker extends DepthFirstAdapter {
     }
 
     @Override
-    public void inStart(Start node)
-    {
-        symbolTable.enterScope();
+    public void inAProgProg(AProgProg node) {
+
     }
 
     @Override
-    public void outStart(Start node)
-    {
-        symbolTable.exitScope();
+    public void outAProgProg(AProgProg node) {
         symbolTable.exitScope();
     }
 
     @Override
     public void caseAVarsTopDec(AVarsTopDec node) {
-        // taken care of by SymbolTableBuilder
+        List<PVarSpec> varSpecs = new ArrayList<PVarSpec>(node.getVarSpec());
+        for (PVarSpec  s : varSpecs) {
+            {
+                List<POptId> copy = new ArrayList<POptId>(((ASpecVarSpec) s).getOptId());
+                for (POptId e : copy) {
+                    e.apply(this);
+                }
+            }
+            {
+                List<PExpr> copy = new ArrayList<PExpr>(((ASpecVarSpec) s).getExpr());
+                for (PExpr e : copy) {
+                    e.apply(this);
+                }
+            }
+        }
     }
 
     @Override

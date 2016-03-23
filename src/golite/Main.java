@@ -163,22 +163,26 @@ class Main {
         try {
             Lexer lexer = new GoLiteLexer(new PushbackReader(new FileReader(inPath), 1024));
             Parser parser = new Parser(lexer);
-            GoLiteWeeder weeder = new GoLiteWeeder();
+            GoLiteWeeder weed = new GoLiteWeeder();
+            Start start = parser.parse();
+            start.apply(weed);
+            SymbolTableBuilder symbolBuilder = new SymbolTableBuilder();
+            start.apply(symbolBuilder);
+            SymbolTable symbolTable = symbolBuilder.getSymbolTable();
+            HashMap<Node, PTypeExpr> typeTable = symbolBuilder.getTypeTable();
+            TypeChecker typeChecker = new TypeChecker(symbolTable, typeTable);
+            start.apply(typeChecker);
 
-            Start tree = parser.parse();
-            tree.apply(weeder);
-
-            TypedPrettyPrinter tpp = new TypedPrettyPrinter();
-            tree.apply(tpp);
-
-            String prettyPrint = tpp.getPrettyPrint();
-
+            TypedPrettyPrinter typePrinter = new TypedPrettyPrinter(typeChecker.getTypeTable());
+            start.apply(typePrinter);
+            /*
+            String prettyPrint = typePrinter.getPrettyPrint();
             String filename = new File(inPath).getName();
             String name = filename.substring(0, filename.indexOf('.'));
             PrintWriter out = new PrintWriter(new FileWriter(name + ".pptype.go"));
             out.print(prettyPrint);
             out.close();
-
+            */
             System.out.println(prettyPrint);
         } catch (Exception e) {
             System.err.println("ERROR: " + e);
@@ -273,5 +277,5 @@ class Main {
                 System.out.println(token.getClass().getSimpleName() + " (" + token.getText() + ")");
         }
     }
-    
+
 }
