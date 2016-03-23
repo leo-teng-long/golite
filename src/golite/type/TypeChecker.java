@@ -48,19 +48,41 @@ public class TypeChecker extends DepthFirstAdapter {
     @Override
     public void caseAVarsTopDec(AVarsTopDec node) {
         List<PVarSpec> varSpecs = new ArrayList<PVarSpec>(node.getVarSpec());
+        System.out.println(varSpecs);
         for (PVarSpec  s : varSpecs) {
             {
                 List<POptId> copy = new ArrayList<POptId>(((ASpecVarSpec) s).getOptId());
                 for (POptId e : copy) {
+                    System.out.println(e);
                     e.apply(this);
                 }
             }
             {
+                PTypeExpr copy = ((ASpecVarSpec) s).getTypeExpr();
+                if (copy != null)
+                {
+                    System.out.println(copy + " " + copy.getClass());
+                    copy.apply(this);
+                }
+            }    
+            {
                 List<PExpr> copy = new ArrayList<PExpr>(((ASpecVarSpec) s).getExpr());
                 for (PExpr e : copy) {
+                    System.out.println(e);
                     e.apply(this);
                 }
             }
+        }
+    }
+
+    @Override
+    public void outAArrayTypeExpr(AArrayTypeExpr node)
+    {
+        System.out.println(node.getExpr());
+        PExpr e = node.getExpr();
+        if (!(e instanceof AIntLitExpr|e instanceof AOctLitExpr|e instanceof AHexLitExpr))
+        {
+            callTypeCheckException(node, "Must index arrays with int type");
         }
     }
 
@@ -1168,6 +1190,9 @@ public class TypeChecker extends DepthFirstAdapter {
         {
             List<TId> ids = new ArrayList<TId>(getIds(node));
             List<PExpr> exprs = node.getExpr();
+            System.out.println("Ids: " + ids);
+            System.out.println("Exprs: " + exprs);
+            System.out.println("TypeExpr: " + node.getTypeExpr() + node.getTypeExpr().getClass());
             for (TId e: ids)
             {
                 symbolTable.addSymbol(e.getText(), node);
