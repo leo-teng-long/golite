@@ -59,6 +59,8 @@ class Main {
             } else if (args[0].equals("-typev")) {
                 verbose = true;
                 type(args[1]);
+            } else if (args[0].equals("-dumpsymtab")) {
+                dumpSymbolTable(args[1]);
             } else {
                 printUsage();
             }
@@ -71,8 +73,8 @@ class Main {
      * Prints the command-line usage to stderr.
      */
     public static void printUsage() {
-        System.err.println("Usage: Main -[scan | parse | pretty | pptype| printTokens | weed | "
-            + "weedv | type | typev ] filename");
+        System.err.println("Usage: Main -[scan | parse | pretty | pptype | printTokens | "
+            + "dumpsymtab | weed | weedv | type | typev ] filename");
     }
 
     /**
@@ -273,5 +275,53 @@ class Main {
                 System.out.println(token.getClass().getSimpleName() + " (" + token.getText() + ")");
         }
     }
+
+    /**
+     * Dumps the symbol table for a GoLite program. Given an input file of the form 'foo.go', the
+     * method writes these results to 'foo.symtab'. 
+     *
+     * @param inPath - Filepath to GoLite program
+     */
+    public static boolean dumpSymbolTable(String inPath) throws IOException {
+        try {
+            Lexer lexer = new GoLiteLexer(new PushbackReader(new FileReader(inPath), 1024));
+            Parser parser = new Parser(lexer);
+            GoLiteWeeder weeder = new GoLiteWeeder();
+
+            Start start = parser.parse();
+            start.apply(weeder);
+
+            SymbolTableBuilder symbolBuilder = new SymbolTableBuilder();
+            start.apply(symbolBuilder);
+
+            SymbolTable symbolTable = symbolBuilder.getSymbolTable();
+
+            dump(symbolTable.toPrettyString(), inPath, ".symtab");
+        } catch (LexerException|ParserException|SymbolException|GoLiteWeederException|TypeCheckException e) {
+            System.out.println("INVALID");
+            if (verbose) {
+                System.err.println("ERROR: " + e);
+                e.printStackTrace();
+            }
+            return false;
+        }
+        return true;
+    }
     
+    /**
+     * Dumps the data dervied from the given input file of the form 'foo.go', to a file in the
+     * current folder with the same name but specified extension. 
+     *
+     * @param data - Data to dump
+     * @param inPath - Filepath to input
+     * @param ext - Output extension
+     */
+    private static void dump(String data, String inPath, String ext) throws IOException {
+        String filename = new File(inPath).getName();
+        String name = filename.substring(0, filename.indexOf('.'));
+        PrintWriter out = new PrintWriter(new FileWriter(name + ext));
+        out.print(data);
+        out.close();
+    }
+
 }
