@@ -9,7 +9,7 @@
 
 \maketitle
 
-\section*{Design Decisions}
+\section{Design Decisions}
 
 \begin{itemize}
 \item Implemented weeder to handle the errors that are not captured by our scanner and parser. Example includes balancing ids and expressions for short assign, ensuring that break and continue only appear in for loop, etc.
@@ -23,7 +23,7 @@
 \item Discuss special cases of nodes that cannot be handled simply through bottom-up traversal (if any)
 \end{itemize}
 
-\section*{Scoping Rules}
+\section{Scoping Rules}
 
 Our type checker obeys standard scoping rules:
 
@@ -33,109 +33,111 @@ Our type checker obeys standard scoping rules:
     \item Declarations using an already-defined identifier in the current scope is illegal (but those from outer scopes is legal).
 \end{itemize}
 
-\section*{Type Checks}
+\section{Type Checks}
 
 Here, we enumerate the type checks and give the correspondence of each type check to the test programs used to demonstrate the type error.
 
-\subsection*{Declaration}
+\subsection{Declaration}
 
 \begin{itemize}
-\item Undeclared variable: \texttt{print_undeclared_variable.go}
-\item Redeclare variable: \texttt{re_declare_variable_in_same_scope.go}, \texttt{short_assign_with_same_ids.go}, \texttt{use_variable_before_declaration.go}, \texttt{redeclare_type.go}
+\item Undeclared variable: \texttt{print\_undeclared\_variable.go}
+\item Redeclare variable: \texttt{re\_declare\_variable\_in\_same\_scope.go}, \texttt{short\_assign\_with\_same\_ids.go}, \texttt{use\_variable\_before\_declaration.go}, \texttt{redeclare\_type.go}
 \end{itemize}
 
-\subsubsection*{Variable declaration}
+\subsubsection{Variable declaration}
 
-\subsubsection*{Function declaration}
+\subsubsection{Function declaration}
 
 \begin{itemize}
-\item Incorrect return type: \texttt{func_return_wrong_type.go}, \texttt{func_with_return_type_return_void.go}
-\item Returning expression in a non-void function: \texttt{func_without_return_type_return_string.go}, \texttt{void_func_return_int.go}
+\item Incorrect return type: \texttt{func\_return\_wrong\_type.go}, \texttt{func\_with\_return\_type\_return\_void.go}
+\item Returning expression in a non-void function: \texttt{func\_without\_return\_type\_return\_string.go}, \texttt{void\_func\_return\_int.go}
 \end{itemize}
 
-\subsection*{Statements}
+\subsection{Statements}
 
-\subsubsection*{Short declaration}
+\subsubsection{Short declaration}
 
 \begin{itemize}
-\item Mixed types: \texttt{short_assign_with_new_id_wrong_expr_type.go}
+\item Mixed types: \texttt{short\_assign\_with\_new\_id\_wrong\_expr\_type.go}
 \end{itemize}
 
-\subsubsection*{Assignment}
-\subsubsection*{Op-assignment}
+\subsubsection{Assignment}
+\subsubsection{Op-assignment}
 
 \begin{itemize}
-\item L.H.S. and R.H.S. are incompatible: \texttt{minus_assign_int_to_rune.go}, \texttt{plus_assign_float_int.go}, \texttt{rshift_assign_int_with_rune.go}
+\item L.H.S. and R.H.S. are incompatible: \texttt{minus\_assign\_int\_to\_rune.go}, \texttt{plus\_assign\_float\_int.go}, \texttt{rshift\_assign\_int\_with\_rune.go}
 \end{itemize}
 
-\subsubsection*{For loop}
+\subsubsection{For loop}
 
 (Same tests for If statements apply here.)
 
-\subsubsection*{If Statement}
+\subsubsection{If Statement}
 
 \begin{itemize}
-\item Non-boolean condition: \texttt{if_with_int_condition.go}, \texttt{if_with_rune_condition.go}, \texttt{invalid_condition_for_while_loop.go}
+\item Non-boolean condition: \texttt{if\_with\_int\_condition.go}, \texttt{if\_with\_rune\_condition.go}, \texttt{invalid\_condition\_for\_while\_loop.go}
 \end{itemize}
 
-\subsubsection*{Switch Statement}
+\subsubsection{Switch Statement}
 
 \begin{itemize}
-\item Expression type and case type don't match: \texttt{switch_expression_not_match_case_expression.go}
-\item No expression: \texttt{switch_without_expression_with_int_case.go}
+\item Expression type and case type don't match: \texttt{switch\_expression\_not\_match\_case\_expression.go}
+\item No expression: \texttt{switch\_without\_expression\_with\_int\_case.go}
 \end{itemize}
 
-\subsubsection*{Increment/Decrement}
+\subsubsection{Increment/Decrement}
 
 \begin{itemize}
-\item Incorrect type: \texttt{incr_string.go}
+\item Incorrect type: \texttt{incr\_string.go}
 \end{itemize}
 
-\subsection*{Expressions}
+\subsection{Expressions}
 
-\subsubsection*{Unary expressions}
+\subsubsection{Unary expressions}
 
 \begin{itemize}
-\item Incorrect operand: \texttt{bit_complement_float_type.go}, \texttt{boolean_not_rune_type.go}, \texttt{unary_minus_bool_type.go}, \texttt{unary_minus_string_type.go}, \texttt{unary_plus_bool_type.go}, \texttt{unary_plus_string_type.go}
+\item Incorrect operand: \texttt{bit\_complement\_float\_type.go}, \texttt{boolean\_not\_rune\_type.go}, \texttt{unary\_minus\_bool\_type.go}, \texttt{unary\_minus\_string\_type.go}, \texttt{unary\_plus\_bool\_type.go}, \texttt{unary\_plus\_string\_type.go}
 \end{itemize}
 
-\subsubsection*{Binary expressions}
+\subsubsection{Binary expressions}
 
 \begin{itemize}
-\item Incorrect operands: \texttt{add_bool_and_bool.go}, \texttt{add_string_and_rune.go}, \texttt{add_int_and_float.go}, \texttt{conditional_and_int_type.go}, \texttt{float_less_than_int.go}, \texttt{float_mod_int.go}, \texttt{int_compared_to_rune.go}, \texttt{array_comparable_1.go}, \texttt{array_comparable_2.go}, \texttt{array_comparable_3.go}, \texttt{array_comparable_4.go}, \texttt{slice_comparable_1.go}, \texttt{slice_comparable_2.go}, \texttt{slice_comparable_3.go}, \texttt{slice_comparable_4.go}, \texttt{slice_comparable_5.go}
+\item Incorrect operands: \texttt{add\_bool\_and\_bool.go}, \texttt{add\_string\_and\_rune.go}, \texttt{add\_int\_and\_float.go}, \texttt{conditional\_and\_int\_type.go}, \texttt{float\_less\_than\_int.go}, \texttt{float\_mod\_int.go}, \texttt{int\_compared\_to\_rune.go}, \texttt{array\_comparable\_1.go}, \texttt{array\_comparable\_2.go}, \texttt{array\_comparable\_3.go}, \texttt{array\_comparable\_4.go}, \texttt{slice\_comparable\_1.go}, \texttt{slice\_comparable\_2.go}, \texttt{slice\_comparable\_3.go}, \texttt{slice\_comparable\_4.go}, \texttt{slice\_comparable\_5.go}
 \end{itemize}
 
-\subsubsection*{Function call}
-
-\item Incorrect argument types: \texttt{func_1.go}, \texttt{func_2.go}, \texttt{func_3.go}, \texttt{func_4.go}, \texttt{func_5.go}, \texttt{func_6.go}, \texttt{func_7.go}, \texttt{func_8.go}, \texttt{func_9.go}
-
-\subsubsection*{Indexing}
+\subsubsection{Function call}
 
 \begin{itemize}
-\item Non-integer index: \texttt{non-int_in_array_var_dec.go}
-
+\item Incorrect argument types: \texttt{func\_1.go}, \texttt{func\_2.go}, \texttt{func\_3.go}, \texttt{func\_4.go}, \texttt{func\_5.go}, \texttt{func\_6.go}, \texttt{func\_7.go}, \texttt{func\_8.go}, \texttt{func\_9.go}
 \end{itemize}
 
-\subsubsection*{Field selection}
+\subsubsection{Indexing}
 
 \begin{itemize}
-\item Incompatible types: \texttt{field_struct_bad_assign_1.go}, \texttt{field_struct_bad_assign_2.go}, \texttt{field_struct_bad_assign_3.go}, \texttt{field_struct_prim_1.go}, \texttt{field_struct_prim_2.go}, \texttt{field_struct_prim_3.go}, \texttt{field_struct_prim_4.go}, \texttt{field_struct_prim_5.go}, \texttt{field_struct_prim_6.go}
+\item Non-integer index: \texttt{non-int\_in\_array\_var\_dec.go}
+
 \end{itemize}
 
-\subsubsection*{\texttt{append}}
+\subsubsection{Field selection}
 
 \begin{itemize}
-\item Incompatible types: \texttt{slice_append_single_to_tiple.go}, \texttt{slice_append_wrong_struct.go}
+\item Incompatible types: \texttt{field\_struct\_bad\_assign\_1.go}, \texttt{field\_struct\_bad\_assign\_2.go}, \texttt{field\_struct\_bad\_assign\_3.go}, \texttt{field\_struct\_prim\_1.go}, \texttt{field\_struct\_prim\_2.go}, \texttt{field\_struct\_prim\_3.go}, \texttt{field\_struct\_prim\_4.go}, \texttt{field\_struct\_prim\_5.go}, \texttt{field\_struct\_prim\_6.go}
 \end{itemize}
 
-\subsubsection*{Type cast}
+\subsubsection{\texttt{append}}
 
 \begin{itemize}
-\item Uncastable: \texttt{array_index_not_prim_param.go}
-\item Too many arguments: \texttt{too_many_arguments_to_type_cast.go}
+\item Incompatible types: \texttt{slice\_append\_single\_to\_tiple.go}, \texttt{slice\_append\_wrong\_struct.go}
 \end{itemize}
 
-\section*{Contributions}
+\subsubsection{Type cast}
+
+\begin{itemize}
+\item Uncastable: \texttt{array\_index\_not\_prim\_param.go}
+\item Too many arguments: \texttt{too\_many\_arguments\_to\_type\_cast.go}
+\end{itemize}
+
+\section{Contributions}
 
 The bulk of the workload for this milestone was carried out by Ethan and Leo, most of which was dedicated to the planning, design, implementation, and testing of the type checking rules.
 They held a total of \textbf{(TODO)} meetings over the course of the milestone, with the first few dedicated to designing the symbol table and type checker.
