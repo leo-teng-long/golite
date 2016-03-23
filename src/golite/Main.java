@@ -177,7 +177,7 @@ class Main {
 
             TypedPrettyPrinter typePrinter = new TypedPrettyPrinter(typeChecker.getTypeTable());
             start.apply(typePrinter);
-            
+
             String prettyPrint = typePrinter.getPrettyPrint();
             String filename = new File(inPath).getName();
             String name = filename.substring(0, filename.indexOf('.'));
@@ -186,7 +186,6 @@ class Main {
             out.close();
         } catch (Exception e) {
             System.err.println("ERROR: " + e);
-            // TODO: Debug.
             e.printStackTrace();
         }
     }
