@@ -40,6 +40,11 @@ Here, we enumerate the type checks and give the correspondence of each type chec
 
 \subsection*{Declaration}
 
+\begin{itemize}
+\item Undeclared variable: \texttt{print_undeclared_variable.go}
+\item Redeclare variable: \texttt{re_declare_variable_in_same_scope.go}
+\end{itemize}
+
 \subsubsection*{Variable declaration}
 \subsubsection*{Type declaration}
 
@@ -57,10 +62,25 @@ Here, we enumerate the type checks and give the correspondence of each type chec
 \subsubsection*{Short declaration}
 \subsubsection*{Assignment}
 \subsubsection*{Op-assignment}
+
+\begin{itemize}
+\item L.H.S. and R.H.S. are incompatible: \texttt{minus_assign_int_to_rune.go}, \texttt{plus_assign_float_int.go}, \texttt{rshift_assign_int_with_rune.go}
+\end{itemize}
+
 \subsubsection*{Block}
 \subsubsection*{\texttt{print} and \texttt{println}}
+
+\begin{itemize}
+\item 
+\end{itemize}
+
 \subsubsection*{For loop}
 \subsubsection*{If Statement}
+
+\begin{itemize}
+\item Non-boolean condition: \texttt{if_with_int_condition.go}, \texttt{if_with_rune_condition.go}, \texttt{invalid_condition_for_while_loop.go}
+\end{itemize}
+
 \subsubsection*{Switch Statement}
 \subsubsection*{Increment/Decrement}
 
@@ -77,12 +97,18 @@ Here, we enumerate the type checks and give the correspondence of each type chec
 \subsubsection*{Binary expressions}
 
 \begin{itemize}
-\item Incorrect operands: \texttt{add_bool_and_bool.go}, \texttt{add_string_and_rune.go}, \texttt{add_int_and_float.go}, \texttt{conditional_and_int_type.go}, \texttt{float_less_than_int.go}, \texttt{float_mod_int.go}
+\item Incorrect operands: \texttt{add_bool_and_bool.go}, \texttt{add_string_and_rune.go}, \texttt{add_int_and_float.go}, \texttt{conditional_and_int_type.go}, \texttt{float_less_than_int.go}, \texttt{float_mod_int.go}, \texttt{int_compared_to_rune.go}
 \item Comparing non-comparables: \texttt{array_comparable_1.go}, \texttt{array_comparable_2.go}, \texttt{array_comparable_3.go}, \texttt{array_comparable_4.go}
 \end{itemize}
 
 \subsubsection*{Function call}
 \subsubsection*{Indexing}
+
+\begin{itemize}
+\item Non-integer index: \texttt{non-int_in_array_var_dec.go}
+
+\end{itemize}
+
 \subsubsection*{Field selection}
 \subsubsection*{\texttt{append}}
 \subsubsection*{Type cast}
