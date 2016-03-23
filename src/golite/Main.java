@@ -177,15 +177,13 @@ class Main {
 
             TypedPrettyPrinter typePrinter = new TypedPrettyPrinter(typeChecker.getTypeTable());
             start.apply(typePrinter);
+            
             String prettyPrint = typePrinter.getPrettyPrint();
-            System.out.println(prettyPrint);
-            /*
             String filename = new File(inPath).getName();
             String name = filename.substring(0, filename.indexOf('.'));
             PrintWriter out = new PrintWriter(new FileWriter(name + ".pptype.go"));
             out.print(prettyPrint);
             out.close();
-            */
         } catch (Exception e) {
             System.err.println("ERROR: " + e);
             // TODO: Debug.
