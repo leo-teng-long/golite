@@ -713,7 +713,7 @@ Abstract Syntax Tree
         | {or} [left]:expr [right]:expr
         | {func_call} id expr*
         | {append} id expr // TODO: Add weeding pass to check for returns on EVERY path in a function
-        | {type_cast} type_expr expr // TODO: Pull out alias/custom type casts -- BIG problems (see TODO in TypeChecker.java)
+        | {type_cast} type_expr expr
         | {array_elem} [array]:expr [index]:expr
         | {field} expr id
         | {blank}
