@@ -1507,6 +1507,9 @@ public class TypeChecker extends DepthFirstAdapter {
         else if (decl instanceof ASpecTypeSpec)
         {
             PTypeExpr castType = ((ASpecTypeSpec) decl).getTypeExpr();
+            if (node.getExpr().size() != 1) {
+                callTypeCheckException(node, "Alias type casting: too few or too many arguments");
+            }
             if    (castType instanceof AIntTypeExpr
             || castType instanceof AFloatTypeExpr
             || castType instanceof ARuneTypeExpr
@@ -1709,4 +1712,5 @@ public class TypeChecker extends DepthFirstAdapter {
         callTypeCheckException(node, "Did not find type for " + node.getClass() + " tried to return null");
         return null;
     }
+    
 }
