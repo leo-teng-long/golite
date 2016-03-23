@@ -55,23 +55,21 @@ public class <<<INSERT NAME HERE>>> {
             Parser parser = new Parser(lexer);
             Start tree = parser.parse();
 
-            String filename = inPath.substring(0, inPath.indexOf('.'));
+            PrettyPrinter pp = new PrettyPrinter();
+            tree.apply(pp);
 
-            PrettyPrinter printer = new PrettyPrinter(filename);
-            tree.apply(printer);
+            String prettyPrint = pp.getPrettyPrint();
 
-            String prettyParse = printer.getBufferString();
-
-            lexer = new GoLiteLexer(new PushbackReader(new StringReader(prettyParse), 1024));
+            lexer = new GoLiteLexer(new PushbackReader(new StringReader(prettyPrint), 1024));
             parser = new Parser(lexer);
             tree = parser.parse();
 
-            printer = new PrettyPrinter(filename);
-            tree.apply(printer);
+            pp = new PrettyPrinter();
+            tree.apply(pp);
 
-            String prettyParsePrettyParse = printer.getBufferString();
+            String prettyPrintPrettyPrint = pp.getPrettyPrint();
 
-            return prettyParse.equals(prettyParsePrettyParse);
+            return prettyPrint.equals(prettyPrintPrettyPrint);
         } catch (Exception e) {
             return false;
         }
