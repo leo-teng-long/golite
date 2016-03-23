@@ -1061,11 +1061,32 @@ public class TypeChecker extends DepthFirstAdapter {
             }
             return ids;
         }
+        else if (node instanceof AStructTypeExpr)
+        {
+            List<PStructSub> subs = ((AStructTypeExpr) node).getStructSub();
+            ArrayList<TId> ids = new ArrayList<TId>();
+            for (PStructSub s: subs)
+            {
+                ids.addAll(getIds(s));
+            }
+            return ids;
+        }
         return new ArrayList<TId>();
     }
 
     private boolean isSameStruct(AStructTypeExpr node1, AStructTypeExpr node2)
     {
+        Node p1 = node1.parent();
+        Node p2 = node2.parent();
+        if (p1 instanceof PTypeSpec && p2 instanceof PTypeSpec)
+        {
+            String structName1 = getIds((ASpecTypeSpec) p1).get(0).getText();
+            String structName2 = getIds((ASpecTypeSpec) p2).get(0).getText();
+            if (!structName1.equals(structName2))
+            {
+                return false;
+            }
+        }
         ArrayList<TId> ids1 = getIds(node1);
         ArrayList<TId> ids2 = getIds(node2);
         boolean sameLength = ids1.size() == ids2.size();

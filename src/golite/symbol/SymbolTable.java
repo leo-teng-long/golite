@@ -116,4 +116,13 @@ public class SymbolTable {
         System.out.println(buffer.toString());
     }
 
+    /**
+     * Returns the symbol table as a pretty string.
+     *
+     * @return Prettified string of symbol table.
+     */
+    public String toPrettyString() {
+        return this.buffer.toString();
+    }
+
 }
