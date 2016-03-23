@@ -14,9 +14,8 @@
 \begin{itemize}
 \item Implemented weeder to handle the errors that are not captured by our scanner and parser. Example includes balancing ids and expressions for short assign, ensuring that break and continue only appear in a loop, etc.
 \item Implemented symbol table building and type checker in SableCC3
-\item Symbol table is built before type checking is started
-\item Symbol table is built using a two-pass approach. The first pass collects the type information associated with all top-level declarations, as they can appear in any order.
-\item Symbol table is build using the standard cactus stack of frames, which are represented by hash tables. However instead of creating a separate symbol class, our symbol table simply maps an identifier directly to its corresponding AST node, which turns out to be an extremely poor design decision. Later during the type checking phase, whenever we need to retrieve the type information of an id, we have to traverse a subtree of the AST where that id comes from. As a result, we wrote a lot of helper methods. And some parts of the type checker implementation can be a little messy.
+\item Symbol table is built using a two-pass approach. The first pass collects the type information associated with all top-level declarations, as they can appear in any order. The second pass traverses the entire tree while typechecking and building upon the symbol table as needed.
+\item Symbol table is build using the standard cactus stack of frames, which are represented by hash tables. However instead of creating a separate symbol class, our symbol table simply maps an identifier directly to its corresponding AST node, which turns out to be an extremely poor design decision (we regret this deeply). Later during the type checking phase, whenever we need to retrieve the type information of an id, we have to traverse a subtree of the AST where that id comes from. As a result, we wrote a lot of helper methods. And some parts of the type checker implementation can be a little messy.
 \item The type information of expressions is stored in an auxiliary hash table that maps from AST nodes to each type class, given that SableCC3 does not provide straight-forward extension for adding extra fields such as type to the AST node classes.
 \item Type checking is done through a single bottom-up traversal of the AST. As the type checker is traversing through the AST, the type information of each expression is gradually added to the type hash table.
 \item The hash table contained expression types is later used by TypePrettyPrinter to annotate the type information for each expression.
@@ -44,8 +43,6 @@ Here, we enumerate the type checks and give the correspondence of each type chec
 \item Redeclare variable: \texttt{re\_declare\_variable\_in\_same\_scope.go}, \texttt{short\_assign\_with\_same\_ids.go}, \texttt{use\_variable\_before\_declaration.go}, \texttt{redeclare\_type.go}
 \end{itemize}
 
-\subsubsection{Variable declaration}
-
 \subsubsection{Function declaration}
 
 \begin{itemize}
@@ -61,7 +58,6 @@ Here, we enumerate the type checks and give the correspondence of each type chec
 \item Mixed types: \texttt{short\_assign\_with\_new\_id\_wrong\_expr\_type.go}
 \end{itemize}
 
-\subsubsection{Assignment}
 \subsubsection{Op-assignment}
 
 \begin{itemize}
@@ -140,7 +136,7 @@ Here, we enumerate the type checks and give the correspondence of each type chec
 \section{Contributions}
 
 The bulk of the workload for this milestone was carried out by Ethan and Leo, most of which was dedicated to the planning, design, implementation, and testing of the type checking rules.
-They held a total of \textbf{(TODO)} meetings over the course of the milestone, with the first few dedicated to designing the symbol table and type checker.
+They held a total of \textbf{7} meetings over the course of the milestone, with the first few dedicated to designing the symbol table and type checker.
 Hardik was absent during most of these meetings, only participating in the last few scrum-like meeting.
 He primarily worked independently and constributed to a new grammar, the weeder, and the typed pretty printer.
 
