@@ -42,7 +42,7 @@ Here, we enumerate the type checks and give the correspondence of each type chec
 
 \begin{itemize}
 \item Undeclared variable: \texttt{print_undeclared_variable.go}
-\item Redeclare variable: \texttt{re_declare_variable_in_same_scope.go}
+\item Redeclare variable: \texttt{re_declare_variable_in_same_scope.go}, \texttt{short_assign_with_same_ids.go}, \texttt{use_variable_before_declaration.go}
 \end{itemize}
 
 \subsubsection*{Variable declaration}
@@ -52,7 +52,7 @@ Here, we enumerate the type checks and give the correspondence of each type chec
 
 \begin{itemize}
 \item Incorrect return type: \texttt{func_return_wrong_type.go}, \texttt{func_with_return_type_return_void.go}
-\item Returning expression in a non-void function: \texttt{func_without_return_type_return_string.go}
+\item Returning expression in a non-void function: \texttt{func_without_return_type_return_string.go}, \texttt{void_func_return_int.go}
 \end{itemize}
 
 \subsection*{Statements}
@@ -60,6 +60,11 @@ Here, we enumerate the type checks and give the correspondence of each type chec
 \subsubsection*{Expression}
 \subsubsection*{Return}
 \subsubsection*{Short declaration}
+
+\begin{itemize}
+\item Mixed types: \texttt{short_assign_with_new_id_wrong_expr_type.go}
+\end{itemize}
+
 \subsubsection*{Assignment}
 \subsubsection*{Op-assignment}
 
@@ -69,11 +74,6 @@ Here, we enumerate the type checks and give the correspondence of each type chec
 
 \subsubsection*{Block}
 \subsubsection*{\texttt{print} and \texttt{println}}
-
-\begin{itemize}
-\item 
-\end{itemize}
-
 \subsubsection*{For loop}
 \subsubsection*{If Statement}
 
@@ -82,6 +82,12 @@ Here, we enumerate the type checks and give the correspondence of each type chec
 \end{itemize}
 
 \subsubsection*{Switch Statement}
+
+\begin{itemize}
+\item Expression type and case type don't match: \texttt{switch_expression_not_match_case_expression.go}
+\item No expression: \texttt{switch_without_expression_with_int_case.go}
+\end{itemize}
+
 \subsubsection*{Increment/Decrement}
 
 \subsection*{Expressions}
@@ -91,14 +97,13 @@ Here, we enumerate the type checks and give the correspondence of each type chec
 \subsubsection*{Unary expressions}
 
 \begin{itemize}
-\item Incorrect operand: \texttt{bit_complement_float_type.go}, \texttt{boolean_not_rune_type.go}
+\item Incorrect operand: \texttt{bit_complement_float_type.go}, \texttt{boolean_not_rune_type.go}, \texttt{unary_minus_bool_type.go}, \texttt{unary_minus_string_type.go}, \texttt{unary_plus_bool_type.go}, \texttt{unary_plus_string_type.go}
 \end{itemize}
 
 \subsubsection*{Binary expressions}
 
 \begin{itemize}
-\item Incorrect operands: \texttt{add_bool_and_bool.go}, \texttt{add_string_and_rune.go}, \texttt{add_int_and_float.go}, \texttt{conditional_and_int_type.go}, \texttt{float_less_than_int.go}, \texttt{float_mod_int.go}, \texttt{int_compared_to_rune.go}
-\item Comparing non-comparables: \texttt{array_comparable_1.go}, \texttt{array_comparable_2.go}, \texttt{array_comparable_3.go}, \texttt{array_comparable_4.go}
+\item Incorrect operands: \texttt{add_bool_and_bool.go}, \texttt{add_string_and_rune.go}, \texttt{add_int_and_float.go}, \texttt{conditional_and_int_type.go}, \texttt{float_less_than_int.go}, \texttt{float_mod_int.go}, \texttt{int_compared_to_rune.go}, \texttt{array_comparable_1.go}, \texttt{array_comparable_2.go}, \texttt{array_comparable_3.go}, \texttt{array_comparable_4.go}, \texttt{slice_comparable_1.go}, \texttt{slice_comparable_2.go}, \texttt{slice_comparable_3.go}, \texttt{slice_comparable_4.go}, \texttt{slice_comparable_5.go}
 \end{itemize}
 
 \subsubsection*{Function call}
@@ -111,10 +116,16 @@ Here, we enumerate the type checks and give the correspondence of each type chec
 
 \subsubsection*{Field selection}
 \subsubsection*{\texttt{append}}
+
+\begin{itemize}
+\item Incompatible types: \texttt{slice_append_single_to_tiple.go}, \texttt{slice_append_wrong_struct.go}
+\end{itemize}
+
 \subsubsection*{Type cast}
 
 \begin{itemize}
 \item Uncastable: \texttt{array_index_not_prim_param.go}
+\item Too many arguments: \texttt{too_many_arguments_to_type_cast.go}
 \end{itemize}
 
 \section*{Contributions}
