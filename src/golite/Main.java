@@ -1,8 +1,8 @@
 package golite;
 
+// TODO: Fix imports.
 import golite.exception.*;
 import golite.symbol.*;
-import golite.type.*;
 import golite.lexer.*;
 import golite.parser.*;
 import golite.node.*;
@@ -45,7 +45,7 @@ class Main {
             } else if (args[0].equals("-pretty")) {
                 prettyPrint(args[1]);
             } else if (args[0].equals("-pptype")) {
-                typedPrettyPrint(args[1]);
+                // typedPrettyPrint(args[1]);
             // Print scanner tokens to stdout.
             } else if (args[0].equals("-printTokens")) {
                 displayTokens(args[1]);
@@ -55,10 +55,10 @@ class Main {
                 verbose = true;
                 weed(args[1]);
             } else if (args[0].equals("-type")) {
-                type(args[1]);
+                // type(args[1]);
             } else if (args[0].equals("-typev")) {
                 verbose = true;
-                type(args[1]);
+                // type(args[1]);
             } else if (args[0].equals("-dumpsymtab")) {
                 dumpSymbolTable(args[1]);
             } else {
@@ -156,39 +156,39 @@ class Main {
         }
     }
 
-    /**
-     * Type pretty print a GoLite program
-     *
-     * @param inPath - Filepath to GoLite program
-     */
-    public static void typedPrettyPrint(String inPath) throws IOException {
-        try {
-            Lexer lexer = new GoLiteLexer(new PushbackReader(new FileReader(inPath), 1024));
-            Parser parser = new Parser(lexer);
-            Weeder weed = new Weeder();
-            Start start = parser.parse();
-            start.apply(weed);
-            SymbolTableBuilder symbolBuilder = new SymbolTableBuilder();
-            start.apply(symbolBuilder);
-            SymbolTable symbolTable = symbolBuilder.getSymbolTable();
-            HashMap<Node, PTypeExpr> typeTable = symbolBuilder.getTypeTable();
-            TypeChecker typeChecker = new TypeChecker(symbolTable, typeTable);
-            start.apply(typeChecker);
+    // /**
+    //  * Type pretty print a GoLite program
+    //  *
+    //  * @param inPath - Filepath to GoLite program
+    //  */
+    // public static void typedPrettyPrint(String inPath) throws IOException {
+    //     try {
+    //         Lexer lexer = new GoLiteLexer(new PushbackReader(new FileReader(inPath), 1024));
+    //         Parser parser = new Parser(lexer);
+    //         Weeder weed = new Weeder();
+    //         Start start = parser.parse();
+    //         start.apply(weed);
+    //         SymbolTableBuilder symbolBuilder = new SymbolTableBuilder();
+    //         start.apply(symbolBuilder);
+    //         SymbolTable symbolTable = symbolBuilder.getSymbolTable();
+    //         HashMap<Node, PTypeExpr> typeTable = symbolBuilder.getTypeTable();
+    //         TypeChecker typeChecker = new TypeChecker(symbolTable, typeTable);
+    //         start.apply(typeChecker);
 
-            TypedPrettyPrinter typePrinter = new TypedPrettyPrinter(typeChecker.getTypeTable());
-            start.apply(typePrinter);
+    //         TypedPrettyPrinter typePrinter = new TypedPrettyPrinter(typeChecker.getTypeTable());
+    //         start.apply(typePrinter);
 
-            String prettyPrint = typePrinter.getPrettyPrint();
-            String filename = new File(inPath).getName();
-            String name = filename.substring(0, filename.indexOf('.'));
-            PrintWriter out = new PrintWriter(new FileWriter(name + ".pptype.go"));
-            out.print(prettyPrint);
-            out.close();
-        } catch (Exception e) {
-            System.err.println("ERROR: " + e);
-            e.printStackTrace();
-        }
-    }
+    //         String prettyPrint = typePrinter.getPrettyPrint();
+    //         String filename = new File(inPath).getName();
+    //         String name = filename.substring(0, filename.indexOf('.'));
+    //         PrintWriter out = new PrintWriter(new FileWriter(name + ".pptype.go"));
+    //         out.print(prettyPrint);
+    //         out.close();
+    //     } catch (Exception e) {
+    //         System.err.println("ERROR: " + e);
+    //         e.printStackTrace();
+    //     }
+    // }
 
     /**
      * Weed a GoLite program.
@@ -214,45 +214,45 @@ class Main {
         return true;
     }
 
-    /**
-    * Typecheck a GoLite program.
-    * @param inPath - Filepath to GoLite program
-    */
-    public static boolean type(String inPath) throws IOException {
-        try {
-            Lexer lexer = new GoLiteLexer(new PushbackReader(new FileReader(inPath), 1024));
-            Parser parser = new Parser(lexer);
-            Weeder weed = new Weeder();
-            Start start = parser.parse();
-            start.apply(weed);
-            SymbolTableBuilder symbolBuilder = new SymbolTableBuilder();
-            start.apply(symbolBuilder);
-            SymbolTable symbolTable = symbolBuilder.getSymbolTable();
-            HashMap<Node, PTypeExpr> typeTable = symbolBuilder.getTypeTable();
-            TypeChecker typeChecker = new TypeChecker(symbolTable, typeTable);
-            start.apply(typeChecker);
-            System.out.println("VALID");
-            if (verbose)
-            {
-                System.out.println("###SYMBOL TABLE:###");
-                symbolTable.printSymbols();
-                System.out.println("###TYPE TABLE:###");
-                for (Node n: typeTable.keySet())
-                {
-                    System.out.println("Node: " + n + " Key: " + n.getClass() + " Value: " + typeTable.get(n).getClass());
-                }
-                System.out.println("\n\n\n");
-            }
-        } catch (LexerException|ParserException|SymbolException|WeederException|TypeCheckException e) {
-            System.out.println("INVALID");
-            if (verbose) {
-                System.err.println("ERROR: " + e);
-                e.printStackTrace();
-            }
-            return false;
-        }
-        return true;
-    }
+    // /**
+    // * Typecheck a GoLite program.
+    // * @param inPath - Filepath to GoLite program
+    // */
+    // public static boolean type(String inPath) throws IOException {
+    //     try {
+    //         Lexer lexer = new GoLiteLexer(new PushbackReader(new FileReader(inPath), 1024));
+    //         Parser parser = new Parser(lexer);
+    //         Weeder weed = new Weeder();
+    //         Start start = parser.parse();
+    //         start.apply(weed);
+    //         SymbolTableBuilder symbolBuilder = new SymbolTableBuilder();
+    //         start.apply(symbolBuilder);
+    //         SymbolTable symbolTable = symbolBuilder.getSymbolTable();
+    //         HashMap<Node, PTypeExpr> typeTable = symbolBuilder.getTypeTable();
+    //         TypeChecker typeChecker = new TypeChecker(symbolTable, typeTable);
+    //         start.apply(typeChecker);
+    //         System.out.println("VALID");
+    //         if (verbose)
+    //         {
+    //             System.out.println("###SYMBOL TABLE:###");
+    //             symbolTable.printSymbols();
+    //             System.out.println("###TYPE TABLE:###");
+    //             for (Node n: typeTable.keySet())
+    //             {
+    //                 System.out.println("Node: " + n + " Key: " + n.getClass() + " Value: " + typeTable.get(n).getClass());
+    //             }
+    //             System.out.println("\n\n\n");
+    //         }
+    //     } catch (LexerException|ParserException|SymbolException|WeederException|TypeCheckException e) {
+    //         System.out.println("INVALID");
+    //         if (verbose) {
+    //             System.err.println("ERROR: " + e);
+    //             e.printStackTrace();
+    //         }
+    //         return false;
+    //     }
+    //     return true;
+    // }
 
     /**
      * Prints the scanned tokens in a GoLite program, one per line. The scanner token is printed
@@ -283,7 +283,7 @@ class Main {
      *
      * @param inPath - Filepath to GoLite program
      */
-    public static boolean dumpSymbolTable(String inPath) throws IOException {
+    public static void dumpSymbolTable(String inPath) throws IOException {
         try {
             Lexer lexer = new GoLiteLexer(new PushbackReader(new FileReader(inPath), 1024));
             Parser parser = new Parser(lexer);
@@ -292,21 +292,15 @@ class Main {
             Start start = parser.parse();
             start.apply(weeder);
 
-            SymbolTableBuilder symbolBuilder = new SymbolTableBuilder();
-            start.apply(symbolBuilder);
+            SymbolTableBuilder symbolTableBuilder = new SymbolTableBuilder();
+            start.apply(symbolTableBuilder);
 
-            SymbolTable symbolTable = symbolBuilder.getSymbolTable();
+            SymbolTable symbolTable = symbolTableBuilder.getTable();
 
-            dump(symbolTable.toPrettyString(), inPath, ".symtab");
-        } catch (LexerException|ParserException|SymbolException|WeederException|TypeCheckException e) {
-            System.out.println("INVALID");
-            if (verbose) {
-                System.err.println("ERROR: " + e);
-                e.printStackTrace();
-            }
-            return false;
+            dump(symbolTable.toString(), inPath, ".symtab");
+        } catch (LexerException|ParserException|WeederException|SymbolTableException e) {
+            e.printStackTrace();
         }
-        return true;
     }
 
     /**

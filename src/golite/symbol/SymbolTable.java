@@ -1,128 +1,114 @@
 package golite.symbol;
 
-import golite.node.*;
-import golite.exception.*;
-import golite.util.*;
-import java.util.*;
-import java.lang.*;
+import java.lang.StringBuilder;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.LinkedList;
 
+
+/**
+ * Symbol table.
+ */
 public class SymbolTable {
 
-    /* Class attributes */
-    private Stack<HashMap<String, Node>> scopes;
-    private LineAndPos lineAndPos = new LineAndPos();
-    private StringBuilder buffer;
+	/** Scopes are stored in a deque, with each scope represented as a hash map from identifier to
+	  * symbol. */
+	private Deque<HashMap<String, Symbol>> scopes;
+	/** Stores the string representation of the symbol table. */
+	private StringBuilder buffer;
 
-    /* Constructor */
-    public SymbolTable() {
-        scopes = new Stack<HashMap<String, Node>>();
-        buffer = new StringBuilder();
-    }
+	/**
+	 * Constructor.
+	 */
+	public SymbolTable() {
+		this.scopes = new LinkedList<HashMap<String, Symbol>>();
+		this.buffer = new StringBuilder();
+	}
 
-    private void addLine()
-    {
-        buffer.append(System.getProperty("line.separator"));
-    }
-
-    /*
-     * Enter a new scope
-     */
-    public void enterScope() {
-        scopes.push(new HashMap<String, Node>());
-        buffer.append("ENTER SCOPE");
-        addLine();
-    }
-
-    /*
-     * Exit a scope, pop it off the stack
-     */
-    public void exitScope() {
-        checkScopesSize();
-        scopes.pop();
-        buffer.append("EXIT SCOPE");
-        addLine();
-    }
-
-    /*
-     * Add identifier to the current scope
-     */
-    public void addSymbol(String id, Node node) {
-        checkScopesSize();
-        if (scopes.peek().containsKey(id)) {
-            callSymbolException(node, "Identifier " + id + " cannot be re-declared");
-        }
-        scopes.peek().put(id, node);
-        buffer.append("Key: " + id + " Value: " + node.getClass());
-        addLine();
-    }
-
-    /*
-     * Remove identifier from the current scope (needed for short assign)
-     */
-    public void removeSymbol(String id) {
-        checkScopesSize();
-        scopes.peek().remove(id);
-    }
-
-    /*
-     * Get the symbol associated with the given identifier
-     */
-    public Node getSymbol(String id, Node node) {
-        checkScopesSize();
-        for (int i = scopes.size() - 1; i >= 0; i--) {
-            Node symbol = scopes.elementAt(i).get(id);
-            if (symbol != null) {
-                return symbol;
-            }
-        }
-        callSymbolException(node, "Identifier " + id + " is not defined");
-        return null;
-    }
-
-    /*
-     * Check if given identifier exists in the current scrope
-     */
-    public boolean containsId(String id) {
-        checkScopesSize();
-        return scopes.peek().containsKey(id);
-    }
-
-    /*
-     * Throw SymbolException with given message, then exit
-     */
-    private void callSymbolException(Node node, String s) {
-        String message = "";
-        if (node != null) {
-            node.apply(lineAndPos);
-            Integer line = lineAndPos.getLine(node);
-            Integer pos = lineAndPos.getPos(node);
-            message += "[" + line + "," + pos + "] ";
-        }
-        message += s;
-        SymbolException e = new SymbolException(message);
-        throw e;
-    }
-
-    /*
-     * Check if there are any scopes on the stack
-     */
-    private void checkScopesSize() {
-        if (scopes.isEmpty()) {
-            callSymbolException(null, "Scope stack is empty");
-        }
-    }
-
-    public void printSymbols() {
-        System.out.println(buffer.toString());
+	// Adds the given string to the buffer.
+	private void addToBuffer(String s) {
+        this.buffer.append(s);
+        this.buffer.append(System.getProperty("line.separator"));
     }
 
     /**
-     * Returns the symbol table as a pretty string.
-     *
-     * @return Prettified string of symbol table.
+     * Enter a scope, pushing it onto the stack.
      */
-    public String toPrettyString() {
-        return this.buffer.toString();
-    }
+	public void scope() {
+		this.scopes.push(new HashMap<String, Symbol>());
+		this.addToBuffer("ENTER SCOPE");
+	}
+
+	/**
+     * Exit a scope, popping it off the stack.
+     */
+	public void unscope() {
+		this.scopes.pop();
+		this.addToBuffer("EXIT SCOPE");
+	}
+
+	/**
+     * Get the symbol with the given name.
+     *
+     * @param name - Name
+     * @return The symbol if it exists, null otherwise.
+     */
+	public Symbol getSymbol(String name) {
+		Symbol symbol = null;
+		for (HashMap<String, Symbol> scope : this.scopes) {
+			symbol = scope.get(name);
+			if (symbol != null)
+				break;
+		}
+
+		return symbol;
+	}
+
+	/**
+	 * Returns the symbol with the given name from the current scope.
+	 *
+	 * @param name - Symbol name
+	 * @param Corresponding symbol if it exists, null otherwise
+	 */
+	public Symbol getSymbolFromCurrentScope(String name) {
+		return this.scopes.peek().get(name);
+	}
+
+	/**
+	 * Puts the given symbol into the symbol table (in the current scope).
+	 *
+	 * @param symbol - Symbol
+	 */
+	public void putSymbol(Symbol symbol) {
+		String name = symbol.getName();
+		this.scopes.peek().put(name, symbol);
+		this.addToBuffer(symbol.getClass().getSimpleName() + "\t" + name + "\t"
+			+ symbol.getTypeString());
+	}
+
+	/**
+	 * Check if the symbol with the given name is defined already in the current scope.
+	 *
+	 * @param name - Symbol name
+	 * @param True if such a symbol exists, false otherwise.
+	 */
+	public boolean defSymbolInCurrentScope(String name) {
+		return (this.getSymbolFromCurrentScope(name) != null);
+	}
+
+	/**
+     * Check if a symbol with the given name exists in the symbol table.
+     *
+     * @param name - Name
+     * @return True if the symbol exists, false otherwise.
+     */
+	public boolean defSymbol(String name) {
+		return (this.getSymbol(name) != null);
+	}
+
+	@Override
+	public String toString() {
+		return this.buffer.toString();
+	}
 
 }
