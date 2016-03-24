@@ -1,9 +1,15 @@
 # Tests to add
 
-## Valid
+## Invalid
 
 ### Syntax
 
-* Casting a bool literal to a bool type
-
-## Invalid
+* Blank return type in function declaration
+* Blank expression
+* Blank return
+* Blank argument to append
+* Blank array in index
+* Blank index
+* Blank selector
+* Blank argument to print and println
+* Blank conversion
