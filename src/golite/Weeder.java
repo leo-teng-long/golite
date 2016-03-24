@@ -330,12 +330,15 @@ public class Weeder extends DepthFirstAdapter {
         return (this.loopDepth > 0);
     }
 
-    // Throws an error if the array bound is non-constant (i.e. contains a variable).
+    // Throws an error if the array bound is not an integer.
     @Override
     public void inAArrayTypeExpr(AArrayTypeExpr node) {
-        VariableExprFinder variableExprFinder = new VariableExprFinder(node);
-        if (variableExprFinder.found())
-            this.throwWeederException(node, "Non-constant array bound");
+        PExpr pExpr = node.getExpr();
+
+        if (!(pExpr instanceof AIntLitExpr
+            || pExpr instanceof AOctLitExpr
+            || pExpr instanceof AHexLitExpr))
+            this.throwWeederException(node, "Non-integer array bound");
     }
 
     // Throw error if type casting for string.

@@ -27,6 +27,9 @@ public class SymbolTableBuilder extends DepthFirstAdapter {
 
 	/**
 	 * Return the symbol type for the given type expression.
+     *
+     * @param node - Type expression AST node
+     * @return Corresponding symbol type
 	 */
 	private SymbolType getSymbolType(PTypeExpr node) {
 		if (node == null)
@@ -42,6 +45,24 @@ public class SymbolTableBuilder extends DepthFirstAdapter {
 			return new RuneSymbolType();
 		else if (node instanceof AStringTypeExpr)
 			return new StringSymbolType();
+        else if (node instanceof AArrayTypeExpr) {
+            PExpr pExpr = ((AArrayTypeExpr) node).getExpr();
+
+            int bound = 0;
+            if (pExpr instanceof AIntLitExpr)
+                bound = Integer.parseInt(((AIntLitExpr) pExpr).getIntLit().getText());
+            else if (pExpr instanceof AOctLitExpr)
+                bound = Integer.parseInt(((AOctLitExpr) pExpr).getOctLit().getText(), 8);
+            else if (pExpr instanceof AHexLitExpr)
+                bound = Integer.parseInt(((AHexLitExpr) pExpr).getHexLit().getText(), 16);
+            else 
+                this.throwSymbolTableException(node, "Non-integer array bound");
+
+            return new ArraySymbolType(this.getSymbolType(((AArrayTypeExpr) node).getTypeExpr()),
+                bound);
+        } else if (node instanceof ASliceTypeExpr) {
+            return new SliceSymbolType(this.getSymbolType(((ASliceTypeExpr) node).getTypeExpr()));
+        }
 
 		return null;
 	}
