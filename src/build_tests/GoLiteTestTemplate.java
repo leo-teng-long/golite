@@ -32,7 +32,7 @@ public class <<<INSERT NAME HERE>>> {
             Start ast = p.parse();
             ast.apply(weeder);
         }
-        catch (LexerException|ParserException|GoLiteWeederException e) {
+        catch (LexerException|ParserException|WeederException e) {
             return false;
         }
 

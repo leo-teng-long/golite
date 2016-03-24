@@ -101,7 +101,7 @@ public class Weeder extends DepthFirstAdapter {
         Integer line = this.lineAndPosTracker.getLine(node);
         Integer pos = this.lineAndPosTracker.getPos(node);
 
-        throw new GoLiteWeederException("[" + line + "," + pos + "] " + msg);
+        throw new WeederException("[" + line + "," + pos + "] " + msg);
     }
 
     /**
