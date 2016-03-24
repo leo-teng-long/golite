@@ -2,7 +2,7 @@ package test;
 
 import golite.GoLiteLexer;
 import golite.PrettyPrinter;
-import golite.GoLiteWeeder;
+import golite.Weeder;
 import golite.exception.*;
 import golite.lexer.*;
 import golite.parser.*;
@@ -27,7 +27,7 @@ public class <<<INSERT NAME HERE>>> {
         try {
             Lexer lexer = new GoLiteLexer(new PushbackReader(new FileReader(inPath), 1024));
             Parser p = new Parser(lexer);
-            GoLiteWeeder weeder = new GoLiteWeeder();
+            Weeder weeder = new Weeder();
 
             Start ast = p.parse();
             ast.apply(weeder);

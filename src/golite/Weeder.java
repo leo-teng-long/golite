@@ -11,7 +11,7 @@ import golite.analysis.*;
  * GoLite Weeder.
  */
 // TODO: Add string of error-causing code in select error messages.
-public class GoLiteWeeder extends DepthFirstAdapter {
+public class Weeder extends DepthFirstAdapter {
 
     /** Line and position tracker for token AST nodes. */
     private LineAndPosTracker lineAndPosTracker = new LineAndPosTracker();

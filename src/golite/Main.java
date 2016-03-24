@@ -112,7 +112,7 @@ class Main {
         try {
             Lexer lexer = new GoLiteLexer(new PushbackReader(new FileReader(inPath), 1024));
             Parser p = new Parser(lexer);
-            GoLiteWeeder weeder = new GoLiteWeeder();
+            Weeder weeder = new Weeder();
 
             Start ast = p.parse();
             ast.apply(weeder);
@@ -136,7 +136,7 @@ class Main {
         try {
             Lexer lexer = new GoLiteLexer(new PushbackReader(new FileReader(inPath), 1024));
             Parser parser = new Parser(lexer);
-            GoLiteWeeder weeder = new GoLiteWeeder();
+            Weeder weeder = new Weeder();
 
             Start tree = parser.parse();
             tree.apply(weeder);
@@ -165,7 +165,7 @@ class Main {
         try {
             Lexer lexer = new GoLiteLexer(new PushbackReader(new FileReader(inPath), 1024));
             Parser parser = new Parser(lexer);
-            GoLiteWeeder weed = new GoLiteWeeder();
+            Weeder weed = new Weeder();
             Start start = parser.parse();
             start.apply(weed);
             SymbolTableBuilder symbolBuilder = new SymbolTableBuilder();
@@ -198,7 +198,7 @@ class Main {
         try {
             Lexer lexer = new GoLiteLexer(new PushbackReader(new FileReader(inPath), 1024));
             Parser parser = new Parser(lexer);
-            GoLiteWeeder weed = new GoLiteWeeder();
+            Weeder weed = new Weeder();
 
             Start tree = parser.parse();
             tree.apply(weed);
@@ -222,7 +222,7 @@ class Main {
         try {
             Lexer lexer = new GoLiteLexer(new PushbackReader(new FileReader(inPath), 1024));
             Parser parser = new Parser(lexer);
-            GoLiteWeeder weed = new GoLiteWeeder();
+            Weeder weed = new Weeder();
             Start start = parser.parse();
             start.apply(weed);
             SymbolTableBuilder symbolBuilder = new SymbolTableBuilder();
@@ -287,7 +287,7 @@ class Main {
         try {
             Lexer lexer = new GoLiteLexer(new PushbackReader(new FileReader(inPath), 1024));
             Parser parser = new Parser(lexer);
-            GoLiteWeeder weeder = new GoLiteWeeder();
+            Weeder weeder = new Weeder();
 
             Start start = parser.parse();
             start.apply(weeder);
