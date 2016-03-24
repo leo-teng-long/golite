@@ -6,7 +6,7 @@
 ../programs/valid/syntax/other_groups/07/var_decl_function.go
 # Need to support arbitary nesting of function call callers and argument lists in parentheses.
 ../programs/valid/syntax/other_groups/09/funccall.go
-# Need to support arbitary nesting of function call callers and argument lists in parentheses.
+# Same as previous.
 ../programs/valid/syntax/other_groups/09/set2square.go
 # Return type checks are performed in the type checker.
 ../programs/invalid/syntax/other_groups/03/invalid_funcdecl.go
