@@ -630,6 +630,7 @@ Abstract Syntax Tree
         | {id} id ;
 
     //* Statement *//
+    
     stmt =
           {empty}
         | {var_dec} var_spec+
