@@ -53,19 +53,22 @@ public class <<<INSERT NAME HERE>>> {
         try {
             Lexer lexer = new GoLiteLexer(new PushbackReader(new FileReader(inPath), 1024));
             Parser parser = new Parser(lexer);
-            Start tree = parser.parse();
+            Weeder weeder = new Weeder();
+
+            Start ast = parser.parse();
+            ast.apply(weeder);
 
             PrettyPrinter pp = new PrettyPrinter();
-            tree.apply(pp);
+            ast.apply(pp);
 
             String prettyPrint = pp.getPrettyPrint();
 
             lexer = new GoLiteLexer(new PushbackReader(new StringReader(prettyPrint), 1024));
             parser = new Parser(lexer);
-            tree = parser.parse();
+            ast = parser.parse();
 
             pp = new PrettyPrinter();
-            tree.apply(pp);
+            ast.apply(pp);
 
             String prettyPrintPrettyPrint = pp.getPrettyPrint();
 
