@@ -1,11 +1,11 @@
 package golite;
 
-import golite.type.*;
-import golite.symbol.*;
-import golite.parser.*;
-import golite.lexer.*;
-import golite.node.*;
 import golite.exception.*;
+import golite.symbol.*;
+import golite.type.*;
+import golite.lexer.*;
+import golite.parser.*;
+import golite.node.*;
 
 import java.io.*;
 import java.util.*;
