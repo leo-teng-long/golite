@@ -9,11 +9,11 @@ public class TypeAliasSymbol extends Symbol {
 	/**
 	 * Constructor.
 	 *
-	 * @param id - Alias Id
+	 * @param alias - alias
 	 * @param type - Type to alias
 	 */
-	public TypeAliasSymbol(String id, SymbolType type) {
-		this.name = id;
+	public TypeAliasSymbol(String alias, SymbolType type) {
+		this.name = alias;
 		this.type = type;
 	}
 
