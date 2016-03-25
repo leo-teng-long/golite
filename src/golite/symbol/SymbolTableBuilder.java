@@ -21,8 +21,8 @@ public class SymbolTableBuilder extends DepthFirstAdapter {
     private LineAndPosTracker lineAndPosTracker = new LineAndPosTracker();
 
 
-    /** Creates a symbol and makes the first pass over the program to initialize top-level
-      * declarations. */
+    /** Creates a symbol table and makes the first pass over the program to initialize the table
+      * with top-level declarations. */
     private static class FirstPasser extends DepthFirstAdapter {
         
         /** Symbol table. */
@@ -183,9 +183,16 @@ public class SymbolTableBuilder extends DepthFirstAdapter {
                         this.checkifDeclaredInCurrentScope(id);
 
                         PTypeExpr pTypeExpr = ((ASpecVarSpec) pVarSpec).getTypeExpr();
-                        // Add a variable symbol to the symbol table.
-                        this.table.putSymbol(new VariableSymbol(id.getText(),
-                            this.getSymbolType(pTypeExpr)));
+                        // The type has not been specified.
+                        if (pTypeExpr == null) {
+                            // A variable symbol is added to the symbol table with a placeholder
+                            // indicating the type must be inferred.
+                            this.table.putSymbol(new VariableSymbol(id.getText(),
+                                new ToBeInferredSymbolType()));
+                        } else
+                            // Add a variable symbol to the symbol table.
+                            this.table.putSymbol(new VariableSymbol(id.getText(),
+                                this.getSymbolType(pTypeExpr)));
                     }
                 }
             }
