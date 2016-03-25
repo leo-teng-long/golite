@@ -108,9 +108,6 @@ public class SymbolTableBuilder extends DepthFirstAdapter {
         Symbol falseSymbol = new VariableSymbol("false", new BoolSymbolType());
         this.table.putSymbol(trueSymbol);
         this.table.putSymbol(falseSymbol);
-
-        // Shadow them.
-        this.table.scope();
     }
 
 
@@ -186,12 +183,6 @@ public class SymbolTableBuilder extends DepthFirstAdapter {
 			this.checkifDeclaredInCurrentScope(id);
 			this.table.putSymbol(new VariableSymbol(id.getText(), type));
 		}
-	}
-
-	// Unscope upon exiting the program.
-    @Override
-	public void outStart(Start node) {
-		this.table.unscope();
 	}
 
 }
