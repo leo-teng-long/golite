@@ -18,42 +18,6 @@ public class Weeder extends DepthFirstAdapter {
     /** Tracks the loop nesting depth in a traversal. */
     private int loopDepth = 0;
 
-    /** Finds a variable (identifier) expression in an AST. */
-    private static class VariableExprFinder extends DepthFirstAdapter {
-        /** Root node of AST. */
-        private Node root;
-        /** Flag for whether the AST contains a variable expression or not. */
-        private boolean found;
-
-        /**
-         * Constructor.
-         *
-         * @param node - Root node of AST
-         */
-        private VariableExprFinder(Node node) {
-            super();
-            this.root = node;
-            this.found = false;
-            this.root.apply(this);
-        }
-
-        /**
-         * Returns whether a variable expression is contained or not.
-         *
-         * @return True if the AST contains a variable expression, false otherwise.
-         */
-        protected boolean found() {
-            return this.found;
-        }
-
-        // Set found to true.
-        @Override
-        public void inAVariableExpr(AVariableExpr node) {
-            this.found = true;
-        }
-
-    }
-
     /** Finds a break statement in an AST. */
     private static class BreakStmtFinder extends DepthFirstAdapter {
         /** Root node of AST. */
