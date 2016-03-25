@@ -5,6 +5,7 @@ import golite.util.LineAndPosTracker;
 import golite.analysis.*;
 import golite.node.*;
 
+import java.util.HashSet;
 import java.util.LinkedList;
 
 
@@ -66,6 +67,8 @@ public class SymbolTableBuilder extends DepthFirstAdapter {
                 return new RuneSymbolType();
             else if (node instanceof AStringTypeExpr)
                 return new StringSymbolType();
+            else if (node instanceof AAliasTypeExpr)
+                return new UnTypedAliasSymbolType(((AAliasTypeExpr) node).getId().getText());
             else if (node instanceof AArrayTypeExpr) {
                 PExpr pExpr = ((AArrayTypeExpr) node).getExpr();
 
@@ -81,8 +84,37 @@ public class SymbolTableBuilder extends DepthFirstAdapter {
 
                 return new ArraySymbolType(this.getSymbolType(((AArrayTypeExpr) node).getTypeExpr()),
                     bound);
-            } else if (node instanceof ASliceTypeExpr) {
+            } else if (node instanceof ASliceTypeExpr)
                 return new SliceSymbolType(this.getSymbolType(((ASliceTypeExpr) node).getTypeExpr()));
+            else if (node instanceof AStructTypeExpr) {
+                StructSymbolType structSymbolType = new StructSymbolType();
+
+                // Keep track of the field Id's to ensure there are no duplicates.
+                HashSet<String> fieldIds = new HashSet<String>();
+
+                // Loop over the field specifications.
+                for (PFieldSpec pFieldSpec : ((AStructTypeExpr) node).getFieldSpec()) {
+                    // Get the optional Id's.
+                    LinkedList<POptId> pOptIds = ((ASpecFieldSpec) pFieldSpec).getOptId();
+
+                    // Loop over each Id.
+                    for(POptId pOptId : pOptIds) {
+                        // Do not consider blank Id's.
+                        if (pOptId instanceof AIdOptId) {
+                            TId id = ((AIdOptId) pOptId).getId();
+
+                            // Throw an error if a duplicate field is encountered.
+                            if (fieldIds.contains(id.getText()))
+                                throwSymbolTableException(id, "Duplicate field " + id.getText());
+
+                            structSymbolType.addField(id.getText(),
+                                this.getSymbolType(((ASpecFieldSpec) pFieldSpec).getTypeExpr()));
+                            fieldIds.add(id.getText());
+                        }
+                    }
+                }
+
+                return structSymbolType;
             }
 
             return null;
@@ -115,6 +147,7 @@ public class SymbolTableBuilder extends DepthFirstAdapter {
                 this.throwSymbolTableException(id, id.getText() + " redeclared in this block");
         }
 
+        // Create an empty symbol table and initialize the 0th scope.
         @Override
         public void inStart(Start node) {
             // Gather all line and position information.
@@ -131,17 +164,19 @@ public class SymbolTableBuilder extends DepthFirstAdapter {
             this.table.putSymbol(falseSymbol);
         }
 
+        // Add top variable declarations into the symbol table.
         @Override
         public void caseAVarsTopDec(AVarsTopDec node) {
-            // Loop over variable declarations in the global scope.
+            // Loop over the variable specifications.
             for(PVarSpec pVarSpec : node.getVarSpec()) {
+                // Get the optional Id's.
                 LinkedList<POptId> pOptIds = ((ASpecVarSpec) pVarSpec).getOptId();
 
                 // Loop over each Id.
-                for(POptId p : pOptIds) {
+                for(POptId pOptId : pOptIds) {
                     // Do not consider blank Id's.
-                    if (p instanceof AIdOptId) {
-                        TId id = ((AIdOptId) p).getId();
+                    if (pOptId instanceof AIdOptId) {
+                        TId id = ((AIdOptId) pOptId).getId();
 
                         // Throw an error if the name is already taken by another identifier in the
                         // global scope.
@@ -156,6 +191,31 @@ public class SymbolTableBuilder extends DepthFirstAdapter {
             }
         }
 
+        // Add a top-level type variables into the symbol table.
+        @Override
+        public void caseATypesTopDec(ATypesTopDec node) {
+            // Loop over the type specifications.
+            for(PTypeSpec pTypeSpec : node.getTypeSpec()) {
+                // Get the optional Id.
+                POptId pOptId = ((ASpecTypeSpec) pTypeSpec).getOptId();
+
+                // Do not consider a blank Id.
+                if (pOptId instanceof AIdOptId) {
+                    TId id = ((AIdOptId) pOptId).getId();
+
+                    // Throw an error if the name is already taken by another identifier in the
+                    // global scope.
+                    this.checkifDeclaredInCurrentScope(id);
+
+                    PTypeExpr pTypeExpr = ((ASpecTypeSpec) pTypeSpec).getTypeExpr();
+                    // Add a type alias symbol to the symbol table.
+                    this.table.putSymbol(new TypeAliasSymbol(id.getText(),
+                        this.getSymbolType(pTypeExpr)));
+                }
+            }
+        }
+
+        // Add top-level function declarations into the symbol table.
         @Override
         public void caseAFuncTopDec(AFuncTopDec node) {
             // Function name.
@@ -202,6 +262,7 @@ public class SymbolTableBuilder extends DepthFirstAdapter {
     	// Gather all line and position information.
         node.apply(this.lineAndPosTracker);
 
+        // Make the first pass.
         FirstPasser firstPasser = new FirstPasser(this.lineAndPosTracker);
         node.apply(firstPasser);
 
