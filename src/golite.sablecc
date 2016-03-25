@@ -453,8 +453,8 @@ Productions
     type_expr {-> type_expr} =
           {prim_type} prim_type
             {-> prim_type.type_expr}
-        | {custom_type} id
-            {-> New type_expr.custom(id)}
+        | {alias_type} id
+            {-> New type_expr.alias(id)}
         | {array} lsquare expr rsquare type_expr
             {-> New type_expr.array(expr.expr, type_expr.type_expr)}
         | {slice} lsquare rsquare type_expr
@@ -677,7 +677,7 @@ Abstract Syntax Tree
         | {float} float64
         | {rune} rune
         | {string} string
-        | {custom} id
+        | {alias} id
         | {array} expr type_expr
         | {slice} type_expr
         | {struct} field_spec* ;

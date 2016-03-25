@@ -915,11 +915,11 @@ public class PrettyPrinter extends DepthFirstAdapter {
   }
 
   /**
-   * @Override public void caseACustomTypeExpr(ACustomTypeExpr node)
+   * @Override public void caseAAliasTypeExpr(AAliasTypeExpr node)
    *
    * Pretty print custom (struct or alias) type
    */
-  public void caseACustomTypeExpr(ACustomTypeExpr node) {
+  public void caseAAliasTypeExpr(AAliasTypeExpr node) {
     if (node.getId() != null) {
       buffer.append(node.getId().getText());
     }
