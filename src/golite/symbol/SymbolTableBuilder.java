@@ -82,6 +82,13 @@ public class SymbolTableBuilder extends DepthFirstAdapter {
         throw new SymbolTableException("[" + line + "," + pos + "] " + msg);
     }
 
+    /**
+     * Checks if the given Id has already been defined in the current scope, throwing an a symbol
+     * table exception if it is.
+     *
+     * @param id - Id token
+     * @throws SymbolTableException
+     */
 	private void checkifDeclaredInCurrentScope(TId id) {
 		if (this.table.defSymbolInCurrentScope(id.getText()))
 			this.throwSymbolTableException(id, id.getText() + " redeclared in this block");
