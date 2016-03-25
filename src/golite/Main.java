@@ -299,7 +299,7 @@ class Main {
 
             dump(symbolTable.toString(), inPath, ".symtab");
         } catch (LexerException|ParserException|WeederException|SymbolTableException e) {
-            e.printStackTrace();
+            System.err.println("ERROR: " + e);
         }
     }
 
