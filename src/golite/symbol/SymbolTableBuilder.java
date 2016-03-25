@@ -133,10 +133,13 @@ public class SymbolTableBuilder extends DepthFirstAdapter {
 
 	@Override
     public void caseAFuncTopDec(AFuncTopDec node) {
-     	TId id = node.getId();
+     	// Function name.
+        TId id = node.getId();
 
+        // Throw an error if the name is already taken by another identifier in the current scope.
      	this.checkifDeclaredInCurrentScope(id);
 
+        // Return type expression.
      	PTypeExpr pTypeExpr = node.getTypeExpr();
 
      	FunctionSymbol funcSymbol = null;
@@ -145,8 +148,8 @@ public class SymbolTableBuilder extends DepthFirstAdapter {
      		funcSymbol = new FunctionSymbol(id.getText(), null);
      	// Has return type.
      	else
-     		funcSymbol = new FunctionSymbol(id.getText(), this.getSymbolType(pTypeExpr));
-     	
+            funcSymbol = new FunctionSymbol(id.getText(), this.getSymbolType(pTypeExpr));
+
      	// Add argument types to the function symbol.
      	AArgArgGroup g = null;
      	for (PArgGroup p : node.getArgGroup()) {

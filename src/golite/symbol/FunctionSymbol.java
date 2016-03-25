@@ -16,11 +16,11 @@ public class FunctionSymbol extends Symbol {
 	 * Constructor.
 	 *
 	 * @param id - Id
-	 * @param type - Type
+	 * @param returnType - Return type of function (null if void)
 	 */
 	public FunctionSymbol(String name, SymbolType returnType) {
 		this.name = name;
-		this.type = type;
+		this.type = returnType;
 		this.argTypes = new ArrayList<SymbolType>();
 	}
 
