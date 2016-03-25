@@ -962,19 +962,19 @@ public class PrettyPrinter extends DepthFirstAdapter {
   public void caseAStructTypeExpr(AStructTypeExpr node) {
     buffer.append("struct");
     beforeCodeBlock();
-    List<PStructSub> copy = new ArrayList<PStructSub>(node.getStructSub());
-    for (PStructSub e : copy) {
-      prettyPrintStructSub(e);
+    List<PFieldSpec> copy = new ArrayList<PFieldSpec>(node.getFieldSpec());
+    for (PFieldSpec e : copy) {
+      prettyPrintFieldSpec(e);
     }
     afterCodeBlock();
   }
 
   /**
-   * @Override public void caseAStructSubStructSub(AStructSubStructSub node)
+   * @Override public void caseASpecFieldSpec(ASpecFieldSpec node)
    *
    * Pretty print struct sub
    */
-  public void caseAStructSubStructSub(AStructSubStructSub node) {
+  public void caseASpecFieldSpec(ASpecFieldSpec node) {
     List<POptId> copy = node.getOptId();
     for (POptId e : copy) {
       e.apply(this);
@@ -2031,9 +2031,9 @@ public class PrettyPrinter extends DepthFirstAdapter {
   /**
    * @Private method
    *
-   * Formatting argument group for struct declaration
+   * Formatting field specification for struct declaration
    */
-  public void prettyPrintStructSub(PStructSub e) {
+  public void prettyPrintFieldSpec(PFieldSpec e) {
     addTabs();
     e.apply(this);
     addNewLines(1);
