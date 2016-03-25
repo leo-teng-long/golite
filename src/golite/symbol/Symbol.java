@@ -27,6 +27,15 @@ public abstract class Symbol {
 	}
 
 	/**
+	 * Returns the underlying type.
+	 *
+	 * @return Underlying type.
+	 */
+	public SymbolType getUnderlyingType() {
+		return this.type.getUnderlyingType();
+	}
+
+	/**
 	 * Returns the toString() of the type.
 	 *
 	 * @return toString() of the type.
