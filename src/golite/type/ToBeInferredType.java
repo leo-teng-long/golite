@@ -8,7 +8,7 @@ public class ToBeInferredType extends GoLiteType {
 
 	@Override
 	public String toString() {
-		return "[TBI]";
+		return "<TBI>";
 	}
 
 }
