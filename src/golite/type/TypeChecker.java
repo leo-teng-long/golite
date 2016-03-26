@@ -194,8 +194,39 @@ public class TypeChecker extends DepthFirstAdapter {
                 ids.add(((AIdOptId) pOptId).getId());
         } else if (node instanceof AArgArgGroup)
         	ids = new ArrayList<TId>(((AArgArgGroup) node).getId());
+        else if (node instanceof AShortAssignStmt) {
+            LinkedList<POptId> pOptIds = ((AShortAssignStmt) node).getOptId();
+            
+            for (POptId o: pOptIds) {
+            	// Ignore blank Id's.
+                if (o instanceof AIdOptId)
+                    ids.add(((AIdOptId) o).getId());
+            }
+        }
 
         return ids;
+    }
+
+    /**
+     * Get the variable symbol corresponding to the given Id token.
+     *
+     * @param id - Id token
+     * @return Corresponding variable symbol
+     * @throws TypeCheckException if the symbol is undefined or is not a variable symbol
+     */
+    private VariableSymbol getVariableSymbol(TId id) {
+    	// Get the corresponding symbol.
+        Symbol symbol = this.symbolTable.getSymbol(id.getText());
+
+        // Symbol was never declared, so throw an error.
+        if (symbol == null)
+			this.throwTypeCheckException(id, "Undefined: " + id.getText());
+		// Symbol is not a variable, so throw an error.
+		else if (!(symbol instanceof VariableSymbol))
+			this.throwTypeCheckException(id,
+				id.getText() + " is not a variable");
+
+		return (VariableSymbol) symbol;
     }
 
 	@Override
@@ -404,19 +435,68 @@ public class TypeChecker extends DepthFirstAdapter {
         }
     }
 
+    /* Type check statements */
+
+    // Short assignment.
+    @Override
+    public void outAShortAssignStmt(AShortAssignStmt node) {
+       	// Get L.H.S. (non-blank) Id's.
+        ArrayList<TId> ids = this.getIds(node);
+        // Get R.H.S. expressions.
+        ArrayList<PExpr> pExprs = new ArrayList<PExpr>(node.getExpr());
+
+        // Flag for whether the L.H.S. has any new variables declared in the current scope.
+        boolean hasNewDecInCurrentScope = false;
+        // Loop through the Id's in sequence, tracking the position.
+        for (int i = 0; i < ids.size(); i++) {
+        	TId id = ids.get(i);
+        	String name = id.getText();
+
+        	// Get the corresponding expression node.
+    		PExpr pExpr = pExprs.get(i);
+    		// Get its GoLite type.
+    		GoLiteType exprType = this.getType(pExpr);
+
+    		// Expression is a void function call.
+        	if (exprType instanceof VoidType) {
+        		TId funcId = ((AFuncCallExpr) pExpr).getId();
+        		this.throwTypeCheckException(pExpr,
+        			funcId.getText() + "() used as a value");
+        	}
+
+        	// A symbol with the given name already exists in the current scope.
+            if (symbolTable.defSymbolInCurrentScope(name)) {
+            	// Get the variable symbol.
+                VariableSymbol symbol = this.getVariableSymbol(id);
+
+        		// Check the underlying type (in case of an alias) of the L.H.S for
+        		// compatibility with the surface type of the R.H.S. expression, throwing an
+        		// error if their incompatible.
+        		if (!symbol.getUnderlyingType().equals(exprType))
+        			this.throwTypeCheckException(pExpr, "Cannot use type " + exprType
+        				+ " as type " + symbol.getType() + " in assignment");
+            // No such symbol exists in the current scope.
+            } else {
+            	// Go ahead and add it to the symbol table, using its inferred type, which may
+            	// shadow an outer scope symbol with the same name.
+            	this.symbolTable.putSymbol(new VariableSymbol(name, exprType, node));
+                hasNewDecInCurrentScope = true;
+	        }
+
+	        this.typeTable.put(id, exprType);
+        }
+
+        // Throw an error is no new variables are declared on the L.H.S.
+        if (!hasNewDecInCurrentScope)
+            this.throwTypeCheckException(node, "No new variables on left side of :=");
+    }
+
+    /** Type check expressions **/
+
+    // Enter a variable expression into the type table.
     @Override
     public void outAVariableExpr(AVariableExpr node) {
-    	// Get the corresponding symbol.
-        Symbol symbol = this.symbolTable.getSymbol(node.getId().getText());
-
-        // Symbol was never declared, so throw an error.
-        if (symbol == null)
-			this.throwTypeCheckException(node.getId(), "Undefined: " + node.getId().getText());
-		// Symbol is not a variable, so throw an error.
-		else if (!(symbol instanceof VariableSymbol))
-			this.throwTypeCheckException(node.getId(),
-				node.getId().getText() + " is not a variable");
-
+    	VariableSymbol symbol = this.getVariableSymbol(node.getId());
         this.typeTable.put(node, symbol.getType());
     }
 
