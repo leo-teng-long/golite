@@ -12,7 +12,7 @@ public abstract class Symbol {
 	protected String name;
 	
 	/** Type of symbol. */
-	protected SymbolType type;
+	protected GoLiteType type;
 
 	/** AST node corresponding to the symbol declaration. */
 	protected Node node;
@@ -27,14 +27,14 @@ public abstract class Symbol {
 	/*
 	 * Getter.
 	 */
-	public SymbolType getType() {
+	public GoLiteType getType() {
 		return this.type;
 	}
 
 	/*
 	 * Setter.
 	 */
-	public void setType(SymbolType type) {
+	public void setType(GoLiteType type) {
 		this.type = type;
 	}
 
@@ -50,7 +50,7 @@ public abstract class Symbol {
 	 *
 	 * @return Underlying type.
 	 */
-	public SymbolType getUnderlyingType() {
+	public GoLiteType getUnderlyingType() {
 		return this.type.getUnderlyingType();
 	}
 

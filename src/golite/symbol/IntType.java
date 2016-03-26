@@ -2,9 +2,9 @@ package golite.symbol;
 
 
 /**
- * int symbol type.
+ * int type.
  */
-public class IntSymbolType extends PrimitiveSymbolType {
+public class IntType extends PrimitiveGoLiteType {
 
 	@Override
 	public String toString() {

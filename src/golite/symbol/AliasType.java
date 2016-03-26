@@ -2,14 +2,14 @@ package golite.symbol;
 
 
 /**
- * Alias symbol type.
+ * Alias type.
  */
-public class AliasSymbolType extends SymbolType {
+public class AliasType extends GoLiteType {
 
 	/** Alias. */
 	private String alias;
 	/** Underlying type. */
-	private SymbolType type;
+	private GoLiteType type;
 
 	/**
 	 * Constructor.
@@ -17,7 +17,7 @@ public class AliasSymbolType extends SymbolType {
 	 * @param alias - Alias
 	 * @param type - Underlying type
 	 */
-	public AliasSymbolType(String alias, SymbolType type) {
+	public AliasType(String alias, GoLiteType type) {
 		this.alias = alias;
 		this.type = type;
 	}
@@ -32,12 +32,12 @@ public class AliasSymbolType extends SymbolType {
 	/**
 	 * Getter.
 	 */
-	public SymbolType getType() {
+	public GoLiteType getType() {
 		return this.type;
 	}
 
 	@Override
-	public SymbolType getUnderlyingType() {
+	public GoLiteType getUnderlyingType() {
 		return this.type.getUnderlyingType();
 	}
 

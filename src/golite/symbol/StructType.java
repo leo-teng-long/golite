@@ -6,9 +6,9 @@ import java.util.Iterator;
 
 
 /**
- * Struct symbol type.
+ * Struct type.
  */
-public class StructSymbolType extends SymbolType {
+public class StructType extends GoLiteType {
 
 	/**
 	 * Struct field.
@@ -18,7 +18,7 @@ public class StructSymbolType extends SymbolType {
 		/** Field Id. */
 		private String id;
 		/** Field type. */
-		private SymbolType type;
+		private GoLiteType type;
 
 		/**
 		 * Constructor/
@@ -26,7 +26,7 @@ public class StructSymbolType extends SymbolType {
 		 * @param id - Id
 		 * @param type - Type
 		 */
-		private Field(String id, SymbolType type) {
+		private Field(String id, GoLiteType type) {
 			this.id = id;
 			this.type = type;
 		}
@@ -41,7 +41,7 @@ public class StructSymbolType extends SymbolType {
 		/**
 		 * Getter.
 		 */
-		protected SymbolType getType() {
+		protected GoLiteType getType() {
 			return this.type;
 		}
 
@@ -58,7 +58,7 @@ public class StructSymbolType extends SymbolType {
 	/**
 	 * Constructor.
 	 */
-	public StructSymbolType() {
+	public StructType() {
 		super();
 		this.fields = new ArrayList<Field>();
 	}
@@ -78,18 +78,18 @@ public class StructSymbolType extends SymbolType {
 	 * @param id - Field Id
 	 * @param type - Field type
 	 */
-	public void addField(String id, SymbolType type) {
+	public void addField(String id, GoLiteType type) {
 		this.fields.add(new Field(id, type));
 	}
 
 	@Override
-	public SymbolType getUnderlyingType() {
-		StructSymbolType underlyingStructSymbolType = new StructSymbolType();
+	public GoLiteType getUnderlyingType() {
+		StructType underlyingStructType = new StructType();
 
 		for (Field f : this.fields)
-			underlyingStructSymbolType.addField(f.getId(), f.getType().getUnderlyingType());
+			underlyingStructType.addField(f.getId(), f.getType().getUnderlyingType());
 
-		return underlyingStructSymbolType;
+		return underlyingStructType;
 	}
 
 	@Override

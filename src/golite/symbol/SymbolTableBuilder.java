@@ -56,22 +56,22 @@ public class SymbolTableBuilder extends DepthFirstAdapter {
          * @param node - Type expression AST node
          * @return Corresponding symbol type
          */
-        private SymbolType getSymbolType(PTypeExpr node) {
+        private GoLiteType getType(PTypeExpr node) {
             if (node == null)
                 return null;
 
             if (node instanceof ABoolTypeExpr)
-                return new BoolSymbolType();
+                return new BoolType();
             else if (node instanceof AIntTypeExpr)
-                return new IntSymbolType();
+                return new IntType();
             else if (node instanceof AFloatTypeExpr)
-                return new FloatSymbolType();
+                return new FloatType();
             else if (node instanceof ARuneTypeExpr)
-                return new RuneSymbolType();
+                return new RuneType();
             else if (node instanceof AStringTypeExpr)
-                return new StringSymbolType();
+                return new StringType();
             else if (node instanceof AAliasTypeExpr)
-                return new UnTypedAliasSymbolType(((AAliasTypeExpr) node).getId().getText());
+                return new UnTypedAliasType(((AAliasTypeExpr) node).getId().getText());
             else if (node instanceof AArrayTypeExpr) {
                 PExpr pExpr = ((AArrayTypeExpr) node).getExpr();
 
@@ -85,12 +85,12 @@ public class SymbolTableBuilder extends DepthFirstAdapter {
                 else 
                     this.throwSymbolTableException(node, "Non-integer array bound");
 
-                return new ArraySymbolType(this.getSymbolType(((AArrayTypeExpr) node).getTypeExpr()),
+                return new ArrayType(this.getType(((AArrayTypeExpr) node).getTypeExpr()),
                     bound);
             } else if (node instanceof ASliceTypeExpr)
-                return new SliceSymbolType(this.getSymbolType(((ASliceTypeExpr) node).getTypeExpr()));
+                return new SliceType(this.getType(((ASliceTypeExpr) node).getTypeExpr()));
             else if (node instanceof AStructTypeExpr) {
-                StructSymbolType structSymbolType = new StructSymbolType();
+                StructType structType = new StructType();
 
                 // Keep track of the field Id's to ensure there are no duplicates.
                 HashSet<String> fieldIds = new HashSet<String>();
@@ -110,14 +110,14 @@ public class SymbolTableBuilder extends DepthFirstAdapter {
                             if (fieldIds.contains(id.getText()))
                                 throwSymbolTableException(id, "Duplicate field " + id.getText());
 
-                            structSymbolType.addField(id.getText(),
-                                this.getSymbolType(((ASpecFieldSpec) pFieldSpec).getTypeExpr()));
+                            structType.addField(id.getText(),
+                                this.getType(((ASpecFieldSpec) pFieldSpec).getTypeExpr()));
                             fieldIds.add(id.getText());
                         }
                     }
                 }
 
-                return structSymbolType;
+                return structType;
             }
 
             return null;
@@ -174,11 +174,11 @@ public class SymbolTableBuilder extends DepthFirstAdapter {
                             // A variable symbol is added to the symbol table with a placeholder
                             // indicating the type must be inferred.
                             this.table.putSymbol(new VariableSymbol(id.getText(),
-                                new ToBeInferredSymbolType(), node));
+                                new ToBeInferredType(), node));
                         } else
                             // Add a variable symbol to the symbol table.
                             this.table.putSymbol(new VariableSymbol(id.getText(),
-                                this.getSymbolType(pTypeExpr), node));
+                                this.getType(pTypeExpr), node));
                     }
                 }
             }
@@ -203,7 +203,7 @@ public class SymbolTableBuilder extends DepthFirstAdapter {
                     PTypeExpr pTypeExpr = ((ASpecTypeSpec) pTypeSpec).getTypeExpr();
                     // Add a type alias symbol to the symbol table.
                     this.table.putSymbol(new TypeAliasSymbol(id.getText(),
-                        this.getSymbolType(pTypeExpr), node));
+                        this.getType(pTypeExpr), node));
                 }
             }
         }
@@ -227,13 +227,13 @@ public class SymbolTableBuilder extends DepthFirstAdapter {
                 funcSymbol = new FunctionSymbol(id.getText(), null, node);
             // Has return type.
             else
-                funcSymbol = new FunctionSymbol(id.getText(), this.getSymbolType(pTypeExpr), node);
+                funcSymbol = new FunctionSymbol(id.getText(), this.getType(pTypeExpr), node);
 
             // Add argument types to the function symbol.
             AArgArgGroup g = null;
             for (PArgGroup p : node.getArgGroup()) {
                 g = (AArgArgGroup) p;
-                funcSymbol.addArgType(this.getSymbolType(g.getTypeExpr()), g.getId().size());
+                funcSymbol.addArgType(this.getType(g.getTypeExpr()), g.getId().size());
             }
 
             // Enter symbol into the table.
@@ -274,8 +274,8 @@ public class SymbolTableBuilder extends DepthFirstAdapter {
         this.table.scope();
 
         // Initialize boolean literals.
-        Symbol trueSymbol = new VariableSymbol("true", new BoolSymbolType(), node);
-        Symbol falseSymbol = new VariableSymbol("false", new BoolSymbolType(), node);
+        Symbol trueSymbol = new VariableSymbol("true", new BoolType(), node);
+        Symbol falseSymbol = new VariableSymbol("false", new BoolType(), node);
         this.table.putSymbol(trueSymbol);
         this.table.putSymbol(falseSymbol);
 
@@ -292,19 +292,19 @@ public class SymbolTableBuilder extends DepthFirstAdapter {
             try {
                 // For variable and type alias symbols, resolve to the underlying type.
                 if (symbol instanceof VariableSymbol || symbol instanceof TypeAliasSymbol)
-                    symbol.setType(this.getResolvedSymbolType(symbol.getType(),
+                    symbol.setType(this.getResolvedType(symbol.getType(),
                         new Stack<String>()));
                 // For functions symbols, resolve argument and return types to their corresponding
                 // underlying types.
                 else if (symbol instanceof FunctionSymbol) {
                     // Resolve the return type.
-                    symbol.setType(this.getResolvedSymbolType(symbol.getType(),
+                    symbol.setType(this.getResolvedType(symbol.getType(),
                         new Stack<String>()));
 
                     // Get resolved versions of the argument types.
-                    ArrayList<SymbolType> resolvedArgTypes = new ArrayList<SymbolType>();
-                    for (SymbolType argType : ((FunctionSymbol) symbol).getArgTypes())
-                        resolvedArgTypes.add(this.getResolvedSymbolType(argType, new Stack<String>()));
+                    ArrayList<GoLiteType> resolvedArgTypes = new ArrayList<GoLiteType>();
+                    for (GoLiteType argType : ((FunctionSymbol) symbol).getArgTypes())
+                        resolvedArgTypes.add(this.getResolvedType(argType, new Stack<String>()));
                     
                     // Set the argument types to the resolved versions.
                     ((FunctionSymbol) symbol).setArgTypes(resolvedArgTypes);
@@ -322,11 +322,11 @@ public class SymbolTableBuilder extends DepthFirstAdapter {
      * @param aliases - Stack of aliases for checking recursive type definitions.
      * @return Resolved underlying type
      */
-    private SymbolType getResolvedSymbolType(SymbolType type, Stack<String> aliases) {
+    private GoLiteType getResolvedType(GoLiteType type, Stack<String> aliases) {
         // Alias.
-        if (type instanceof AliasSymbolType) {
-            String alias = ((AliasSymbolType) type).getAlias();
-            SymbolType aliasedType = ((AliasSymbolType) type).getType();
+        if (type instanceof AliasType) {
+            String alias = ((AliasType) type).getAlias();
+            GoLiteType aliasedType = ((AliasType) type).getType();
 
             // Alias has already been encountered in the recursion and hence, throw an error.
             if (aliases.search(alias) != -1)
@@ -334,40 +334,40 @@ public class SymbolTableBuilder extends DepthFirstAdapter {
 
             // Get the resolved type for the aliased type, which could be a type alias.
             aliases.push(alias);
-            AliasSymbolType aliasSymbolType = new AliasSymbolType(alias,
-                this.getResolvedSymbolType(aliasedType, aliases));
+            AliasType aliasType = new AliasType(alias,
+                this.getResolvedType(aliasedType, aliases));
             aliases.pop();
 
-            return aliasSymbolType;
+            return aliasType;
         // Array.
-        } else if (type instanceof ArraySymbolType) {
-            int bound = ((ArraySymbolType) type).getBound();
-            SymbolType arrayType = ((ArraySymbolType) type).getType();
+        } else if (type instanceof ArrayType) {
+            int bound = ((ArrayType) type).getBound();
+            GoLiteType arrayType = ((ArrayType) type).getType();
 
             // Get the resolved type for the element type, which could include a type alias.
-            return new ArraySymbolType(this.getResolvedSymbolType(arrayType, aliases), bound);
+            return new ArrayType(this.getResolvedType(arrayType, aliases), bound);
         // Slice.
-        } else if (type instanceof SliceSymbolType) {
-            SymbolType sliceType = ((SliceSymbolType) type).getType();
+        } else if (type instanceof SliceType) {
+            GoLiteType sliceType = ((SliceType) type).getType();
 
             // Get the resolved type for the element type, which could include a type alias.
-            return new SliceSymbolType(this.getResolvedSymbolType(sliceType, aliases));
+            return new SliceType(this.getResolvedType(sliceType, aliases));
         // Struct.
-        } else if (type instanceof StructSymbolType) {
-            StructSymbolType resolvedStructSymbolType = new StructSymbolType();
+        } else if (type instanceof StructType) {
+            StructType resolvedStructType = new StructType();
 
             // Get the resolved type for each field type.
-            Iterator<StructSymbolType.Field> fieldIter = ((StructSymbolType) type).getFieldIterator();
+            Iterator<StructType.Field> fieldIter = ((StructType) type).getFieldIterator();
             while (fieldIter.hasNext()) {
-                StructSymbolType.Field field = fieldIter.next();
-                resolvedStructSymbolType.addField(field.getId(),
-                    this.getResolvedSymbolType(field.getType(), aliases));
+                StructType.Field field = fieldIter.next();
+                resolvedStructType.addField(field.getId(),
+                    this.getResolvedType(field.getType(), aliases));
             }
 
-            return resolvedStructSymbolType;   
+            return resolvedStructType;   
         // Untyped alias.             
-        } else if (type instanceof UnTypedAliasSymbolType) {
-            String alias = ((UnTypedAliasSymbolType) type).getAlias();
+        } else if (type instanceof UnTypedAliasType) {
+            String alias = ((UnTypedAliasType) type).getAlias();
 
             // Alias has already been encountered in the recursion and hence, throw an error.
             if (aliases.search(alias) != -1)
@@ -382,8 +382,8 @@ public class SymbolTableBuilder extends DepthFirstAdapter {
 
             // Return a typed alias type with the aliased type fully resolved.
             aliases.push(alias);
-            AliasSymbolType aliasSymbolType = new AliasSymbolType(alias,
-                this.getResolvedSymbolType(typeAliasSymbol.getType(), aliases));
+            AliasType aliasType = new AliasType(alias,
+                this.getResolvedType(typeAliasSymbol.getType(), aliases));
             aliases.pop();
         }
 

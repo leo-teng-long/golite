@@ -2,10 +2,10 @@ package golite.symbol;
 
 
 /**
- * Untyped alias symbol type, where the type is not set (Used as a placeholder in the first pass of
- * the program for symbol table construction).
+ * Untyped alias type, where the type is not set (Used as a placeholder in the first pass of the
+ * program for symbol table construction).
  */
-class UnTypedAliasSymbolType extends SymbolType {
+class UnTypedAliasType extends GoLiteType {
 
 	/** Alias. */
 	private String alias;
@@ -15,7 +15,7 @@ class UnTypedAliasSymbolType extends SymbolType {
 	 *
 	 * @param alias - Alias
 	 */
-	public UnTypedAliasSymbolType(String alias) {
+	public UnTypedAliasType(String alias) {
 		this.alias = alias;
 	}
 

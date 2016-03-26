@@ -2,9 +2,9 @@ package golite.symbol;
 
 
 /**
- * rune symbol type.
+ * rune type.
  */
-public class RuneSymbolType extends PrimitiveSymbolType {
+public class RuneType extends PrimitiveGoLiteType {
 
 	@Override
 	public String toString() {

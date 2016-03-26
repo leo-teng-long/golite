@@ -15,7 +15,7 @@ public class TypeAliasSymbol extends Symbol {
 	 * @param type - Type to alias
 	 * @param node - Corresponding AST node
 	 */
-	public TypeAliasSymbol(String alias, SymbolType type, Node node) {
+	public TypeAliasSymbol(String alias, GoLiteType type, Node node) {
 		this.name = alias;
 		this.type = type;
 		this.node = node;

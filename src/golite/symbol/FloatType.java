@@ -2,9 +2,9 @@ package golite.symbol;
 
 
 /**
- * float64 symbol type.
+ * float64 type.
  */
-public class FloatSymbolType extends PrimitiveSymbolType {
+public class FloatType extends PrimitiveGoLiteType {
 
 	@Override
 	public String toString() {

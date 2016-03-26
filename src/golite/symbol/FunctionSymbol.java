@@ -13,7 +13,7 @@ import java.util.Iterator;
 public class FunctionSymbol extends Symbol {
 
 	/** Argument types. */
-	private ArrayList<SymbolType> argTypes;
+	private ArrayList<GoLiteType> argTypes;
 
 	/**
 	 * Constructor.
@@ -22,24 +22,24 @@ public class FunctionSymbol extends Symbol {
 	 * @param returnType - Return type of function (null if void)
 	 * @param node - Corresponding AST node
 	 */
-	public FunctionSymbol(String name, SymbolType returnType, Node node) {
+	public FunctionSymbol(String name, GoLiteType returnType, Node node) {
 		this.name = name;
 		this.type = returnType;
 		this.node = node;
-		this.argTypes = new ArrayList<SymbolType>();
+		this.argTypes = new ArrayList<GoLiteType>();
 	}
 
 	/**
 	 * Getter.
 	 */
-	public ArrayList<SymbolType> getArgTypes() {
+	public ArrayList<GoLiteType> getArgTypes() {
 		return this.argTypes;
 	}
 
 	/**
 	 * Setter.
 	 */
-	public void setArgTypes(ArrayList<SymbolType> argTypes) {
+	public void setArgTypes(ArrayList<GoLiteType> argTypes) {
 		this.argTypes = argTypes;
 	}
 
@@ -48,7 +48,7 @@ public class FunctionSymbol extends Symbol {
 	 *
 	 * @param argType - Argument Type
 	 */
-	public void addArgType(SymbolType argType) {
+	public void addArgType(GoLiteType argType) {
 		this.argTypes.add(argType);
 	}
 
@@ -58,7 +58,7 @@ public class FunctionSymbol extends Symbol {
 	 * @param argType - Argument Type
 	 * @param cnt - Number to add
 	 */
-	public void addArgType(SymbolType argType, int cnt) {
+	public void addArgType(GoLiteType argType, int cnt) {
 		for (int i = 0; i < cnt; i++)
 			this.argTypes.add(argType);
 	}
@@ -69,7 +69,7 @@ public class FunctionSymbol extends Symbol {
 		
 		s.append("(");
 		boolean rest = false;
-		for (SymbolType t : this.argTypes) {
+		for (GoLiteType t : this.argTypes) {
 			if (rest)
 				s.append(", ");
 			else
@@ -94,7 +94,7 @@ public class FunctionSymbol extends Symbol {
 		
 		s.append("(");
 		boolean rest = false;
-		for (SymbolType t : this.argTypes) {
+		for (GoLiteType t : this.argTypes) {
 			if (rest)
 				s.append(", ");
 			else

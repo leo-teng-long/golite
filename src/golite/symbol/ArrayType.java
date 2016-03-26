@@ -2,19 +2,19 @@ package golite.symbol;
 
 
 /**
- * Array symbol type.
+ * Array type.
  */
-public class ArraySymbolType extends SymbolType {
+public class ArrayType extends GoLiteType {
 
 	/** Type of the array. */
-	private SymbolType type;
+	private GoLiteType type;
 	/** Array bound. */
 	private int bound;
 
 	/**
 	 * Constructor.
 	 */
-	public ArraySymbolType(SymbolType type, int bound) {
+	public ArrayType(GoLiteType type, int bound) {
 		this.type = type;
 		this.bound = bound;
 	}
@@ -22,7 +22,7 @@ public class ArraySymbolType extends SymbolType {
 	/**
 	 * Getter.
 	 */
-	public SymbolType getType() {
+	public GoLiteType getType() {
 		return this.type;
 	}
 
@@ -34,8 +34,8 @@ public class ArraySymbolType extends SymbolType {
 	}
 
 	@Override
-	public SymbolType getUnderlyingType() {
-		return new ArraySymbolType(this.type.getUnderlyingType(), this.bound);
+	public GoLiteType getUnderlyingType() {
+		return new ArrayType(this.type.getUnderlyingType(), this.bound);
 	}
 
 	@Override

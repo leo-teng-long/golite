@@ -15,7 +15,7 @@ public class VariableSymbol extends Symbol {
 	 * @param type - Type
 	 * @param node - Corresponding AST node
 	 */
-	public VariableSymbol(String id, SymbolType type, Node node) {
+	public VariableSymbol(String id, GoLiteType type, Node node) {
 		this.name = id;
 		this.type = type;
 		this.node = node;

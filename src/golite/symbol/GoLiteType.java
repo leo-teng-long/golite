@@ -2,16 +2,16 @@ package golite.symbol;
 
 
 /**
- * Symbol type.
+ * GoLite type.
  */
-public abstract class SymbolType {
+public abstract class GoLiteType {
 
 	/**
 	 * Returns the underlying type, which for non-alias types is the type itself.
 	 *
 	 * @return Underlying type
 	 */
-	public SymbolType getUnderlyingType() {
+	public GoLiteType getUnderlyingType() {
 		return this;
 	}
 
