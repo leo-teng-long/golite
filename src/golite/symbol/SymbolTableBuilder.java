@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.Stack;
 
 
 /**
@@ -291,17 +292,19 @@ public class SymbolTableBuilder extends DepthFirstAdapter {
             try {
                 // For variable and type alias symbols, resolve to the underlying type.
                 if (symbol instanceof VariableSymbol || symbol instanceof TypeAliasSymbol)
-                    symbol.setType(this.getResolvedSymbolType(symbol.getType()));
+                    symbol.setType(this.getResolvedSymbolType(symbol.getType(),
+                        new Stack<String>()));
                 // For functions symbols, resolve argument and return types to their corresponding
                 // underlying types.
                 else if (symbol instanceof FunctionSymbol) {
                     // Resolve the return type.
-                    symbol.setType(this.getResolvedSymbolType(symbol.getType()));
+                    symbol.setType(this.getResolvedSymbolType(symbol.getType(),
+                        new Stack<String>()));
 
                     // Get resolved versions of the argument types.
                     ArrayList<SymbolType> resolvedArgTypes = new ArrayList<SymbolType>();
                     for (SymbolType argType : ((FunctionSymbol) symbol).getArgTypes())
-                        resolvedArgTypes.add(this.getResolvedSymbolType(argType));
+                        resolvedArgTypes.add(this.getResolvedSymbolType(argType, new Stack<String>()));
                     
                     // Set the argument types to the resolved versions.
                     ((FunctionSymbol) symbol).setArgTypes(resolvedArgTypes);
@@ -318,29 +321,39 @@ public class SymbolTableBuilder extends DepthFirstAdapter {
      * Recursively resolves the given type to its most underlying type.
      *
      * @param type - Symbol type
+     * @param aliases - Stack of aliases for checking recursive type definitions.
      * @return Resolved underlying type
      */
-    private SymbolType getResolvedSymbolType(SymbolType type) {
+    private SymbolType getResolvedSymbolType(SymbolType type, Stack<String> aliases) {
         // Alias.
         if (type instanceof AliasSymbolType) {
             String alias = ((AliasSymbolType) type).getAlias();
             SymbolType aliasedType = ((AliasSymbolType) type).getType();
 
+            // Alias has already been encountered in the recursion and hence, throw an error.
+            if (aliases.search(alias) != -1)
+                throw new SymbolTableException("Invalid recursive type " + alias);
+
             // Get the resolved type for the aliased type, which could be a type alias.
-            return new AliasSymbolType(alias, this.getResolvedSymbolType(aliasedType));
+            aliases.push(alias);
+            AliasSymbolType aliasSymbolType = new AliasSymbolType(alias,
+                this.getResolvedSymbolType(aliasedType, aliases));
+            aliases.pop();
+
+            return aliasSymbolType;
         // Array.
         } else if (type instanceof ArraySymbolType) {
             int bound = ((ArraySymbolType) type).getBound();
             SymbolType arrayType = ((ArraySymbolType) type).getType();
 
             // Get the resolved type for the element type, which could include a type alias.
-            return new ArraySymbolType(this.getResolvedSymbolType(arrayType), bound);
+            return new ArraySymbolType(this.getResolvedSymbolType(arrayType, aliases), bound);
         // Slice.
         } else if (type instanceof SliceSymbolType) {
             SymbolType sliceType = ((SliceSymbolType) type).getType();
 
             // Get the resolved type for the element type, which could include a type alias.
-            return new SliceSymbolType(this.getResolvedSymbolType(sliceType));
+            return new SliceSymbolType(this.getResolvedSymbolType(sliceType, aliases));
         // Struct.
         } else if (type instanceof StructSymbolType) {
             StructSymbolType resolvedStructSymbolType = new StructSymbolType();
@@ -350,13 +363,18 @@ public class SymbolTableBuilder extends DepthFirstAdapter {
             while (fieldIter.hasNext()) {
                 StructSymbolType.Field field = fieldIter.next();
                 resolvedStructSymbolType.addField(field.getId(),
-                    this.getResolvedSymbolType(field.getType()));
+                    this.getResolvedSymbolType(field.getType(), aliases));
             }
 
             return resolvedStructSymbolType;   
         // Untyped alias.             
         } else if (type instanceof UnTypedAliasSymbolType) {
             String alias = ((UnTypedAliasSymbolType) type).getAlias();
+
+            // Alias has already been encountered in the recursion and hence, throw an error.
+            if (aliases.search(alias) != -1)
+                throw new SymbolTableException("Invalid recursive type " + alias);
+
             // Find the corresponding type alias symbol.
             Symbol typeAliasSymbol = this.table.getSymbol(alias);
 
@@ -365,7 +383,10 @@ public class SymbolTableBuilder extends DepthFirstAdapter {
                 throw new SymbolTableException("Undefined: " + alias);
 
             // Return a typed alias type with the aliased type fully resolved.
-            return new AliasSymbolType(alias, this.getResolvedSymbolType(typeAliasSymbol.getType()));
+            aliases.push(alias);
+            AliasSymbolType aliasSymbolType = new AliasSymbolType(alias,
+                this.getResolvedSymbolType(typeAliasSymbol.getType(), aliases));
+            aliases.pop();
         }
 
         // For base types.
