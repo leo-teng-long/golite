@@ -23,9 +23,10 @@ VALID_GENERAL_PROGS_DIRPATH = os.path.join(VALID_PROGS_DIRPATH, "general")
 VALID_SYNTAX_PROGS_DIRPATH = os.path.join(VALID_PROGS_DIRPATH, "syntax")
 VALID_TYPE_PROGS_DIRPATH = os.path.join(VALID_PROGS_DIRPATH, "type")
 
-# Path to invalid programs directory (Only syntax for now).
-INVALID_PROGS_DIRPATH = os.path.join(PROGS_DIRPATH, os.path.join("invalid",
-	"syntax"))
+# Path to invalid programs directories.
+INVALID_PROGS_DIRPATH = os.path.join(PROGS_DIRPATH, "invalid")
+INVALID_SYNTAX_PROGS_DIRPATH = os.path.join(INVALID_PROGS_DIRPATH, "syntax")
+INVALID_TYPE_PROGS_DIRPATH = os.path.join(INVALID_PROGS_DIRPATH, "type")
 
 # Directory name for tests from other groups.
 OTHER_GROUPS_PROGS_DIRNAME = "other_groups"
@@ -56,12 +57,14 @@ OUT_SUITE_FPATH = os.path.join(OUT_TEST_DIRPATH, "GoLiteTestSuite.java")
 
 # Output name for test checking valid syntax is correctly parsed.
 OUT_VALID_PARSE_TNAME = "GoLiteValidSyntaxTest"
-# Output name for test checking valid typing is correctly verified.
-OUT_VALID_TYPE_TNAME = "GoLiteValidTypingTest"
 # Output name for test checking invalid syntax is not parsed.
 OUT_INVALID_PARSE_TNAME = "GoLiteInvalidSyntaxTest"
 # Output name for test checking pretty printing.
 OUT_PRETTY_TNAME = "GoLitePrettyPrintTest"
+# Output name for test checking valid typing is correctly verified.
+OUT_VALID_TYPE_TNAME = "GoLiteValidTypingTest"
+# Output name for test checking invalid typing is correctly caught.
+OUT_INVALID_TYPE_TNAME = "GoLiteInvalidTypingTest"
 
 
 def capitalize(in_str):
@@ -149,8 +152,9 @@ def create_test_method_str(prog_fname, prog_fpath, tpe):
 	@param prog_fpath - Filepath to program
 	@param tpe - 'valid_parse' for testing the correct parsing of the program,
 		'invalid_parse' for testing no parse is produced for the program,
-		'pretty' for testing the pretty printer on the program, or 'valid_type'
-		for testing the correct type check of the program
+		'pretty' for testing the pretty printer on the program, 'valid_type'
+		for testing the correct type check of the program, or 'invalid_type' for
+		testing type check flags the program
 	@return Corresponding test method source
 	"""
 
@@ -172,9 +176,12 @@ def create_test_method_str(prog_fname, prog_fpath, tpe):
 	elif tpe == 'valid_type':
 		assert_method_name = ASSERT_TRUE
 		check_method_name = 'typeCheck'
+	elif tpe == 'invalid_type':
+		assert_method_name = ASSERT_FALSE
+		check_method_name = 'typeCheck'
 	else:
 		raise ValueError("'tpe' argument must be 'valid_parse', "
-			"'invalid_parse', 'pretty', or 'valid_type'.")
+			"'invalid_parse', 'pretty', 'valid_type', or 'invalid_type'.")
 
 	test_method_str = "\t@Test\n"
 	test_method_str += "\tpublic void %s() throws IOException {\n" % test_name
@@ -204,8 +211,9 @@ def create_test(test_name, progs_dirpaths, tpe, out_path):
 	@param progs_dirpaths - Directory paths to input test programs folders
 	@param tpe - 'valid_parse' for testing the correct parsing of the program,
 		'invalid_parse' for testing no parse is produced for the program,
-		'pretty' for testing the pretty printer on the program, or 'valid_type'
-		for testing the correct type check of the program
+		'pretty' for testing the pretty printer on the program, 'valid_type'
+		for testing the correct type check of the program, or 'invalid_type' for
+		testing type check flags the program
 	@param out_path - Output file to test source file
 	"""
 
@@ -270,8 +278,9 @@ def main():
 
 	# Create the parser test for syntactically invalid programs.
 	logging.info("Creating parser test for syntactically invalid programs...")
-	create_test(OUT_INVALID_PARSE_TNAME, [INVALID_PROGS_DIRPATH], 'invalid_parse',
-		os.path.join(OUT_TEST_DIRPATH, '%s.java' % OUT_INVALID_PARSE_TNAME))
+	create_test(OUT_INVALID_PARSE_TNAME, [INVALID_SYNTAX_PROGS_DIRPATH],
+		'invalid_parse', os.path.join(OUT_TEST_DIRPATH,
+			'%s.java' % OUT_INVALID_PARSE_TNAME))
 
 	# Create the pretty printer test.
 	logging.info("Creating pretty printer tests...")
@@ -283,6 +292,13 @@ def main():
 	create_test(OUT_VALID_TYPE_TNAME, [VALID_TYPE_PROGS_DIRPATH], 'valid_type',
 		os.path.join(OUT_TEST_DIRPATH, '%s.java' % OUT_VALID_TYPE_TNAME))
 
+	# Create the type checker test for incorrectly-typed programs.
+	logging.info("Creating type checker test for incorrectly-typed "
+		"programs....")
+	create_test(OUT_INVALID_TYPE_TNAME, [INVALID_TYPE_PROGS_DIRPATH],
+		'invalid_type', os.path.join(OUT_TEST_DIRPATH,
+			'%s.java' % OUT_INVALID_TYPE_TNAME))
+
 	# Read in the test suite template.
 	with open(SUITE_TEMPALTE_FPATH) as fin:
 		suite_str = fin.read()
@@ -290,9 +306,9 @@ def main():
 	# Insert the test names into the test suite runner class.
 	suite_str = suite_str.replace(
 		to_template_marker("INSERT TEST CLASSES HERE"),
-		"%s.class,\n\t%s.class,\n\t%s.class,\n\t%s.class" %
+		"%s.class,\n\t%s.class,\n\t%s.class,\n\t%s.class,\n\t%s.class" %
 			(OUT_VALID_PARSE_TNAME, OUT_INVALID_PARSE_TNAME, OUT_PRETTY_TNAME,
-				OUT_VALID_TYPE_TNAME))
+				OUT_VALID_TYPE_TNAME, OUT_INVALID_TYPE_TNAME))
 
 	# Save the test suite source to file.
 	with open(OUT_SUITE_FPATH, 'w') as fout:
