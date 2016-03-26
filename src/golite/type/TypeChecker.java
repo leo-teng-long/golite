@@ -491,7 +491,54 @@ public class TypeChecker extends DepthFirstAdapter {
             this.throwTypeCheckException(node, "No new variables on left side of :=");
     }
 
-    /** Type check expressions **/
+    /** Type check expressions. **/
+
+    // Function call.
+    // TODO: Handle alias type casting.
+    @Override
+    public void outAFuncCallExpr(AFuncCallExpr node) {
+        TId id = node.getId();
+        String name = id.getText();
+
+        Symbol symbol = this.symbolTable.getSymbol(name);
+
+        // If no corresponding symbol exists, throw an error.
+        if (symbol == null)
+        	this.throwTypeCheckException(id, "Undefined: " + name);
+        // If the symbol is not a function, throw an error.
+        if (!(symbol instanceof FunctionSymbol))
+        	this.throwTypeCheckException(id,
+        		"Cannot call non-function " + name + " (type " + symbol.getType() + ")");
+
+        FunctionSymbol funcSymbol = (FunctionSymbol) symbol;
+        // Argument types.
+		ArrayList<GoLiteType> argTypes = funcSymbol.getArgTypes();
+		int numArgTypes = argTypes.size();
+
+        // Passed argument expressions.
+        LinkedList<PExpr> pExprs = node.getExpr();
+        int numExprs = pExprs.size();
+
+        // Too many arguments are passed, so throw an error.
+        if (numArgTypes < numExprs)
+        	this.throwTypeCheckException(node, "Too many arguments in call to " + name);
+
+        // Too few arguments are passed, so throw an error.
+        if (numArgTypes > numExprs)
+        	this.throwTypeCheckException(node, "Not enough arguments in call to " + name);
+
+        // Check type compatibility of the declared argument types and passed argument types.
+        for (int i = 0; i < numExprs; i++) {
+        	GoLiteType argType = argTypes.get(i);
+        	GoLiteType exprType = this.getType(pExprs.get(i));
+
+        	if (!argType.getUnderlyingType().equals(exprType))
+        		this.throwTypeCheckException(node, "Cannot use type " + exprType + " as type "
+        			+ argType + " in argument to " + name);
+        }
+
+        this.typeTable.put(node, funcSymbol.getReturnType());
+    }
 
     // Enter a variable expression into the type table.
     @Override

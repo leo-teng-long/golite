@@ -56,6 +56,15 @@ public class FunctionSymbol extends Symbol {
 	}
 
 	/**
+	 * Get the return type.
+	 *
+	 * @return Return type
+	 */
+	public GoLiteType getReturnType() {
+		return this.type;
+	}
+
+	/**
 	 * Add the given argument type.
 	 *
 	 * @param argType - Argument Type
