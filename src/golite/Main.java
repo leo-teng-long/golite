@@ -297,7 +297,7 @@ class Main {
 
             SymbolTable symbolTable = symbolTableBuilder.getTable();
 
-            dump(symbolTable.toString(), inPath, ".symtab");
+            dump(symbolTable.getLog(), inPath, ".symtab");
         } catch (LexerException|ParserException|WeederException|SymbolTableException e) {
             System.err.println("ERROR: " + e);
         }

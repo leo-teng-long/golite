@@ -1,5 +1,7 @@
 package golite.symbol;
 
+import golite.node.Node;
+
 
 /**
  * Symbol in symbol table.
@@ -11,6 +13,9 @@ public abstract class Symbol {
 	
 	/** Type of symbol. */
 	protected SymbolType type;
+
+	/** AST node corresponding to the symbol declaration. */
+	protected Node node;
 
 	/*
 	 * Getter.
@@ -26,6 +31,20 @@ public abstract class Symbol {
 		return this.type;
 	}
 
+	/*
+	 * Setter.
+	 */
+	public void setType(SymbolType type) {
+		this.type = type;
+	}
+
+	/*
+	 * Getter.
+	 */
+	public Node getNode() {
+		return this.node;
+	}
+
 	/**
 	 * Returns the underlying type.
 	 *
@@ -36,12 +55,21 @@ public abstract class Symbol {
 	}
 
 	/**
-	 * Returns the toString() of the type.
+	 * Returns a print-friendly string representation of the type.
 	 *
-	 * @return toString() of the type.
+	 * @return Print-friendly string representation of the type.
 	 */
 	public String getTypeString() {
 		return this.type.toString();
+	}
+
+	/**
+	 * Returns a print-friendly string representation of the underlying type.
+	 *
+	 * @return Print-friendly string representation of the underlying type.
+	 */
+	public String getUnderlyingTypeString() {
+		return this.type.getUnderlyingType().toString();
 	}
 
 }

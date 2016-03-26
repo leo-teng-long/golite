@@ -2,6 +2,7 @@ package golite.symbol;
 
 import java.lang.StringBuilder;
 import java.util.ArrayList;
+import java.util.Iterator;
 
 
 /**
@@ -12,7 +13,7 @@ public class StructSymbolType extends SymbolType {
 	/**
 	 * Struct field.
 	 */
-	private static class Field {
+	protected static class Field {
 
 		/** Field Id. */
 		private String id;
@@ -28,6 +29,20 @@ public class StructSymbolType extends SymbolType {
 		private Field(String id, SymbolType type) {
 			this.id = id;
 			this.type = type;
+		}
+
+		/**
+		 * Getter.
+		 */
+		protected String getId() {
+			return this.id;
+		}
+
+		/**
+		 * Getter.
+		 */
+		protected SymbolType getType() {
+			return this.type;
 		}
 
 		@Override
@@ -49,6 +64,15 @@ public class StructSymbolType extends SymbolType {
 	}
 
 	/**
+	 * Returns an iterator over the fields.
+	 * 
+	 * @return Iterator over fields
+	 */
+	public Iterator<Field> getFieldIterator() {
+		return this.fields.iterator();
+	}
+
+	/**
 	 * Adds a field to the struct type.
 	 *
 	 * @param id - Field Id
@@ -56,6 +80,16 @@ public class StructSymbolType extends SymbolType {
 	 */
 	public void addField(String id, SymbolType type) {
 		this.fields.add(new Field(id, type));
+	}
+
+	@Override
+	public SymbolType getUnderlyingType() {
+		StructSymbolType underlyingStructSymbolType = new StructSymbolType();
+
+		for (Field f : this.fields)
+			underlyingStructSymbolType.addField(f.getId(), f.getType().getUnderlyingType());
+
+		return underlyingStructSymbolType;
 	}
 
 	@Override

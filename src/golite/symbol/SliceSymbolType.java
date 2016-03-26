@@ -16,6 +16,18 @@ public class SliceSymbolType extends SymbolType {
 		this.type = type;
 	}
 
+	/**
+	 * Getter
+	 */
+	public SymbolType getType() {
+		return this.type;
+	}
+
+	@Override
+	public SymbolType getUnderlyingType() {
+		return new SliceSymbolType(this.type.getUnderlyingType());
+	}
+
 	@Override
 	public String toString() {
 		return "[]" + this.type;

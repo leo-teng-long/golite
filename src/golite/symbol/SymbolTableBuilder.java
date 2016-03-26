@@ -5,12 +5,14 @@ import golite.util.LineAndPosTracker;
 import golite.analysis.*;
 import golite.node.*;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 
 
 /**
- * Builds the global scope of the symbol table for a GoLite program.
+ * Builds the 0th and global scope of the symbol table for a GoLite program.
  */
 public class SymbolTableBuilder extends DepthFirstAdapter {
 
@@ -20,9 +22,7 @@ public class SymbolTableBuilder extends DepthFirstAdapter {
     /** Line and position tracker for AST nodes. */
     private LineAndPosTracker lineAndPosTracker = new LineAndPosTracker();
 
-
-    /** Creates a symbol table and makes the first pass over the program to initialize the table
-      * with top-level declarations. */
+    /** Makes the first pass over the program to initialize the table with top-level declarations. */
     private static class FirstPasser extends DepthFirstAdapter {
         
         /** Symbol table. */
@@ -34,9 +34,11 @@ public class SymbolTableBuilder extends DepthFirstAdapter {
         /**
          * Constructor.
          *
-         * @param lineAndPosTracker - Initialized line and position tracker.
+         * @param table - Symbol table
+         * @param lineAndPosTracker - Initialized line and position tracker
          */
-        public FirstPasser(LineAndPosTracker lineAndPosTracker) {
+        public FirstPasser(SymbolTable table, LineAndPosTracker lineAndPosTracker) {
+            this.table = table;
             this.lineAndPosTracker = lineAndPosTracker;
         }
 
@@ -147,23 +149,6 @@ public class SymbolTableBuilder extends DepthFirstAdapter {
                 this.throwSymbolTableException(id, id.getText() + " redeclared in this block");
         }
 
-        // Create an empty symbol table and initialize the 0th scope.
-        @Override
-        public void inStart(Start node) {
-            // Gather all line and position information.
-            node.apply(this.lineAndPosTracker);
-
-            // Enter the 0-th scope and never leave it.
-            this.table = new SymbolTable();
-            this.table.scope();
-
-            // Initialize boolean literals.
-            Symbol trueSymbol = new VariableSymbol("true", new BoolSymbolType());
-            Symbol falseSymbol = new VariableSymbol("false", new BoolSymbolType());
-            this.table.putSymbol(trueSymbol);
-            this.table.putSymbol(falseSymbol);
-        }
-
         // Add top variable declarations into the symbol table.
         @Override
         public void caseAVarsTopDec(AVarsTopDec node) {
@@ -188,11 +173,11 @@ public class SymbolTableBuilder extends DepthFirstAdapter {
                             // A variable symbol is added to the symbol table with a placeholder
                             // indicating the type must be inferred.
                             this.table.putSymbol(new VariableSymbol(id.getText(),
-                                new ToBeInferredSymbolType()));
+                                new ToBeInferredSymbolType(), node));
                         } else
                             // Add a variable symbol to the symbol table.
                             this.table.putSymbol(new VariableSymbol(id.getText(),
-                                this.getSymbolType(pTypeExpr)));
+                                this.getSymbolType(pTypeExpr), node));
                     }
                 }
             }
@@ -217,7 +202,7 @@ public class SymbolTableBuilder extends DepthFirstAdapter {
                     PTypeExpr pTypeExpr = ((ASpecTypeSpec) pTypeSpec).getTypeExpr();
                     // Add a type alias symbol to the symbol table.
                     this.table.putSymbol(new TypeAliasSymbol(id.getText(),
-                        this.getSymbolType(pTypeExpr)));
+                        this.getSymbolType(pTypeExpr), node));
                 }
             }
         }
@@ -238,10 +223,10 @@ public class SymbolTableBuilder extends DepthFirstAdapter {
             FunctionSymbol funcSymbol = null;
             // No return type.
             if (pTypeExpr == null)
-                funcSymbol = new FunctionSymbol(id.getText(), null);
+                funcSymbol = new FunctionSymbol(id.getText(), null, node);
             // Has return type.
             else
-                funcSymbol = new FunctionSymbol(id.getText(), this.getSymbolType(pTypeExpr));
+                funcSymbol = new FunctionSymbol(id.getText(), this.getSymbolType(pTypeExpr), node);
 
             // Add argument types to the function symbol.
             AArgArgGroup g = null;
@@ -257,23 +242,141 @@ public class SymbolTableBuilder extends DepthFirstAdapter {
     }
 
     /**
+     * Throws a symbol table exception after annotating the message with line and position
+     * information.
+     *
+     * @param node - AST node
+     * @param msg - Error message
+     * @throws SymbolTableException
+     */
+    private void throwSymbolTableException(Node node, String msg) {
+        Integer line = this.lineAndPosTracker.getLine(node);
+        Integer pos = this.lineAndPosTracker.getPos(node);
+
+        throw new SymbolTableException("[" + line + "," + pos + "] " + msg);
+    }
+
+    /**
      * Getter.
      */
     public SymbolTable getTable() {
         return this.table;
     }
-
 	
 	@Override
     public void inStart(Start node) {
     	// Gather all line and position information.
         node.apply(this.lineAndPosTracker);
 
+         // Enter the 0-th scope.
+        this.table = new SymbolTable();
+        this.table.scope();
+
+        // Initialize boolean literals.
+        Symbol trueSymbol = new VariableSymbol("true", new BoolSymbolType(), node);
+        Symbol falseSymbol = new VariableSymbol("false", new BoolSymbolType(), node);
+        this.table.putSymbol(trueSymbol);
+        this.table.putSymbol(falseSymbol);
+
+        // Enter the global scope.
+        this.table.scope();
+
         // Make the first pass.
-        FirstPasser firstPasser = new FirstPasser(this.lineAndPosTracker);
+        FirstPasser firstPasser = new FirstPasser(this.table, this.lineAndPosTracker);
         node.apply(firstPasser);
 
-        this.table = firstPasser.getTable();
+        // Resolve all global symbols that are typed with an alias by passing over all the symbols
+        // in the global scope.
+        for (Symbol symbol : this.table.getSymbolsFromCurrentScope()) {
+            try {
+                // For variable and type alias symbols, resolve to the underlying type.
+                if (symbol instanceof VariableSymbol || symbol instanceof TypeAliasSymbol)
+                    symbol.setType(this.getResolvedSymbolType(symbol.getType()));
+                // For functions symbols, resolve argument and return types to their corresponding
+                // underlying types.
+                else if (symbol instanceof FunctionSymbol) {
+                    // Resolve the return type.
+                    symbol.setType(this.getResolvedSymbolType(symbol.getType()));
+
+                    // Get resolved versions of the argument types.
+                    ArrayList<SymbolType> resolvedArgTypes = new ArrayList<SymbolType>();
+                    for (SymbolType argType : ((FunctionSymbol) symbol).getArgTypes())
+                        resolvedArgTypes.add(this.getResolvedSymbolType(argType));
+                    
+                    // Set the argument types to the resolved versions.
+                    ((FunctionSymbol) symbol).setArgTypes(resolvedArgTypes);
+                }
+            } catch (SymbolTableException e) {
+                throwSymbolTableException(symbol.getNode(), e.getMessage());
+            }
+        }
+            
+        System.out.println(this.table);
+    }
+
+    /**
+     * Recursively resolves the given type to its most underlying type.
+     *
+     * @param type - Symbol type
+     * @return Resolved underlying type
+     */
+    private SymbolType getResolvedSymbolType(SymbolType type) {
+        // Alias.
+        if (type instanceof AliasSymbolType) {
+            String alias = ((AliasSymbolType) type).getAlias();
+            SymbolType aliasedType = ((AliasSymbolType) type).getType();
+
+            // Get the resolved type for the aliased type, which could be a type alias.
+            return new AliasSymbolType(alias, this.getResolvedSymbolType(aliasedType));
+        // Array.
+        } else if (type instanceof ArraySymbolType) {
+            int bound = ((ArraySymbolType) type).getBound();
+            SymbolType arrayType = ((ArraySymbolType) type).getType();
+
+            // Get the resolved type for the element type, which could include a type alias.
+            return new ArraySymbolType(this.getResolvedSymbolType(arrayType), bound);
+        // Slice.
+        } else if (type instanceof SliceSymbolType) {
+            SymbolType sliceType = ((SliceSymbolType) type).getType();
+
+            // Get the resolved type for the element type, which could include a type alias.
+            return new SliceSymbolType(this.getResolvedSymbolType(sliceType));
+        // Struct.
+        } else if (type instanceof StructSymbolType) {
+            StructSymbolType resolvedStructSymbolType = new StructSymbolType();
+
+            // Get the resolved type for each field type.
+            Iterator<StructSymbolType.Field> fieldIter = ((StructSymbolType) type).getFieldIterator();
+            while (fieldIter.hasNext()) {
+                StructSymbolType.Field field = fieldIter.next();
+                resolvedStructSymbolType.addField(field.getId(),
+                    this.getResolvedSymbolType(field.getType()));
+            }
+
+            return resolvedStructSymbolType;   
+        // Untyped alias.             
+        } else if (type instanceof UnTypedAliasSymbolType) {
+            String alias = ((UnTypedAliasSymbolType) type).getAlias();
+            // Find the corresponding type alias symbol.
+            Symbol typeAliasSymbol = this.table.getSymbol(alias);
+
+            // If the type alias symbol cannot be found, i.e. is undefined, then throw an exception.
+            if (typeAliasSymbol == null)
+                throw new SymbolTableException("Undefined: " + alias);
+
+            // Return a typed alias type with the aliased type fully resolved.
+            return new AliasSymbolType(alias, this.getResolvedSymbolType(typeAliasSymbol.getType()));
+        }
+
+        // For base types.
+        return type;
+    }
+
+    // Unscope the global and 0-th scope upon program exit.
+    @Override
+    public void outStart(Start node) {
+        this.table.unscope();
+        this.table.unscope();
     }
 
 }

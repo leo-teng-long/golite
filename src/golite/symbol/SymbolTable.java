@@ -1,9 +1,13 @@
 package golite.symbol;
 
 import java.lang.StringBuilder;
+import java.util.ArrayDeque;
+import java.util.Collection;
 import java.util.Deque;
-import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
+import java.util.Map;
 
 
 /**
@@ -13,30 +17,33 @@ public class SymbolTable {
 
 	/** Scopes are stored in a deque, with each scope represented as a hash map from identifier to
 	  * symbol. */
-	private Deque<HashMap<String, Symbol>> scopes;
-	/** Stores the string representation of the symbol table. */
-	private StringBuilder buffer;
+	private Deque<LinkedHashMap<String, Symbol>> scopes;
+	/** Logs the actions performed on the symbol table. */
+	private StringBuilder logger;
 
 	/**
 	 * Constructor.
 	 */
 	public SymbolTable() {
-		this.scopes = new LinkedList<HashMap<String, Symbol>>();
-		this.buffer = new StringBuilder();
+		this.scopes = new ArrayDeque<LinkedHashMap<String, Symbol>>();
+		this.logger = new StringBuilder();
+
+		this.log("(KIND\tNAME\tTYPE)");
+		this.log("");
 	}
 
-	// Adds the given string to the buffer.
-	private void addToBuffer(String s) {
-        this.buffer.append(s);
-        this.buffer.append(System.getProperty("line.separator"));
+	// Adds the given string to the internal logger.
+	private void log(String s) {
+        this.logger.append(s);
+        this.logger.append(System.getProperty("line.separator"));
     }
 
     /**
      * Enter a scope, pushing it onto the stack.
      */
 	public void scope() {
-		this.scopes.push(new HashMap<String, Symbol>());
-		this.addToBuffer("ENTER SCOPE");
+		this.scopes.push(new LinkedHashMap<String, Symbol>());
+		this.log("ENTER SCOPE");
 	}
 
 	/**
@@ -44,7 +51,7 @@ public class SymbolTable {
      */
 	public void unscope() {
 		this.scopes.pop();
-		this.addToBuffer("EXIT SCOPE");
+		this.log("EXIT SCOPE");
 	}
 
 	/**
@@ -55,7 +62,7 @@ public class SymbolTable {
      */
 	public Symbol getSymbol(String name) {
 		Symbol symbol = null;
-		for (HashMap<String, Symbol> scope : this.scopes) {
+		for (LinkedHashMap<String, Symbol> scope : this.scopes) {
 			symbol = scope.get(name);
 			if (symbol != null)
 				break;
@@ -68,10 +75,19 @@ public class SymbolTable {
 	 * Returns the symbol with the given name from the current scope.
 	 *
 	 * @param name - Symbol name
-	 * @param Corresponding symbol if it exists, null otherwise
+	 * @return Corresponding symbol if it exists, null otherwise
 	 */
 	public Symbol getSymbolFromCurrentScope(String name) {
 		return this.scopes.peek().get(name);
+	}
+
+	/**
+	 * Returns the symbols in the current scope.
+	 *
+	 * @return Collection of symbols in the current scope
+	 */
+	public Collection<Symbol> getSymbolsFromCurrentScope() {
+		return this.scopes.peek().values();
 	}
 
 	/**
@@ -82,8 +98,8 @@ public class SymbolTable {
 	public void putSymbol(Symbol symbol) {
 		String name = symbol.getName();
 		this.scopes.peek().put(name, symbol);
-		this.addToBuffer(symbol.getClass().getSimpleName() + "\t" + name + "\t"
-			+ symbol.getTypeString());
+
+		this.log(symbol.getClass().getSimpleName() + "\t" + name + "\t" + symbol.getTypeString());
 	}
 
 	/**
@@ -106,9 +122,42 @@ public class SymbolTable {
 		return (this.getSymbol(name) != null);
 	}
 
+	/**
+	 * Get the symbol table activity log.
+	 *
+	 * @return Activity log as a string
+	 */
+	public String getLog() {
+		return this.logger.toString();
+	}
+
 	@Override
 	public String toString() {
-		return this.buffer.toString();
+		StringBuilder s = new StringBuilder();
+		// Header.
+		s.append("(KIND\tNAME\tTYPE\tUNDERLYING TYPE)\n\n");
+
+		// Iterate over the scopes from outermost to innermost.
+		Iterator<LinkedHashMap<String, Symbol>> scopeIter = this.scopes.descendingIterator();
+		int i = 0;
+		while (scopeIter.hasNext()) {
+			s.append("SCOPE #" + i + "\n");
+
+			LinkedHashMap<String, Symbol> scope = scopeIter.next();
+			for (Map.Entry<String, Symbol> entry : scope.entrySet()) {
+			    String name = entry.getKey();
+			    Symbol symbol = entry.getValue();
+			    
+		    	s.append(symbol.getClass().getSimpleName() + "\t" + name + "\t"
+		    		+ symbol.getTypeString() + "\t" + symbol.getUnderlyingTypeString() + "\n");
+			}
+
+			s.append("\n");
+			i++;
+		}
+
+		s.setLength(s.length() - 1);
+		return s.toString();
 	}
 
 }
