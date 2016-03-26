@@ -366,10 +366,12 @@ public class TypeChecker extends DepthFirstAdapter {
             		// Get its GoLite type.
             		GoLiteType exprType = this.getType(pExpr);
             		
-            		// Check the underlying types for compatibility, throwing an error if not.
-            		if (!typeExprType.getUnderlyingType().equals(exprType.getUnderlyingType()))
-            			this.throwTypeCheckException(pExpr,
-            				"Cannot use value of type " + exprType + " for " + typeExprType);
+            		// Check the underlying type (in case of an alias) of the L.H.S for
+            		// compatibility with the surface type of the R.H.S. expression, throwing an
+            		// error if their incompatible.
+            		if (!typeExprType.getUnderlyingType().equals(exprType))
+            			this.throwTypeCheckException(pExpr, "Cannot use type " + exprType
+            				+ " as type " + typeExprType + " in assignment");
             	}
 
             	// Put a new variable symbol into the symbol table.
@@ -400,6 +402,22 @@ public class TypeChecker extends DepthFirstAdapter {
             this.symbolTable.putSymbol(new TypeAliasSymbol(id.getText(), type, node));
             this.typeTable.put(node, type);
         }
+    }
+
+    @Override
+    public void outAVariableExpr(AVariableExpr node) {
+    	// Get the corresponding symbol.
+        Symbol symbol = this.symbolTable.getSymbol(node.getId().getText());
+
+        // Symbol was never declared, so throw an error.
+        if (symbol == null)
+			this.throwTypeCheckException(node.getId(), "Undefined: " + node.getId().getText());
+		// Symbol is not a variable, so throw an error.
+		else if (!(symbol instanceof VariableSymbol))
+			this.throwTypeCheckException(node.getId(),
+				node.getId().getText() + " is not a variable");
+
+        this.typeTable.put(node, symbol.getType());
     }
 
     /* Type check literals. */
