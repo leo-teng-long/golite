@@ -1,5 +1,6 @@
 package golite.exception;
 
+
 /**
  * Symbol table exception.
  */
