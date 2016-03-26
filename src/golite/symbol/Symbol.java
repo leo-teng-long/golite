@@ -46,15 +46,20 @@ public abstract class Symbol {
 		return this.node;
 	}
 
+	// Equality performed on the symbol name.
 	@Override
     public boolean equals(Object o) {
-    	if (!(o instanceof TypeAliasSymbol))
+    	if (!(o instanceof Symbol))
         	return false;
 
-        TypeAliasSymbol other = (TypeAliasSymbol) o;
-        return this.name == other.getName();
+        if (this == o)
+        	return true;
+
+        Symbol other = (Symbol) o;
+        return this.name.equals(other.getName());
     }
 
+    // Hash code derived from the symbol name.
     @Override
     public int hashCode() {
         return this.name.hashCode();

@@ -1,5 +1,7 @@
 package golite.symbol;
 
+import golite.type.GoLiteType;
+
 import java.lang.StringBuilder;
 import java.util.ArrayDeque;
 import java.util.Collection;
@@ -55,10 +57,19 @@ public class SymbolTable {
 	}
 
 	/**
+	 * Checks if the current scope is the global scope.
+	 *
+	 * @return True if the current scope is the global scope, false otherwise
+	 */
+	public boolean inGlobalScope() {
+		return this.scopes.size() == 2;
+	}
+
+	/**
      * Get the symbol with the given name.
      *
      * @param name - Name
-     * @return The symbol if it exists, null otherwise.
+     * @return The symbol if it exists, null otherwise
      */
 	public Symbol getSymbol(String name) {
 		Symbol symbol = null;
@@ -69,6 +80,18 @@ public class SymbolTable {
 		}
 
 		return symbol;
+	}
+
+	/**
+     * Get type for the symbol with the given name.
+     *
+     * @param name - Name
+     * @return Type of the symbol if it exists, null otherwise
+     */
+	public GoLiteType getSymbolType(String name) {
+		Symbol symbol = this.getSymbol(name);
+
+		return (symbol == null) ? null : symbol.getType();
 	}
 
 	/**

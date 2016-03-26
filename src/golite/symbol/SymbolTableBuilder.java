@@ -151,8 +151,7 @@ public class SymbolTableBuilder extends DepthFirstAdapter {
         }
 
         /**
-         * Checks if the given Id has already been defined in the current scope, throwing an a symbol
-         * table exception if it is.
+         * Checks if the given Id has already been defined in the current scope.
          *
          * @param id - Id token
          * @throws SymbolTableException

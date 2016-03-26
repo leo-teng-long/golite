@@ -41,6 +41,25 @@ public class AliasType extends GoLiteType {
 		return this.type.getUnderlyingType();
 	}
 
+	// Equality performed on the alias.
+	@Override
+    public boolean equals(Object o) {
+    	if (!(o instanceof AliasType))
+        	return false;
+
+        if (this == o)
+        	return true;
+
+        AliasType other = (AliasType) o;
+        return this.alias.equals(other.getAlias());
+    }
+
+    // Hash code derived from the alias.
+    @Override
+    public int hashCode() {
+        return this.alias.hashCode();
+    }
+
 	@Override
 	public String toString() {
 		return this.alias;

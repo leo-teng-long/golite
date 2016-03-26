@@ -45,6 +45,25 @@ public class StructType extends GoLiteType {
 			return this.type;
 		}
 
+		// Equality is performed on the Id and type.
+		@Override
+	    public boolean equals(Object o) {
+	    	if (!(o instanceof Field))
+	        	return false;
+
+	        if (this == o)
+	        	return true;
+
+	        Field other = (Field) o;
+	        return this.id.equals(other.getId()) && this.type.equals(other.getType());
+	    }
+
+	    // Hash code is derived from the Id and type.
+	    @Override
+	    public int hashCode() {
+	        return 997 * this.id.hashCode() ^ 991 * this.type.hashCode();
+	    }
+
 		@Override
 		public String toString() {
 			return this.id + " " + this.type;
@@ -61,6 +80,15 @@ public class StructType extends GoLiteType {
 	public StructType() {
 		super();
 		this.fields = new ArrayList<Field>();
+	}
+
+	/**
+	 * Returns the number of fields.
+	 *
+	 * @return Number of fields
+	 */
+	public int size() {
+		return this.fields.size();
 	}
 
 	/**
@@ -91,6 +119,30 @@ public class StructType extends GoLiteType {
 
 		return underlyingStructType;
 	}
+
+	// Equality is performed on fields.
+	@Override
+    public boolean equals(Object o) {
+    	if (!(o instanceof StructType))
+        	return false;
+
+        if (this == o)
+        	return true;
+
+        StructType other = (StructType) o;
+
+        if (this.fields.size() != other.size())
+        	return false;
+
+        Iterator<Field> iter = other.getFieldIterator();
+        Field otherField = null;
+        for (int i = 0; iter.hasNext(); i++) {
+        	if (!this.fields.get(i).equals(iter.next()))
+        		return false;
+        }
+
+        return true;
+    }
 
 	@Override
 	public String toString() {
