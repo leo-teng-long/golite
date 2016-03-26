@@ -46,6 +46,20 @@ public abstract class Symbol {
 		return this.node;
 	}
 
+	@Override
+    public boolean equals(Object o) {
+    	if (!(o instanceof TypeAliasSymbol))
+        	return false;
+
+        TypeAliasSymbol other = (TypeAliasSymbol) o;
+        return this.name == other.getName();
+    }
+
+    @Override
+    public int hashCode() {
+        return this.name.hashCode();
+    }
+
 	/**
 	 * Returns the underlying type.
 	 *

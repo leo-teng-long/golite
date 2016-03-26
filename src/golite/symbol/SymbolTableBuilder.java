@@ -1,6 +1,7 @@
 package golite.symbol;
 
 import golite.exception.SymbolTableException;
+import golite.exception.TypeException;
 import golite.type.AliasType;
 import golite.type.ArrayType;
 import golite.type.BoolType;
@@ -11,7 +12,6 @@ import golite.type.RuneType;
 import golite.type.SliceType;
 import golite.type.StringType;
 import golite.type.StructType;
-import golite.type.ToBeInferredType;
 import golite.util.LineAndPosTracker;
 import golite.analysis.*;
 import golite.node.*;
@@ -62,12 +62,13 @@ public class SymbolTableBuilder extends DepthFirstAdapter {
         }
 
         /**
-         * Return the symbol type for the given type expression.
+         * Returns the type for the given type expression.
          *
          * @param node - Type expression AST node
-         * @return Corresponding symbol type
+         * @return Corresponding type
+         * @throws SymbolTableException
          */
-        private GoLiteType getType(PTypeExpr node) {
+        public GoLiteType getType(PTypeExpr node) {
             if (node == null)
                 return null;
 
@@ -94,12 +95,12 @@ public class SymbolTableBuilder extends DepthFirstAdapter {
                 else if (pExpr instanceof AHexLitExpr)
                     bound = Integer.parseInt(((AHexLitExpr) pExpr).getHexLit().getText(), 16);
                 else 
-                    this.throwSymbolTableException(node, "Non-integer array bound");
+                    this.throwSymbolTableException(pExpr, "Non-integer array bound");
 
-                return new ArrayType(this.getType(((AArrayTypeExpr) node).getTypeExpr()),
+                return new ArrayType(getType(((AArrayTypeExpr) node).getTypeExpr()),
                     bound);
             } else if (node instanceof ASliceTypeExpr)
-                return new SliceType(this.getType(((ASliceTypeExpr) node).getTypeExpr()));
+                return new SliceType(getType(((ASliceTypeExpr) node).getTypeExpr()));
             else if (node instanceof AStructTypeExpr) {
                 StructType structType = new StructType();
 
@@ -119,10 +120,10 @@ public class SymbolTableBuilder extends DepthFirstAdapter {
 
                             // Throw an error if a duplicate field is encountered.
                             if (fieldIds.contains(id.getText()))
-                                throwSymbolTableException(id, "Duplicate field " + id.getText());
+                                this.throwSymbolTableException(id, "Duplicate field " + id.getText());
 
                             structType.addField(id.getText(),
-                                this.getType(((ASpecFieldSpec) pFieldSpec).getTypeExpr()));
+                                getType(((ASpecFieldSpec) pFieldSpec).getTypeExpr()));
                             fieldIds.add(id.getText());
                         }
                     }
@@ -180,14 +181,11 @@ public class SymbolTableBuilder extends DepthFirstAdapter {
                         this.checkifDeclaredInCurrentScope(id);
 
                         PTypeExpr pTypeExpr = ((ASpecVarSpec) pVarSpec).getTypeExpr();
-                        // The type has not been specified.
-                        if (pTypeExpr == null) {
-                            // A variable symbol is added to the symbol table with a placeholder
-                            // indicating the type must be inferred.
-                            this.table.putSymbol(new VariableSymbol(id.getText(),
-                                new ToBeInferredType(), node));
-                        } else
-                            // Add a variable symbol to the symbol table.
+                        // The type has been specified, in which case add a variable symbol to the
+                        // symbol table. Otherwise, skip over the declaration and let the type
+                        // checker perform inference and a corresponding variable symbol to the
+                        // symbol table.
+                        if (pTypeExpr != null)
                             this.table.putSymbol(new VariableSymbol(id.getText(),
                                 this.getType(pTypeExpr), pVarSpec));
                     }
