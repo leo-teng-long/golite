@@ -494,7 +494,6 @@ public class TypeChecker extends DepthFirstAdapter {
     /** Type check expressions. **/
 
     // Function call.
-    // TODO: Handle alias type casting.
     @Override
     public void outAFuncCallExpr(AFuncCallExpr node) {
         TId id = node.getId();
@@ -505,39 +504,65 @@ public class TypeChecker extends DepthFirstAdapter {
         // If no corresponding symbol exists, throw an error.
         if (symbol == null)
         	this.throwTypeCheckException(id, "Undefined: " + name);
-        // If the symbol is not a function, throw an error.
-        if (!(symbol instanceof FunctionSymbol))
-        	this.throwTypeCheckException(id,
-        		"Cannot call non-function " + name + " (type " + symbol.getType() + ")");
 
-        FunctionSymbol funcSymbol = (FunctionSymbol) symbol;
-        // Argument types.
-		ArrayList<GoLiteType> argTypes = funcSymbol.getArgTypes();
-		int numArgTypes = argTypes.size();
-
-        // Passed argument expressions.
+		// Passed argument expressions.
         LinkedList<PExpr> pExprs = node.getExpr();
-        int numExprs = pExprs.size();
+        int numExprs = pExprs.size();        	
 
-        // Too many arguments are passed, so throw an error.
-        if (numArgTypes < numExprs)
-        	this.throwTypeCheckException(node, "Too many arguments in call to " + name);
+        // Symbol is a function.
+        if (symbol instanceof FunctionSymbol) {
+	        FunctionSymbol funcSymbol = (FunctionSymbol) symbol;
+	        // Argument types.
+			ArrayList<GoLiteType> argTypes = funcSymbol.getArgTypes();
+			int numArgTypes = argTypes.size();
 
-        // Too few arguments are passed, so throw an error.
-        if (numArgTypes > numExprs)
-        	this.throwTypeCheckException(node, "Not enough arguments in call to " + name);
+	        // Too many arguments are passed, so throw an error.
+	        if (numArgTypes < numExprs)
+	        	this.throwTypeCheckException(node, "Too many arguments in call to " + name);
 
-        // Check type compatibility of the declared argument types and passed argument types.
-        for (int i = 0; i < numExprs; i++) {
-        	GoLiteType argType = argTypes.get(i);
-        	GoLiteType exprType = this.getType(pExprs.get(i));
+	        // Too few arguments are passed, so throw an error.
+	        if (numArgTypes > numExprs)
+	        	this.throwTypeCheckException(node, "Not enough arguments in call to " + name);
 
-        	if (!argType.getUnderlyingType().equals(exprType))
-        		this.throwTypeCheckException(node, "Cannot use type " + exprType + " as type "
-        			+ argType + " in argument to " + name);
-        }
+	        // Check type compatibility of the declared argument types and passed argument types.
+	        for (int i = 0; i < numExprs; i++) {
+	        	GoLiteType argType = argTypes.get(i);
+	        	GoLiteType exprType = this.getType(pExprs.get(i));
 
-        this.typeTable.put(node, funcSymbol.getReturnType());
+	        	if (!argType.getUnderlyingType().equals(exprType))
+	        		this.throwTypeCheckException(node, "Cannot use type " + exprType + " as type "
+	        			+ argType + " in argument to " + name);
+	        }
+
+	        this.typeTable.put(node, funcSymbol.getReturnType());
+	    // Symbol is a type alias for casting.
+    	} else if (symbol instanceof TypeAliasSymbol) {
+    		// Must have at least one argument expression, otherwise throw an error.
+    		if (numExprs < 1)
+    			this.throwTypeCheckException(node, "Missing argument to conversion to " + name);
+    		if (numExprs > 1)
+    			this.throwTypeCheckException(node, "Too many arguments to conversion to " + name);
+
+    		TypeAliasSymbol typeAliasSymbol = ((TypeAliasSymbol) symbol);
+
+    		// Underlying type must be primitive (except string, which is already weeded out).
+    		GoLiteType underlyingType = typeAliasSymbol.getUnderlyingType();
+
+    		if (!(underlyingType instanceof PrimitiveGoLiteType))
+    			this.throwTypeCheckException(id,
+    				"Type alias " + name + " must map to a non-string primitive type");
+
+    		// Expression must have type that is a non-string primitive.
+    		GoLiteType argType = this.getType(pExprs.get(0));
+    		if (!(argType instanceof PrimitiveGoLiteType) || argType instanceof StringType)
+    			this.throwTypeCheckException(id, "Arugment to conversion to " + name
+    				+ " must map to a non-string primitive type");
+
+    		this.typeTable.put(node, typeAliasSymbol.getAliasType());
+    	// If the symbol is not a function or a type alias, throw an error.
+    	} else
+    		this.throwTypeCheckException(id,
+        		"Cannot call non-function " + name + " (type " + symbol.getType() + ")");
     }
 
     // Enter a variable expression into the type table.

@@ -1,5 +1,6 @@
 package golite.symbol;
 
+import golite.type.AliasType;
 import golite.type.GoLiteType;
 import golite.node.Node;
 
@@ -20,6 +21,15 @@ public class TypeAliasSymbol extends Symbol {
 		this.name = alias;
 		this.type = type;
 		this.node = node;
+	}
+
+	/**
+	 * Returns the alias as an alias type.
+	 *
+	 * @return Alias type
+	 */
+	public AliasType getAliasType() {
+		return new AliasType(this.name, this.type);
 	}
 
 }
