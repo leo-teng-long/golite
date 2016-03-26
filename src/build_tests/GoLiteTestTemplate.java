@@ -3,7 +3,12 @@ package test;
 import golite.GoLiteLexer;
 import golite.PrettyPrinter;
 import golite.Weeder;
-import golite.exception.*;
+import golite.exception.SymbolTableException;
+import golite.exception.TypeCheckException;
+import golite.exception.WeederException;
+import golite.symbol.SymbolTable;
+import golite.symbol.SymbolTableBuilder;
+import golite.type.TypeChecker;
 import golite.lexer.*;
 import golite.parser.*;
 import golite.node.*;
@@ -76,6 +81,34 @@ public class <<<INSERT NAME HERE>>> {
         } catch (Exception e) {
             return false;
         }
+    }
+
+    /**
+     * Type check a GoLite program.
+     *
+     * @param inPath - Filepath to GoLite program
+     * @return True if the program passed type-checking, false otherwise
+     */
+    public static boolean typeCheck(String inPath) throws IOException {
+        try {
+            Lexer lexer = new GoLiteLexer(new PushbackReader(new FileReader(inPath), 1024));
+            Parser parser = new Parser(lexer);
+            Weeder weeder = new Weeder();
+
+            Start ast = parser.parse();
+            ast.apply(weeder);
+
+            SymbolTableBuilder symbolTableBuilder = new SymbolTableBuilder();
+            ast.apply(symbolTableBuilder);
+
+            SymbolTable symbolTable = symbolTableBuilder.getTable();
+            TypeChecker typeChecker = new TypeChecker(symbolTable);
+            ast.apply(typeChecker);
+        } catch (LexerException|ParserException|SymbolTableException|WeederException|TypeCheckException e) {             
+            return false;
+        }
+
+        return true;
     }
 
 <<<INSERT TESTS HERE>>>
