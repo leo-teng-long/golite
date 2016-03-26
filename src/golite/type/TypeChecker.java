@@ -4,11 +4,13 @@ import golite.exception.TypeCheckException;
 import golite.symbol.FunctionSymbol;
 import golite.symbol.Symbol;
 import golite.symbol.SymbolTable;
+import golite.symbol.TypeAliasSymbol;
 import golite.symbol.VariableSymbol;
 import golite.util.LineAndPosTracker;
 import golite.analysis.*;
 import golite.node.*;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -49,7 +51,7 @@ public class TypeChecker extends DepthFirstAdapter {
      * @return Corresponding GoLite type
      * @throws TypeCheckerException
      */
-    public GoLiteType getType(PTypeExpr node) {
+    private GoLiteType getType(PTypeExpr node) {
         if (node == null)
             return null;
 
@@ -166,6 +168,36 @@ public class TypeChecker extends DepthFirstAdapter {
 		return type;
 	}
 
+	/**
+	 * Get Id tokens from the given AST node.
+	 *
+	 * @param node - AST node
+	 * @return List of Id tokens
+	 */
+	private ArrayList<TId> getIds(Node node) {
+        ArrayList<TId> ids = new ArrayList<TId>();
+
+        // Variable specification.
+        if (node instanceof ASpecVarSpec) {
+            LinkedList<POptId> pOptIds = ((ASpecVarSpec) node).getOptId();
+            
+            for (POptId o: pOptIds) {
+            	// Ignore blank Id's.
+                if (o instanceof AIdOptId)
+                    ids.add(((AIdOptId) o).getId());
+            }
+        // Type specification.
+        } else if (node instanceof ASpecTypeSpec) {
+            POptId pOptId = ((ASpecTypeSpec) node).getOptId();
+            
+            if (pOptId instanceof AIdOptId)
+                ids.add(((AIdOptId) pOptId).getId());
+        } else if (node instanceof AArgArgGroup)
+        	ids = new ArrayList<TId>(((AArgArgGroup) node).getId());
+
+        return ids;
+    }
+
 	@Override
     public void inStart(Start node) {
     	// Gather all line and position information.
@@ -191,8 +223,7 @@ public class TypeChecker extends DepthFirstAdapter {
     public void outAVarsTopDec(AVarsTopDec node) {
         // Loop over the variable specifications.
         for(PVarSpec pVarSpec : node.getVarSpec()) {
-            // Get the optional Id's.
-            LinkedList<POptId> pOptIds = ((ASpecVarSpec) pVarSpec).getOptId();
+            // Get the expressions on the R.H.S.
             LinkedList<PExpr> pExprs = ((ASpecVarSpec) pVarSpec).getExpr();
 
 	        // Flag for whether the variables are initialized with expressions.
@@ -200,51 +231,48 @@ public class TypeChecker extends DepthFirstAdapter {
 
             // Loop over each Id, tracking the position in the specfication.
             int i = 0;
-            for(POptId pOptId : pOptIds) {
-                // Do not consider blank Id's.
-                if (pOptId instanceof AIdOptId) {
-                	// Symbol table already checks if the name is already taken by another
-                	// identifier in the global scope.
-                    TId id = ((AIdOptId) pOptId).getId();
-                   	
-                    PTypeExpr pTypeExpr = ((ASpecVarSpec) pVarSpec).getTypeExpr();
-                    // Type must be inferred.
-                    if (pTypeExpr == null) {
-                    	// Expression should exist, otherwise a parser or weeder would've caught the
-                    	// Error.
-                    	PExpr pExpr = ((ASpecVarSpec) pVarSpec).getExpr().get(i);
+            // Symbol table already checks if the name is already taken by another identifier in the
+            // global scope.
+            for (TId id : this.getIds(((ASpecVarSpec) pVarSpec))) {
+                PTypeExpr pTypeExpr = ((ASpecVarSpec) pVarSpec).getTypeExpr();
+                // Type must be inferred.
+                if (pTypeExpr == null) {
+                	// Expression should exist, otherwise a parser or weeder would've caught the
+                	// Error.
+                	PExpr pExpr = ((ASpecVarSpec) pVarSpec).getExpr().get(i);
 
-                    	GoLiteType type = this.getType(pExpr);
+                	GoLiteType type = this.getType(pExpr);
 
-                    	// Expression is a void function call 
-                    	if (type instanceof VoidType) {
-                    		TId funcId = ((AFuncCallExpr) pExpr).getId();
-                    		this.throwTypeCheckException(pExpr,
-                    			funcId.getText() + "() used as a value");
-                    	}
-                    		
-                    	this.symbolTable.putSymbol(new VariableSymbol(id.getText(), type, node));
-                    // Type is declared and so check that the type declaration and initializing
-                    // expressions (if any) are type compatible.
-                    } else {
-                    	// GoLite type of the type expression.
-	                	GoLiteType typeExprType = this.getType(pTypeExpr);
+                	// Expression is a void function call 
+                	if (type instanceof VoidType) {
+                		TId funcId = ((AFuncCallExpr) pExpr).getId();
+                		this.throwTypeCheckException(pExpr,
+                			funcId.getText() + "() used as a value");
+                	}
+                		
+                	this.symbolTable.putSymbol(new VariableSymbol(id.getText(), type, node));
+                // Type is declared and so check that the type declaration and initializing
+                // expressions (if any) are type compatible.
+                } else {
+                	// GoLite type of the type expression.
+                	GoLiteType typeExprType = this.getType(pTypeExpr);
 
-	                	// Variable is initialized with an expression.
-	                	if (isInitialized) {
-	                		// Get the corresponding expression node.
-	                		PExpr pExpr = ((ASpecVarSpec) pVarSpec).getExpr().get(i);
-	                		// Get its GoLite type.
-	                		GoLiteType exprType = this.getType(pExpr);
-	                		
-	                		// Check the types for compatibility, throwing an error if not.
-	                		if (!typeExprType.equals(exprType))
-	                			this.throwTypeCheckException(pExpr,
-	                				"Cannot use value of type " + exprType + " for " + typeExprType);
-	                	}
-	                }
+                	// Variable is initialized with an expression.
+                	if (isInitialized) {
+                		// Get the corresponding expression node.
+                		PExpr pExpr = ((ASpecVarSpec) pVarSpec).getExpr().get(i);
+                		// Get its GoLite type.
+                		GoLiteType exprType = this.getType(pExpr);
+                		
+                		// Check the types for compatibility, throwing an error if not.
+                		if (!typeExprType.equals(exprType))
+                			this.throwTypeCheckException(pExpr,
+                				"Cannot use value of type " + exprType + " for "
+                				+ typeExprType);
+                	}
                 }
 
+                // Increment to next position.
                 i++;
             }
         }
@@ -281,17 +309,18 @@ public class TypeChecker extends DepthFirstAdapter {
 
         // Loop over each identifier in the group and add a new variable symbol into the function
         // scope for each.
-        for (TId id : node.getId()) {
+        for (TId id : this.getIds(node)) {
         	// Throw an error if multiple arguments have the same Id.
             this.checkifDeclaredInCurrentScope(id);
             this.symbolTable.putSymbol(new VariableSymbol(id.getText(), type, node));
         }
     }
 
+    // Add non-global variables declared into the symbol table, performing type compatability checks
+    // and type inference, if necessary.
     @Override
     public void outASpecVarSpec(ASpecVarSpec node) {
-        // Get the optional Id's.
-        LinkedList<POptId> pOptIds = node.getOptId();
+        // Get the expressions on the R.H.S.
         LinkedList<PExpr> pExprs = node.getExpr();
 
         // Flag for whether the variables are initialized with expressions.
@@ -299,60 +328,77 @@ public class TypeChecker extends DepthFirstAdapter {
 
         // Loop over each Id, tracking the position in the specfication.
         int i = 0;
-        for(POptId pOptId : pOptIds) {
-            // Do not consider blank Id's.
-            if (pOptId instanceof AIdOptId) {
-                TId id = ((AIdOptId) pOptId).getId();
-               	
-               	// Skip variable specifications in the global scope, they're already taken care of.
-                if (this.symbolTable.inGlobalScope())
-                	return;
+       	for (TId id : this.getIds(node)) {
+           	// Skip variable specifications in the global scope, they're already taken care of in
+           	// symbol table building.
+            if (this.symbolTable.inGlobalScope())
+            	return;
 
-               	// Throw an error if a symbol with the given Id already exists in the current scope
-               	// and the current scope.
-                this.checkifDeclaredInCurrentScope(id);
+           	// Throw an error if a symbol with the given Id already exists in the current scope
+           	// and the current scope.
+            this.checkifDeclaredInCurrentScope(id);
 
-                PTypeExpr pTypeExpr = node.getTypeExpr();
-                // Type not declared and so must be inferred.
-                if (pTypeExpr == null) {
-                	// Expression should exist, otherwise a parser or weeder would've caught the
-                	// Error.
-                	PExpr pExpr = node.getExpr().get(i);
+            PTypeExpr pTypeExpr = node.getTypeExpr();
+            // Type not declared and so must be inferred.
+            if (pTypeExpr == null) {
+            	// Expression should exist, otherwise a parser or weeder would've caught the
+            	// Error.
+            	PExpr pExpr = node.getExpr().get(i);
 
-                	GoLiteType type = this.getType(pExpr);
+            	GoLiteType type = this.getType(pExpr);
 
-                	// Expression is a void function call 
-                	if (type instanceof VoidType) {
-                		TId funcId = ((AFuncCallExpr) pExpr).getId();
-                		this.throwTypeCheckException(pExpr,
-                			funcId.getText() + "() used as a value");
-                	}
-                		
-                	this.symbolTable.putSymbol(new VariableSymbol(id.getText(), type, node));
-                } else {
-                	// GoLite type of the type expression.
-                	GoLiteType typeExprType = this.getType(pTypeExpr);
+            	// Expression is a void function call 
+            	if (type instanceof VoidType) {
+            		TId funcId = ((AFuncCallExpr) pExpr).getId();
+            		this.throwTypeCheckException(pExpr,
+            			funcId.getText() + "() used as a value");
+            	}
+            		
+            	this.symbolTable.putSymbol(new VariableSymbol(id.getText(), type, node));
+            } else {
+            	// GoLite type of the type expression.
+            	GoLiteType typeExprType = this.getType(pTypeExpr);
 
-                	// Variable is initialized with an expression.
-                	if (isInitialized) {
-                		// Get the corresponding expression node.
-                		PExpr pExpr = node.getExpr().get(i);
-                		// Get its GoLite type.
-                		GoLiteType exprType = this.getType(pExpr);
-                		
-                		// Check the types for compatibility, throwing an error if not.
-                		if (!typeExprType.equals(exprType))
-                			this.throwTypeCheckException(pExpr,
-                				"Cannot use value of type " + exprType + " for " + typeExprType);
-                	}
+            	// Variable is initialized with an expression.
+            	if (isInitialized) {
+            		// Get the corresponding expression node.
+            		PExpr pExpr = node.getExpr().get(i);
+            		// Get its GoLite type.
+            		GoLiteType exprType = this.getType(pExpr);
+            		
+            		// Check the underlying types for compatibility, throwing an error if not.
+            		if (!typeExprType.getUnderlyingType().equals(exprType.getUnderlyingType()))
+            			this.throwTypeCheckException(pExpr,
+            				"Cannot use value of type " + exprType + " for " + typeExprType);
+            	}
 
-                	// Put a new variable symbol into the symbol table.
-                	this.symbolTable.putSymbol(new VariableSymbol(id.getText(), typeExprType,
-                		node));
-                }
+            	// Put a new variable symbol into the symbol table.
+            	this.symbolTable.putSymbol(new VariableSymbol(id.getText(), typeExprType,
+            		node));
             }
 
+            // Increment the position.
             i++;
+        }
+    }
+
+    @Override
+    public void inASpecTypeSpec(ASpecTypeSpec node) {
+    	// Skip type specifications in the global scope, they're already taken care of in symbol
+    	// table building.
+        if (this.symbolTable.inGlobalScope())
+        	return;
+
+        for (TId id: this.getIds(node)) {
+        	// Throw an error if the name is already taken by another identifier in the current
+        	// scope.
+            this.checkifDeclaredInCurrentScope(id);
+
+            // Get the GoLite type of the type expression.
+            GoLiteType type = this.getType(node.getTypeExpr());
+            // Add a type alias symbol to the symbol table.
+            this.symbolTable.putSymbol(new TypeAliasSymbol(id.getText(), type, node));
+            this.typeTable.put(node, type);
         }
     }
 
