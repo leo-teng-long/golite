@@ -270,6 +270,9 @@ def main():
 	valid_syntax_progs_dirpaths = [VALID_ACTUAL_PROGS_DIRPATH,
 		VALID_GENERAL_PROGS_DIRPATH, VALID_SYNTAX_PROGS_DIRPATH]
 
+	valid_type_progs_dirpaths = [VALID_ACTUAL_PROGS_DIRPATH,
+		VALID_GENERAL_PROGS_DIRPATH, VALID_TYPE_PROGS_DIRPATH]
+
 	# Create the parser test for syntactically valid programs.
 	logging.info("Creating parser test for syntactically valid programs...")
 	create_test(OUT_VALID_PARSE_TNAME, valid_syntax_progs_dirpaths,
@@ -289,7 +292,7 @@ def main():
 
 	# Create the type checker test for correctly-typed programs.
 	logging.info("Creating type checker test for correctly-typed programs....")
-	create_test(OUT_VALID_TYPE_TNAME, [VALID_TYPE_PROGS_DIRPATH], 'valid_type',
+	create_test(OUT_VALID_TYPE_TNAME, valid_type_progs_dirpaths, 'valid_type',
 		os.path.join(OUT_TEST_DIRPATH, '%s.java' % OUT_VALID_TYPE_TNAME))
 
 	# Create the type checker test for incorrectly-typed programs.
