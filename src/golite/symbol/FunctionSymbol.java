@@ -1,6 +1,7 @@
 package golite.symbol;
 
 import golite.type.GoLiteType;
+import golite.type.VoidType;
 import golite.node.Node;
 
 import java.lang.StringBuilder;
@@ -25,9 +26,19 @@ public class FunctionSymbol extends Symbol {
 	 */
 	public FunctionSymbol(String name, GoLiteType returnType, Node node) {
 		this.name = name;
-		this.type = returnType;
+		this.type = (returnType == null) ? new VoidType() : returnType;
 		this.node = node;
 		this.argTypes = new ArrayList<GoLiteType>();
+	}
+
+	/**
+	 * Constructor for void function.
+	 *
+	 * @param id - Id
+	 * @param node - Corresponding AST node
+	 */
+	public FunctionSymbol(String name, Node node) {
+		this(name, null, node);
 	}
 
 	/**
@@ -82,8 +93,7 @@ public class FunctionSymbol extends Symbol {
 		s.append(" -> ");
 
 		s.append("(");
-		if (this.type != null)
-			s.append(this.type.toString());
+		s.append(this.type.toString());
 		s.append(")");
 
 		return s.toString();
@@ -107,8 +117,7 @@ public class FunctionSymbol extends Symbol {
 		s.append(" -> ");
 
 		s.append("(");
-		if (this.type != null)
-			s.append(this.type.getUnderlyingType().toString());
+		s.append(this.type.getUnderlyingType().toString());
 		s.append(")");
 
 		return s.toString();

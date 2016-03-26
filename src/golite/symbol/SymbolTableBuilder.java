@@ -189,7 +189,7 @@ public class SymbolTableBuilder extends DepthFirstAdapter {
                         } else
                             // Add a variable symbol to the symbol table.
                             this.table.putSymbol(new VariableSymbol(id.getText(),
-                                this.getType(pTypeExpr), node));
+                                this.getType(pTypeExpr), pVarSpec));
                     }
                 }
             }
@@ -214,7 +214,7 @@ public class SymbolTableBuilder extends DepthFirstAdapter {
                     PTypeExpr pTypeExpr = ((ASpecTypeSpec) pTypeSpec).getTypeExpr();
                     // Add a type alias symbol to the symbol table.
                     this.table.putSymbol(new TypeAliasSymbol(id.getText(),
-                        this.getType(pTypeExpr), node));
+                        this.getType(pTypeExpr), pTypeSpec));
                 }
             }
         }
@@ -235,7 +235,7 @@ public class SymbolTableBuilder extends DepthFirstAdapter {
             FunctionSymbol funcSymbol = null;
             // No return type.
             if (pTypeExpr == null)
-                funcSymbol = new FunctionSymbol(id.getText(), null, node);
+                funcSymbol = new FunctionSymbol(id.getText(), node);
             // Has return type.
             else
                 funcSymbol = new FunctionSymbol(id.getText(), this.getType(pTypeExpr), node);
@@ -275,12 +275,13 @@ public class SymbolTableBuilder extends DepthFirstAdapter {
         return this.table;
     }
 	
+    // Intialize the 0th scope.
 	@Override
     public void inStart(Start node) {
     	// Gather all line and position information.
         node.apply(this.lineAndPosTracker);
 
-         // Enter the 0-th scope.
+         // Enter the 0th scope.
         this.table = new SymbolTable();
         this.table.scope();
 
@@ -289,7 +290,11 @@ public class SymbolTableBuilder extends DepthFirstAdapter {
         Symbol falseSymbol = new VariableSymbol("false", new BoolType(), node);
         this.table.putSymbol(trueSymbol);
         this.table.putSymbol(falseSymbol);
+    }
 
+    // Initialize the global scope.
+    @Override
+    public void inAProgProg(AProgProg node) {
         // Enter the global scope.
         this.table.scope();
 
@@ -400,13 +405,6 @@ public class SymbolTableBuilder extends DepthFirstAdapter {
 
         // For base types.
         return type;
-    }
-
-    // Unscope the global and 0-th scope upon program exit.
-    @Override
-    public void outStart(Start node) {
-        this.table.unscope();
-        this.table.unscope();
     }
 
 }
