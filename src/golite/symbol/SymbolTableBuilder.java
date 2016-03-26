@@ -298,7 +298,10 @@ public class SymbolTableBuilder extends DepthFirstAdapter {
         // Make the first pass.
         FirstPasser firstPasser = new FirstPasser(this.table, this.lineAndPosTracker);
         node.apply(firstPasser);
+    }
 
+    @Override
+    public void outAProgProg(AProgProg node) {
         // Resolve all global symbols that are typed with an alias by passing over all the symbols
         // in the global scope.
         for (Symbol symbol : this.table.getSymbolsFromCurrentScope()) {
@@ -398,6 +401,8 @@ public class SymbolTableBuilder extends DepthFirstAdapter {
             AliasType aliasType = new AliasType(alias,
                 this.getResolvedType(typeAliasSymbol.getType(), aliases));
             aliases.pop();
+
+            return aliasType;
         }
 
         // For base types.
