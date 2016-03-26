@@ -313,8 +313,6 @@ public class SymbolTableBuilder extends DepthFirstAdapter {
                 throwSymbolTableException(symbol.getNode(), e.getMessage());
             }
         }
-            
-        System.out.println(this.table);
     }
 
     /**
