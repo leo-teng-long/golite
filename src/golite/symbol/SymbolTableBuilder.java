@@ -1,6 +1,17 @@
 package golite.symbol;
 
 import golite.exception.SymbolTableException;
+import golite.type.AliasType;
+import golite.type.ArrayType;
+import golite.type.BoolType;
+import golite.type.FloatType;
+import golite.type.GoLiteType;
+import golite.type.IntType;
+import golite.type.RuneType;
+import golite.type.SliceType;
+import golite.type.StringType;
+import golite.type.StructType;
+import golite.type.ToBeInferredType;
 import golite.util.LineAndPosTracker;
 import golite.analysis.*;
 import golite.node.*;

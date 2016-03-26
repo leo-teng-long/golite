@@ -1,4 +1,4 @@
-package golite.symbol;
+package golite.type;
 
 
 /**

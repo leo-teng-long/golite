@@ -1,4 +1,4 @@
-package golite.symbol;
+package golite.type;
 
 import java.lang.StringBuilder;
 import java.util.ArrayList;
@@ -13,7 +13,7 @@ public class StructType extends GoLiteType {
 	/**
 	 * Struct field.
 	 */
-	protected static class Field {
+	public static class Field {
 
 		/** Field Id. */
 		private String id;
@@ -34,14 +34,14 @@ public class StructType extends GoLiteType {
 		/**
 		 * Getter.
 		 */
-		protected String getId() {
+		public String getId() {
 			return this.id;
 		}
 
 		/**
 		 * Getter.
 		 */
-		protected GoLiteType getType() {
+		public GoLiteType getType() {
 			return this.type;
 		}
 

@@ -1,10 +1,10 @@
-package golite.symbol;
+package golite.type;
 
 
 /**
  * A placeholder type indicating the type for a given program element must be inferred.
  */
-class ToBeInferredType extends GoLiteType {
+public class ToBeInferredType extends GoLiteType {
 
 	@Override
 	public String toString() {

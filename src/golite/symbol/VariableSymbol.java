@@ -1,5 +1,6 @@
 package golite.symbol;
 
+import golite.type.GoLiteType;
 import golite.node.Node;
 
 
