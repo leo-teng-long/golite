@@ -1034,14 +1034,76 @@ public class TypeChecker extends DepthFirstAdapter {
 
     /** Type check expressions. **/
 
+    /* Unary expressions. */
+
+    // Plus unary expression.
+    @Override
+    public void outAPosExpr(APosExpr node) {
+    	PExpr pExpr = node.getExpr();
+    	// Expression type.
+        GoLiteType type = this.getType(pExpr);
+
+        // Throw an error if the expression is not numeric.
+        if (!this.isNumericType(type))
+            this.throwTypeCheckException(pExpr,
+            	"Invalid oepration '+': undefined for type " + type);
+
+        this.typeTable.put(node, type);
+    }
+
+    // Minus unary expression.
+    @Override
+    public void outANegExpr(ANegExpr node) {
+    	PExpr pExpr = node.getExpr();
+    	// Expression type.
+        GoLiteType type = this.getType(pExpr);
+
+        // Throw an error if the expression is not numeric.
+        if (!this.isNumericType(type))
+            this.throwTypeCheckException(pExpr,
+            	"Invalid oepration '-': undefined for type " + type);
+
+        this.typeTable.put(node, type);
+    }
+
+    // Bit complement unary expression.
+    @Override
+    public void outABitCompExpr(ABitCompExpr node) {
+    	PExpr pExpr = node.getExpr();
+    	// Expression type.
+        GoLiteType type = this.getType(pExpr);
+
+        // Throw an error if the expression is not integer or rune.
+        if (!this.isIntOrRuneType(type))
+            this.throwTypeCheckException(pExpr,
+            	"Invalid oepration '^': undefined for type " + type);
+
+        this.typeTable.put(node, type);
+    }
+
+    // Not unary expression.
+    @Override
+    public void outANotExpr(ANotExpr node) {
+    	PExpr pExpr = node.getExpr();
+    	// Expression type.
+        GoLiteType type = this.getType(pExpr);
+
+        // Throw an error if the expression is not boolean.
+        if (!(type instanceof BoolType))
+            this.throwTypeCheckException(pExpr,
+            	"Invalid oepration '!': undefined for type " + type);
+
+        this.typeTable.put(node, type);
+    }
+
     /* Type check comparison expressions. */
 
     // '==' expression.
     @Override
     public void outAEqExpr(AEqExpr node) {
         // Left and right hand expression types.
-        GoLiteType leftExprType = this.typeTable.get(node.getLeft());
-        GoLiteType rightExprType = this.typeTable.get(node.getRight());
+        GoLiteType leftExprType = this.getType(node.getLeft());
+        GoLiteType rightExprType = this.getType(node.getRight());
 
         // Make sure operands have the same surface type, otherwise throw an error.
         if (!leftExprType.equals(rightExprType))
@@ -1061,8 +1123,8 @@ public class TypeChecker extends DepthFirstAdapter {
     @Override
     public void outANeqExpr(ANeqExpr node) {
         // Left and right hand expression types.
-        GoLiteType leftExprType = this.typeTable.get(node.getLeft());
-        GoLiteType rightExprType = this.typeTable.get(node.getRight());
+        GoLiteType leftExprType = this.getType(node.getLeft());
+        GoLiteType rightExprType = this.getType(node.getRight());
 
         // Make sure operands have the same surface type, otherwise throw an error.
         if (!leftExprType.equals(rightExprType))
@@ -1082,8 +1144,8 @@ public class TypeChecker extends DepthFirstAdapter {
     @Override
     public void outALtExpr(ALtExpr node) {
     	// Left and right hand expression types.
-        GoLiteType leftExprType = this.typeTable.get(node.getLeft());
-        GoLiteType rightExprType = this.typeTable.get(node.getRight());
+        GoLiteType leftExprType = this.getType(node.getLeft());
+        GoLiteType rightExprType = this.getType(node.getRight());
 
         // Make sure operands have the same surface type, otherwise throw an error.
         if (!leftExprType.equals(rightExprType))
@@ -1103,8 +1165,8 @@ public class TypeChecker extends DepthFirstAdapter {
     @Override
     public void outALteExpr(ALteExpr node) {
     	// Left and right hand expression types.
-        GoLiteType leftExprType = this.typeTable.get(node.getLeft());
-        GoLiteType rightExprType = this.typeTable.get(node.getRight());
+        GoLiteType leftExprType = this.getType(node.getLeft());
+        GoLiteType rightExprType = this.getType(node.getRight());
 
         // Make sure operands have the same surface type, otherwise throw an error.
         if (!leftExprType.equals(rightExprType))
@@ -1124,8 +1186,8 @@ public class TypeChecker extends DepthFirstAdapter {
     @Override
     public void outAGtExpr(AGtExpr node) {
     	// Left and right hand expression types.
-        GoLiteType leftExprType = this.typeTable.get(node.getLeft());
-        GoLiteType rightExprType = this.typeTable.get(node.getRight());
+        GoLiteType leftExprType = this.getType(node.getLeft());
+        GoLiteType rightExprType = this.getType(node.getRight());
 
         // Make sure operands have the same surface type, otherwise throw an error.
         if (!leftExprType.equals(rightExprType))
@@ -1145,8 +1207,8 @@ public class TypeChecker extends DepthFirstAdapter {
     @Override
     public void outAGteExpr(AGteExpr node) {
     	// Left and right hand expression types.
-        GoLiteType leftExprType = this.typeTable.get(node.getLeft());
-        GoLiteType rightExprType = this.typeTable.get(node.getRight());
+        GoLiteType leftExprType = this.getType(node.getLeft());
+        GoLiteType rightExprType = this.getType(node.getRight());
 
         // Make sure operands have the same surface type, otherwise throw an error.
         if (!leftExprType.equals(rightExprType))
