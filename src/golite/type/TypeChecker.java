@@ -1609,6 +1609,31 @@ public class TypeChecker extends DepthFirstAdapter {
         		"Cannot call non-function " + name + " (type " + symbol.getType() + ")");
     }
 
+    // Array access.
+    @Override
+    public void outAArrayElemExpr(AArrayElemExpr node) {
+    	// Array expression and type.
+    	PExpr arrayExpr = node.getArray();
+    	GoLiteType arrayExprType = this.getType(arrayExpr);
+    	// Index expression and type.
+    	PExpr indexExpr = node.getIndex();
+		GoLiteType indexExprType = this.getType(indexExpr);
+
+		// Make sure index is of type integer, otherwise throw an error.
+		// TODO: Remove this check from the weeder.
+		if (!(indexExprType instanceof IntType))
+			this.throwTypeCheckException(indexExpr, "Non-integer array bound");
+
+		// Make sure the array expression evaluates to an array or slice, otherwise throw an error.
+		if (arrayExprType instanceof ArrayType)
+        	this.typeTable.put(node, ((ArrayType) arrayExprType).getType().getUnderlyingType());
+        else if (arrayExprType instanceof SliceType)
+        	this.typeTable.put(node, ((SliceType) arrayExprType).getType().getUnderlyingType());
+        else
+        	this.throwTypeCheckException(arrayExpr, "Invalid operation '[]': type " + arrayExprType
+				+ " does not support indexing");
+    }
+
     // Enter a variable expression into the type table.
     @Override
     public void outAVariableExpr(AVariableExpr node) {
