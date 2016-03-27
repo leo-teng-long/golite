@@ -24,12 +24,13 @@ public class TypeChecker extends DepthFirstAdapter {
 
 	/** Symbol table. */
 	private SymbolTable symbolTable;
-
 	/** Type table. */
 	private HashMap<Node, GoLiteType> typeTable;
-
 	/** Line and position tracker for AST nodes. */
     private LineAndPosTracker lineAndPosTracker;
+
+    /** Keeps track of the function symbol when entering the body of a function. */
+    private FunctionSymbol currentFunctionSymbol;
 
 	/**
 	 * Constructor.
@@ -368,6 +369,9 @@ public class TypeChecker extends DepthFirstAdapter {
         // Function symbol is already in the symbol table.
         FunctionSymbol funcSymbol = (FunctionSymbol) this.symbolTable.getSymbol(id.getText());
 
+        // Set the current function symbol so descendants can access function information.
+        this.currentFunctionSymbol = funcSymbol;
+
      	// Enter the function body.
      	this.symbolTable.scope();
 
@@ -381,6 +385,8 @@ public class TypeChecker extends DepthFirstAdapter {
 
      	// Exit the fucntion body.
      	this.symbolTable.unscope();
+
+     	this.currentFunctionSymbol = null;
     }
 
     // Add function arguments as variable symbols into the current scope.
@@ -487,7 +493,7 @@ public class TypeChecker extends DepthFirstAdapter {
 
     /* Type check statements */
 
-    // Short assignment.
+    // Short assignment statement.
     @Override
     public void outAShortAssignStmt(AShortAssignStmt node) {
        	// Get L.H.S. (non-blank) Id's.
@@ -539,6 +545,34 @@ public class TypeChecker extends DepthFirstAdapter {
         // Throw an error is no new variables are declared on the L.H.S.
         if (!hasNewDecInCurrentScope)
             this.throwTypeCheckException(node, "No new variables on left side of :=");
+    }
+
+    // Return statement.
+    @Override
+    public void outAReturnStmt(AReturnStmt node) {
+        // Current function's return type.
+        GoLiteType returnType = this.currentFunctionSymbol.getReturnType();
+        
+        // Return expression.
+        PExpr pExpr = node.getExpr();
+
+        // Empty return statement.
+        if (pExpr == null) {
+        	// Throw an error if the return type is non-void.
+            if (!(returnType instanceof VoidType))
+                this.throwTypeCheckException(node, "Not enough arguments to return");
+        // Non-empty return statement.
+        } else {
+        	// Throw an error if the return type is void.
+         	if (returnType instanceof VoidType)
+                this.throwTypeCheckException(pExpr, "Too many arguments to return");
+
+            // Check the return type and return expression for type compatibility.
+            GoLiteType exprType = this.typeTable.get(pExpr);
+            if (returnType.getUnderlyingType().equals(exprType))
+                this.throwTypeCheckException(pExpr, "Cannot use type " + exprType + " as type "
+                	+ returnType + " in return argument");
+        }
     }
 
     // Loop statement.
