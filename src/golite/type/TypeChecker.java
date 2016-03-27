@@ -855,23 +855,40 @@ public class TypeChecker extends DepthFirstAdapter {
     // Loop statement.
     @Override
     public void caseALoopStmt(ALoopStmt node) {
-    	// Create a new scope for the loop body.
+    	// Create a new scope for the loop initializer and body.
         this.symbolTable.scope();
-    }
 
-    @Override
-    public void outALoopStmt(ALoopStmt node) {
-    	// Loop condition.
+        // Type check the initial statement, if it exists.
+        PStmt pStmt = node.getInit();
+        if (pStmt != null)
+            pStmt.apply(this);
+
+        // Loop condition.
     	PExpr pExpr = node.getExpr();
-
     	// If the condition is not empty, make sure it evaluates to a boolean.
     	if (pExpr != null) {
+            pExpr.apply(this);
             GoLiteType condType = this.typeTable.get(pExpr);
             if (!(condType instanceof BoolType))
                 this.throwTypeCheckException(pExpr,
                 	"Non-bool (type " + condType + ") used as for condition");
         }
 
+        // Type check the end statement, if it exists.
+        pStmt = node.getEnd();
+        if (pStmt != null)
+            pStmt.apply(this);
+
+        // Create a new scope for the loop body.
+        this.symbolTable.scope();
+
+        // Type check the body statements.
+        for (PStmt s : node.getBlock())
+            s.apply(this);
+
+        // Exit the scope for the loop body.
+        this.symbolTable.unscope();
+        // Exit the scope for the loop initializer and body.
     	this.symbolTable.unscope();
     }
 
