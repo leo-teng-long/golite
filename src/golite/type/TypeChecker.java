@@ -1161,6 +1161,150 @@ public class TypeChecker extends DepthFirstAdapter {
         typeTable.put(node, leftExprType.getUnderlyingType());
     }
 
+    // Bit-and expression.
+    @Override
+    public void outABitAndExpr(ABitAndExpr node) {
+         // Left and right hand expressions their types.
+        PExpr leftExpr = node.getLeft();
+        PExpr rightExpr = node.getRight();
+        GoLiteType leftExprType = this.getType(leftExpr);
+        GoLiteType rightExprType = this.getType(rightExpr);
+
+       	// Make sure operands are type compatible, otherwise throw an error.
+	    if (!(leftExprType.getUnderlyingType().equals(rightExprType)
+	    	|| rightExprType.getUnderlyingType().equals(leftExprType)))
+	        this.throwTypeCheckException(node,
+	        	"Invalid operation '&': mismatched types " + leftExprType + " and "
+	        	+ rightExprType);
+
+	    // Make sure the underlying operand type is integer or rune, otherwise throw an error.
+	    if (!this.isIntOrRuneType(leftExprType))
+	        this.throwTypeCheckException(node,
+	        	"Invalid operation '&': operator not defined on " + leftExprType);
+	    
+	    typeTable.put(node, leftExprType.getUnderlyingType());
+    }
+
+    // Bit-or expression.
+    @Override
+    public void outABitOrExpr(ABitOrExpr node) {
+         // Left and right hand expressions their types.
+        PExpr leftExpr = node.getLeft();
+        PExpr rightExpr = node.getRight();
+        GoLiteType leftExprType = this.getType(leftExpr);
+        GoLiteType rightExprType = this.getType(rightExpr);
+
+       	// Make sure operands are type compatible, otherwise throw an error.
+	    if (!(leftExprType.getUnderlyingType().equals(rightExprType)
+	    	|| rightExprType.getUnderlyingType().equals(leftExprType)))
+	        this.throwTypeCheckException(node,
+	        	"Invalid operation '|': mismatched types " + leftExprType + " and "
+	        	+ rightExprType);
+
+	    // Make sure the underlying operand type is integer or rune, otherwise throw an error.
+	    if (!this.isIntOrRuneType(leftExprType))
+	        this.throwTypeCheckException(node,
+	        	"Invalid operation '|': operator not defined on " + leftExprType);
+	    
+	    typeTable.put(node, leftExprType.getUnderlyingType());
+    }
+
+    // Bit-xor expression.
+    @Override
+    public void outABitXorExpr(ABitXorExpr node) {
+         // Left and right hand expressions their types.
+        PExpr leftExpr = node.getLeft();
+        PExpr rightExpr = node.getRight();
+        GoLiteType leftExprType = this.getType(leftExpr);
+        GoLiteType rightExprType = this.getType(rightExpr);
+
+       	// Make sure operands are type compatible, otherwise throw an error.
+	    if (!(leftExprType.getUnderlyingType().equals(rightExprType)
+	    	|| rightExprType.getUnderlyingType().equals(leftExprType)))
+	        this.throwTypeCheckException(node,
+	        	"Invalid operation '^': mismatched types " + leftExprType + " and "
+	        	+ rightExprType);
+
+	    // Make sure the underlying operand type is integer or rune, otherwise throw an error.
+	    if (!this.isIntOrRuneType(leftExprType))
+	        this.throwTypeCheckException(node,
+	        	"Invalid operation '^': operator not defined on " + leftExprType);
+	    
+	    typeTable.put(node, leftExprType.getUnderlyingType());
+    }
+
+    // Bit-clear expression.
+    @Override
+    public void outABitClearExpr(ABitClearExpr node) {
+         // Left and right hand expressions their types.
+        PExpr leftExpr = node.getLeft();
+        PExpr rightExpr = node.getRight();
+        GoLiteType leftExprType = this.getType(leftExpr);
+        GoLiteType rightExprType = this.getType(rightExpr);
+
+       	// Make sure operands are type compatible, otherwise throw an error.
+	    if (!(leftExprType.getUnderlyingType().equals(rightExprType)
+	    	|| rightExprType.getUnderlyingType().equals(leftExprType)))
+	        this.throwTypeCheckException(node,
+	        	"Invalid operation '&^': mismatched types " + leftExprType + " and "
+	        	+ rightExprType);
+
+	    // Make sure the underlying operand type is integer or rune, otherwise throw an error.
+	    if (!this.isIntOrRuneType(leftExprType))
+	        this.throwTypeCheckException(node,
+	        	"Invalid operation '&^': operator not defined on " + leftExprType);
+	    
+	    typeTable.put(node, leftExprType.getUnderlyingType());
+    }
+
+    // Bit-left-shift expression.
+    @Override
+    public void outABitLshiftExpr(ABitLshiftExpr node) {
+         // Left and right hand expressions their types.
+        PExpr leftExpr = node.getLeft();
+        PExpr rightExpr = node.getRight();
+        GoLiteType leftExprType = this.getType(leftExpr);
+        GoLiteType rightExprType = this.getType(rightExpr);
+
+       	// Make sure operands are type compatible, otherwise throw an error.
+	    if (!(leftExprType.getUnderlyingType().equals(rightExprType)
+	    	|| rightExprType.getUnderlyingType().equals(leftExprType)))
+	        this.throwTypeCheckException(node,
+	        	"Invalid operation '<<': mismatched types " + leftExprType + " and "
+	        	+ rightExprType);
+
+	    // Make sure the underlying operand type is integer or rune, otherwise throw an error.
+	    if (!this.isIntOrRuneType(leftExprType))
+	        this.throwTypeCheckException(node,
+	        	"Invalid operation '<<': operator not defined on " + leftExprType);
+	    
+	    typeTable.put(node, leftExprType.getUnderlyingType());
+    }
+
+    // Bit-right-shift expression.
+    @Override
+    public void outABitRshiftExpr(ABitRshiftExpr node) {
+         // Left and right hand expressions their types.
+        PExpr leftExpr = node.getLeft();
+        PExpr rightExpr = node.getRight();
+        GoLiteType leftExprType = this.getType(leftExpr);
+        GoLiteType rightExprType = this.getType(rightExpr);
+
+       	// Make sure operands are type compatible, otherwise throw an error.
+	    if (!(leftExprType.getUnderlyingType().equals(rightExprType)
+	    	|| rightExprType.getUnderlyingType().equals(leftExprType)))
+	        this.throwTypeCheckException(node,
+	        	"Invalid operation '>>': mismatched types " + leftExprType + " and "
+	        	+ rightExprType);
+
+	    // Make sure the underlying operand type is integer or rune, otherwise throw an error.
+	    if (!this.isIntOrRuneType(leftExprType))
+	        this.throwTypeCheckException(node,
+	        	"Invalid operation '>>': operator not defined on " + leftExprType);
+	    
+	    typeTable.put(node, leftExprType.getUnderlyingType());
+    }
+
     /* Unary expressions. */
 
     // Plus unary expression.
