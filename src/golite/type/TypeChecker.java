@@ -788,6 +788,30 @@ public class TypeChecker extends DepthFirstAdapter {
     	// Well-typedness is checked in expression nodes.
     }
 
+    // Print statement.
+    @Override
+    public void outAPrintStmt(APrintStmt node) {
+        for (PExpr pExpr : node.getExpr()) {
+            GoLiteType type = this.getType(pExpr);
+            
+            // Only primitive types can be printed.
+            if (!(type instanceof PrimitiveGoLiteType))
+                this.throwTypeCheckException(pExpr, "Cannot print type " + type);
+        }
+    }
+
+    // Println statement.
+    @Override
+    public void outAPrintlnStmt(APrintlnStmt node) {
+        for (PExpr pExpr : node.getExpr()) {
+            GoLiteType type = this.getType(pExpr);
+            
+            // Only primitive types can be printed.
+            if (!(type instanceof PrimitiveGoLiteType))
+                this.throwTypeCheckException(pExpr, "Cannot println type " + type);
+        }
+    }
+
     // Continue statement.
     @Override
     public void outAContinueStmt(AContinueStmt node) {
