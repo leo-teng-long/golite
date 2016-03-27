@@ -536,7 +536,7 @@ public class TypeChecker extends DepthFirstAdapter {
 
     /** Type check expressions. **/
 
-    // "Less than" expression.
+    // "<" expression.
     @Override
     public void outALtExpr(ALtExpr node) {
     	// Left and right hand expression types.
@@ -554,6 +554,72 @@ public class TypeChecker extends DepthFirstAdapter {
         if (!this.isOrdinalType(leftExprType.getUnderlyingType()))
             this.throwTypeCheckException(node,
             	"Invalid operation '<': undefined for type " + leftExprType);
+ 
+        typeTable.put(node, new BoolType());
+    }
+
+    // "<=" expression.
+    @Override
+    public void outALteExpr(ALteExpr node) {
+    	// Left and right hand expression types.
+        GoLiteType leftExprType = this.typeTable.get(node.getLeft());
+        GoLiteType rightExprType = this.typeTable.get(node.getRight());
+
+        // Make sure operands have the same surface type, otherwise throw an error.
+        if (!leftExprType.equals(rightExprType)) {
+            this.throwTypeCheckException(node.getLeft(),
+            	"Invalid operation '<=': (mismatched types " + leftExprType
+            		+ " and " + rightExprType + ")");
+        }
+
+        // Make sure the underlying operand type is ordinal, otherwise throw an error.
+        if (!this.isOrdinalType(leftExprType.getUnderlyingType()))
+            this.throwTypeCheckException(node,
+            	"Invalid operation '<=': undefined for type " + leftExprType);
+ 
+        typeTable.put(node, new BoolType());
+    }
+
+    // ">" expression.
+    @Override
+    public void outAGtExpr(AGtExpr node) {
+    	// Left and right hand expression types.
+        GoLiteType leftExprType = this.typeTable.get(node.getLeft());
+        GoLiteType rightExprType = this.typeTable.get(node.getRight());
+
+        // Make sure operands have the same surface type, otherwise throw an error.
+        if (!leftExprType.equals(rightExprType)) {
+            this.throwTypeCheckException(node.getLeft(),
+            	"Invalid operation '>': (mismatched types " + leftExprType
+            		+ " and " + rightExprType + ")");
+        }
+
+        // Make sure the underlying operand type is ordinal, otherwise throw an error.
+        if (!this.isOrdinalType(leftExprType.getUnderlyingType()))
+            this.throwTypeCheckException(node,
+            	"Invalid operation '>': undefined for type " + leftExprType);
+ 
+        typeTable.put(node, new BoolType());
+    }
+
+    // ">=" expression.
+    @Override
+    public void outAGteExpr(AGteExpr node) {
+    	// Left and right hand expression types.
+        GoLiteType leftExprType = this.typeTable.get(node.getLeft());
+        GoLiteType rightExprType = this.typeTable.get(node.getRight());
+
+        // Make sure operands have the same surface type, otherwise throw an error.
+        if (!leftExprType.equals(rightExprType)) {
+            this.throwTypeCheckException(node.getLeft(),
+            	"Invalid operation '>=': (mismatched types " + leftExprType
+            		+ " and " + rightExprType + ")");
+        }
+
+        // Make sure the underlying operand type is ordinal, otherwise throw an error.
+        if (!this.isOrdinalType(leftExprType.getUnderlyingType()))
+            this.throwTypeCheckException(node,
+            	"Invalid operation '>=': undefined for type " + leftExprType);
  
         typeTable.put(node, new BoolType());
     }
