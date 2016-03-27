@@ -1034,6 +1034,133 @@ public class TypeChecker extends DepthFirstAdapter {
 
     /** Type check expressions. **/
 
+    @Override
+    public void outAEmptyExpr(AEmptyExpr node) {
+    	// Trivially well-typed.
+    }
+
+    /* Binary arithmetic expressions. */
+
+    // Addition expression.
+    @Override
+    public void outAAddExpr(AAddExpr node) {
+        // Left and right hand expressions their types.
+        PExpr leftExpr = node.getLeft();
+        PExpr rightExpr = node.getRight();
+        GoLiteType leftExprType = this.getType(leftExpr);
+        GoLiteType rightExprType = this.getType(rightExpr);
+
+        // Make sure operands are type compatible, otherwise throw an error.
+        if (!(leftExprType.getUnderlyingType().equals(rightExprType)
+        	|| rightExprType.getUnderlyingType().equals(leftExprType)))
+            this.throwTypeCheckException(node,
+            	"Invalid operation '+': mismatched types " + leftExprType + " and "
+            	+ rightExprType);
+
+        // Make sure the underlying operand type is ordered, otherwise throw an error.
+        if (!this.isOrderedType(leftExprType))
+            this.throwTypeCheckException(node,
+            	"Invalid operation '+': operator not defined on " + leftExprType);
+        
+        typeTable.put(node, leftExprType.getUnderlyingType());
+    }
+
+    // Subtraction expression.
+    @Override
+    public void outASubtractExpr(ASubtractExpr node) {
+        // Left and right hand expressions their types.
+        PExpr leftExpr = node.getLeft();
+        PExpr rightExpr = node.getRight();
+        GoLiteType leftExprType = this.getType(leftExpr);
+        GoLiteType rightExprType = this.getType(rightExpr);
+
+        // Make sure operands are type compatible, otherwise throw an error.
+        if (!(leftExprType.getUnderlyingType().equals(rightExprType)
+        	|| rightExprType.getUnderlyingType().equals(leftExprType)))
+            this.throwTypeCheckException(node,
+            	"Invalid operation '-': mismatched types " + leftExprType + " and "
+            	+ rightExprType);
+
+        // Make sure the underlying operand type is numeric, otherwise throw an error.
+        if (!this.isNumericType(leftExprType))
+            this.throwTypeCheckException(node,
+            	"Invalid operation '-': operator not defined on " + leftExprType);
+        
+        typeTable.put(node, leftExprType.getUnderlyingType());
+    }
+
+    // Multiplication expression.
+    @Override
+    public void outAMultExpr(AMultExpr node) {
+        // Left and right hand expressions their types.
+        PExpr leftExpr = node.getLeft();
+        PExpr rightExpr = node.getRight();
+        GoLiteType leftExprType = this.getType(leftExpr);
+        GoLiteType rightExprType = this.getType(rightExpr);
+
+        // Make sure operands are type compatible, otherwise throw an error.
+        if (!(leftExprType.getUnderlyingType().equals(rightExprType)
+        	|| rightExprType.getUnderlyingType().equals(leftExprType)))
+            this.throwTypeCheckException(node,
+            	"Invalid operation '*': mismatched types " + leftExprType + " and "
+            	+ rightExprType);
+
+        // Make sure the underlying operand type is numeric, otherwise throw an error.
+        if (!this.isNumericType(leftExprType))
+            this.throwTypeCheckException(node,
+            	"Invalid operation '*': operator not defined on " + leftExprType);
+        
+        typeTable.put(node, leftExprType.getUnderlyingType());
+    }
+
+    // Division expression.
+    @Override
+    public void outADivExpr(ADivExpr node) {
+        // Left and right hand expressions their types.
+        PExpr leftExpr = node.getLeft();
+        PExpr rightExpr = node.getRight();
+        GoLiteType leftExprType = this.getType(leftExpr);
+        GoLiteType rightExprType = this.getType(rightExpr);
+
+        // Make sure operands are type compatible, otherwise throw an error.
+        if (!(leftExprType.getUnderlyingType().equals(rightExprType)
+        	|| rightExprType.getUnderlyingType().equals(leftExprType)))
+            this.throwTypeCheckException(node,
+            	"Invalid operation '/': mismatched types " + leftExprType + " and "
+            	+ rightExprType);
+
+        // Make sure the underlying operand type is numeric, otherwise throw an error.
+        if (!this.isNumericType(leftExprType))
+            this.throwTypeCheckException(node,
+            	"Invalid operation '/': operator not defined on " + leftExprType);
+        
+        typeTable.put(node, leftExprType.getUnderlyingType());
+    }
+
+    // Modulo expression.
+    @Override
+    public void outAModExpr(AModExpr node) {
+        // Left and right hand expressions their types.
+        PExpr leftExpr = node.getLeft();
+        PExpr rightExpr = node.getRight();
+        GoLiteType leftExprType = this.getType(leftExpr);
+        GoLiteType rightExprType = this.getType(rightExpr);
+
+        // Make sure operands are type compatible, otherwise throw an error.
+        if (!(leftExprType.getUnderlyingType().equals(rightExprType)
+        	|| rightExprType.getUnderlyingType().equals(leftExprType)))
+            this.throwTypeCheckException(node,
+            	"Invalid operation '%': mismatched types " + leftExprType + " and "
+            	+ rightExprType);
+
+        // Make sure the underlying operand type is integer or rune, otherwise throw an error.
+        if (!this.isIntOrRuneType(leftExprType))
+            this.throwTypeCheckException(node,
+            	"Invalid operation '%': operator not defined on " + leftExprType);
+        
+        typeTable.put(node, leftExprType.getUnderlyingType());
+    }
+
     /* Unary expressions. */
 
     // Plus unary expression.
