@@ -851,6 +851,19 @@ public class TypeChecker extends DepthFirstAdapter {
     	this.symbolTable.unscope();
     }
 
+    // Block statement.
+    @Override
+    public void inABlockStmt(ABlockStmt node) {
+    	// Create a new scope.
+		this.symbolTable.scope();
+	}
+
+	@Override
+	public void outABlockStmt(ABlockStmt node) {
+		// Drop the block scope.
+		this.symbolTable.unscope();
+	}
+
     /** Type check expressions. **/
 
     /* Type check comparison expressions. */
