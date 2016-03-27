@@ -12,20 +12,20 @@ public class TypeChecker extends DepthFirstAdapter {
     /* Class attributes */
     private SymbolTable symbolTable;
     private HashMap<Node, PTypeExpr> typeTable;
-    private LineAndPos lineAndPos;
+    private LineAndPosTracker lineAndPos;
 
     /** Constructor **/
     public TypeChecker() {
         symbolTable = new SymbolTable();
         typeTable = new HashMap<Node, PTypeExpr>();
-        lineAndPos = new LineAndPos();
+        lineAndPos = new LineAndPosTracker();
     }
 
     public TypeChecker(SymbolTable symbolTable, HashMap<Node, PTypeExpr> typeTable) {
         this.symbolTable = symbolTable;
         this.typeTable = typeTable;
         typeTable = new HashMap<Node, PTypeExpr>();
-        lineAndPos = new LineAndPos();
+        lineAndPos = new LineAndPosTracker();
     }
 
     /**
@@ -61,7 +61,7 @@ public class TypeChecker extends DepthFirstAdapter {
                 {
                     copy.apply(this);
                 }
-            }    
+            }
             {
                 List<PExpr> copy = new ArrayList<PExpr>(((ASpecVarSpec) s).getExpr());
                 for (PExpr e : copy) {
@@ -1729,5 +1729,5 @@ public class TypeChecker extends DepthFirstAdapter {
         callTypeCheckException(node, "Did not find type for " + node.getClass() + " tried to return null");
         return null;
     }
-    
+
 }

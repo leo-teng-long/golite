@@ -10,7 +10,7 @@ public class SymbolTable {
 
     /* Class attributes */
     private Stack<HashMap<String, Node>> scopes;
-    private LineAndPos lineAndPos = new LineAndPos();
+    private LineAndPosTracker lineAndPos = new LineAndPosTracker();
     private StringBuilder buffer;
 
     /* Constructor */

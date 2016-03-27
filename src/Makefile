@@ -32,4 +32,4 @@ test_type: build test_type_valid test_type_invalid
 test_type_v: build test_type_valid_v test_type_invalid_v
 
 clean:
-	rm -rf golite/*.class golite/lexer golite/parser golite/node golite/analysis
+	rm -rf golite/*.class golite/lexer golite/parser golite/node golite/analysis golite/*/*.class

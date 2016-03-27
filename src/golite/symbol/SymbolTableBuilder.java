@@ -12,7 +12,7 @@ public class SymbolTableBuilder extends DepthFirstAdapter
 {
     private SymbolTable symbolTable;
     private HashMap<Node, PTypeExpr> typeTable;
-    private LineAndPos lineAndPos;
+    private LineAndPosTracker lineAndPos;
 
     public SymbolTable getSymbolTable() {
         return symbolTable;
@@ -27,7 +27,7 @@ public class SymbolTableBuilder extends DepthFirstAdapter
     public void inStart(Start node)
     {
         symbolTable = new SymbolTable();
-        lineAndPos = new LineAndPos();
+        lineAndPos = new LineAndPosTracker();
         typeTable = new HashMap<Node, PTypeExpr>();
         symbolTable.enterScope();
         //Initialize boolean types
