@@ -13,6 +13,7 @@ import golite.node.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 
 
@@ -179,13 +180,42 @@ public class TypeChecker extends DepthFirstAdapter {
     }
 
     /**
-	 * Returns whether the given type is ordinal (i.e. integer, rune, float, or string).
+	 * Returns whether the given type is ordered (i.e. integer, rune, float, or string).
 	 *
 	 * @param type - Type
-	 * @return True if it's ordinal, false otherwise
+	 * @return True if it's ordered, false otherwise
 	 */
-    private boolean isOrdinalType(GoLiteType type) {
+    private boolean isOrderedType(GoLiteType type) {
         return this.isNumericType(type) || type instanceof StringType;
+    }
+
+    /**
+	 * Returns whether the given type is comparable (i.e. boolean, ordered, array, or struct).
+	 *
+	 * @param type - Type
+	 * @return True if it's comparable, false otherwise
+	 */
+    private boolean isComparableType(GoLiteType type) {
+        // Boolean's and ordered's are comparable.
+        if (type instanceof BoolType || this.isOrderedType(type))
+        	return true;
+
+        // Arrays are comparable if their element type is comparable.
+        if (type instanceof ArrayType)
+        	return this.isComparableType(((ArrayType) type).getType());
+
+        // Structs are comparable if all their fields are comparable.
+        if (type instanceof StructType) {
+        	Iterator<StructType.Field> fieldIter = ((StructType) type).getFieldIterator();
+        	while (fieldIter.hasNext()) {
+        		if (!this.isComparableType(fieldIter.next().getType()))
+        			return false;
+        	}
+
+        	return true;
+        }
+
+        return false;
     }
 
 	/**
@@ -536,6 +566,50 @@ public class TypeChecker extends DepthFirstAdapter {
 
     /** Type check expressions. **/
 
+    /* Type check comparison expressions. */
+
+    // '==' expression.
+    @Override
+    public void outAEqExpr(AEqExpr node) {
+        // Left and right hand expression types.
+        GoLiteType leftExprType = this.typeTable.get(node.getLeft());
+        GoLiteType rightExprType = this.typeTable.get(node.getRight());
+
+        // Make sure operands have the same surface type, otherwise throw an error.
+        if (!leftExprType.equals(rightExprType))
+            this.throwTypeCheckException(node.getLeft(),
+            	"Invalid operation '==': (mismatched types " + leftExprType
+            		+ " and " + rightExprType + ")");
+
+        // Make sure the underlying operand type is comparable, otherwise throw an error.
+        if (!isComparableType(leftExprType))
+            this.throwTypeCheckException(node,
+            	"Invalid operation '==': undefined for type " + leftExprType);
+
+        typeTable.put(node, new BoolType());
+    }
+
+    // '!=' expression.
+    @Override
+    public void outANeqExpr(ANeqExpr node) {
+        // Left and right hand expression types.
+        GoLiteType leftExprType = this.typeTable.get(node.getLeft());
+        GoLiteType rightExprType = this.typeTable.get(node.getRight());
+
+        // Make sure operands have the same surface type, otherwise throw an error.
+        if (!leftExprType.equals(rightExprType))
+            this.throwTypeCheckException(node.getLeft(),
+            	"Invalid operation '!=': (mismatched types " + leftExprType
+            		+ " and " + rightExprType + ")");
+
+        // Make sure the underlying operand type is comparable, otherwise throw an error.
+        if (!isComparableType(leftExprType))
+            this.throwTypeCheckException(node,
+            	"Invalid operation '!=': undefined for type " + leftExprType);
+
+        typeTable.put(node, new BoolType());
+    }
+
     // "<" expression.
     @Override
     public void outALtExpr(ALtExpr node) {
@@ -544,14 +618,13 @@ public class TypeChecker extends DepthFirstAdapter {
         GoLiteType rightExprType = this.typeTable.get(node.getRight());
 
         // Make sure operands have the same surface type, otherwise throw an error.
-        if (!leftExprType.equals(rightExprType)) {
+        if (!leftExprType.equals(rightExprType))
             this.throwTypeCheckException(node.getLeft(),
             	"Invalid operation '<': (mismatched types " + leftExprType
             		+ " and " + rightExprType + ")");
-        }
 
-        // Make sure the underlying operand type is ordinal, otherwise throw an error.
-        if (!this.isOrdinalType(leftExprType.getUnderlyingType()))
+        // Make sure the underlying operand type is ordered, otherwise throw an error.
+        if (!this.isOrderedType(leftExprType.getUnderlyingType()))
             this.throwTypeCheckException(node,
             	"Invalid operation '<': undefined for type " + leftExprType);
  
@@ -566,14 +639,13 @@ public class TypeChecker extends DepthFirstAdapter {
         GoLiteType rightExprType = this.typeTable.get(node.getRight());
 
         // Make sure operands have the same surface type, otherwise throw an error.
-        if (!leftExprType.equals(rightExprType)) {
+        if (!leftExprType.equals(rightExprType))
             this.throwTypeCheckException(node.getLeft(),
             	"Invalid operation '<=': (mismatched types " + leftExprType
             		+ " and " + rightExprType + ")");
-        }
 
-        // Make sure the underlying operand type is ordinal, otherwise throw an error.
-        if (!this.isOrdinalType(leftExprType.getUnderlyingType()))
+        // Make sure the underlying operand type is ordered, otherwise throw an error.
+        if (!this.isOrderedType(leftExprType.getUnderlyingType()))
             this.throwTypeCheckException(node,
             	"Invalid operation '<=': undefined for type " + leftExprType);
  
@@ -588,14 +660,13 @@ public class TypeChecker extends DepthFirstAdapter {
         GoLiteType rightExprType = this.typeTable.get(node.getRight());
 
         // Make sure operands have the same surface type, otherwise throw an error.
-        if (!leftExprType.equals(rightExprType)) {
+        if (!leftExprType.equals(rightExprType))
             this.throwTypeCheckException(node.getLeft(),
             	"Invalid operation '>': (mismatched types " + leftExprType
             		+ " and " + rightExprType + ")");
-        }
 
-        // Make sure the underlying operand type is ordinal, otherwise throw an error.
-        if (!this.isOrdinalType(leftExprType.getUnderlyingType()))
+        // Make sure the underlying operand type is ordered, otherwise throw an error.
+        if (!this.isOrderedType(leftExprType.getUnderlyingType()))
             this.throwTypeCheckException(node,
             	"Invalid operation '>': undefined for type " + leftExprType);
  
@@ -610,14 +681,13 @@ public class TypeChecker extends DepthFirstAdapter {
         GoLiteType rightExprType = this.typeTable.get(node.getRight());
 
         // Make sure operands have the same surface type, otherwise throw an error.
-        if (!leftExprType.equals(rightExprType)) {
+        if (!leftExprType.equals(rightExprType))
             this.throwTypeCheckException(node.getLeft(),
             	"Invalid operation '>=': (mismatched types " + leftExprType
             		+ " and " + rightExprType + ")");
-        }
 
-        // Make sure the underlying operand type is ordinal, otherwise throw an error.
-        if (!this.isOrdinalType(leftExprType.getUnderlyingType()))
+        // Make sure the underlying operand type is ordered, otherwise throw an error.
+        if (!this.isOrderedType(leftExprType.getUnderlyingType()))
             this.throwTypeCheckException(node,
             	"Invalid operation '>=': undefined for type " + leftExprType);
  
