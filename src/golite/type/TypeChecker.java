@@ -29,8 +29,10 @@ public class TypeChecker extends DepthFirstAdapter {
 	/** Line and position tracker for AST nodes. */
     private LineAndPosTracker lineAndPosTracker;
 
-    /** Keeps track of the function symbol when entering the body of a function. */
+    // Keeps track of the function symbol when entering the body of a function.
     private FunctionSymbol currentFunctionSymbol;
+    // Keeps track of the switch condition type when entering the body of a switch.
+    private GoLiteType currentSwitchCondType;
 
 	/**
 	 * Constructor.
@@ -903,6 +905,78 @@ public class TypeChecker extends DepthFirstAdapter {
                 this.throwTypeCheckException(pExpr,
                 	"Non-bool (type " + type + ") used as if condition");
         }
+    }
+
+    // Switch statement.
+    @Override
+    public void caseASwitchStmt(ASwitchStmt node) {
+         // Create a new scope for the switch initializer and blocks.
+        this.symbolTable.scope();
+        
+        // Type check the initial statement, if it exists.
+        PStmt pStmt = node.getStmt();
+        if (pStmt != null)
+            pStmt.apply(this);
+
+        // Store the previous switch condition type and restore it at the end (for handling nested
+        // switches).
+        GoLiteType prevSwitchCondType = this.currentSwitchCondType;
+
+        // Switch condition expression.
+        PExpr pExpr = node.getExpr();
+        if (pExpr == null)
+        	// Set the condition type to boolean if no condition is provided.
+        	this.currentSwitchCondType = new BoolType();
+        else {
+        	pExpr.apply(this);
+        	this.currentSwitchCondType = this.getType(pExpr);
+
+        	// Make sure the condition type is not void, otherwise throw an error.
+        	if (this.currentSwitchCondType instanceof VoidType)
+        		this.throwTypeCheckException(pExpr, "Void used as value");
+        }
+            
+        // Type check each case block.
+        for (PCaseBlock c : node.getCaseBlock())
+            c.apply(this);
+        
+        // Restore the current switch condition type.
+        this.currentSwitchCondType = prevSwitchCondType;
+
+        // Exit the scope for the switch initializer and blocks.
+    	this.symbolTable.unscope();
+    }
+
+    // Case block.
+    @Override
+    public void inABlockCaseBlock(ABlockCaseBlock node) {
+        // Create a new scope for the case block.
+        this.symbolTable.scope();
+    }
+
+    @Override
+    public void outABlockCaseBlock(ABlockCaseBlock node) {
+        // Exit the scope for the case block.
+        this.symbolTable.unscope();
+    }
+
+    // Non-default case block contiion.
+    @Override
+    public void outAExprsCaseCondition(AExprsCaseCondition node) {
+        // Make sure each expression in the case condition is type compatible with the switch
+        // condition.
+        for (PExpr pExpr : node.getExpr()) {
+            GoLiteType type = this.typeTable.get(pExpr);
+            if (this.currentSwitchCondType.getUnderlyingType().equals(type))
+                this.throwTypeCheckException(pExpr, "Invalid case in switch (mismatched types "
+                	+ type + " and " + this.currentSwitchCondType + ")");
+        }
+    }
+
+    // Default case block condition.
+    @Override
+    public void outADefaultCaseCondition(ADefaultCaseCondition node) {
+        // Trivially well-typed.
     }
 
     // Loop statement.
