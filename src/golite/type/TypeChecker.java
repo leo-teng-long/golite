@@ -171,13 +171,23 @@ public class TypeChecker extends DepthFirstAdapter {
 	}
 
 	/**
+	 * Returns whether the given type is integer or rune.
+	 *
+	 * @param type - Type
+	 * @return True if it's integer or rune, false otherwise
+	 */
+    private boolean isIntOrRuneType(GoLiteType type) {
+        return type instanceof IntType || type instanceof RuneType;
+    }
+
+	/**
 	 * Returns whether the given type is numeric (i.e. integer, rune, or float).
 	 *
 	 * @param type - Type
 	 * @return True if it's numeric, false otherwise
 	 */
     private boolean isNumericType(GoLiteType type) {
-        return type instanceof IntType || type instanceof RuneType || type instanceof FloatType;
+        return this.isIntOrRuneType(type) || type instanceof FloatType;
     }
 
     /**
@@ -491,7 +501,7 @@ public class TypeChecker extends DepthFirstAdapter {
         }
     }
 
-    /* Type check statements */
+    /** Type check statements. **/
 
     // Empty statement.
     @Override
@@ -571,6 +581,99 @@ public class TypeChecker extends DepthFirstAdapter {
         				+ " as type " + leftExprType + " in assignment");
         }
     }
+
+    /* Type check op-assign statements. */
+
+    // Plus-assignment statement.
+    @Override
+    public void outAPlusAssignStmt(APlusAssignStmt node) {
+    	// L.H.S. is guaranteed to be an assignable by the grammar.
+        GoLiteType leftExprType = this.getType(node.getLhs());
+        GoLiteType rightExprType = this.getType(node.getRhs());
+
+        // Throw an error if the types are not compatible.
+        if (leftExprType.getUnderlyingType().equals(rightExprType))
+            this.throwTypeCheckException(node, "Invalid operation '+=': Mismatched types "
+            	+ leftExprType + " and " + rightExprType);
+
+        // Throw an error if the type is not ordered and hence cannot be plused.
+        if (!this.isOrderedType(leftExprType))
+            this.throwTypeCheckException(node,
+            	"Invalid operation '+=': Operator '+' not defined on " + leftExprType);
+    }
+
+    // Minus-assignment statement.
+    @Override
+    public void outAMinusAssignStmt(AMinusAssignStmt node) {
+    	// L.H.S. is guaranteed to be an assignable by the grammar.
+        GoLiteType leftExprType = this.getType(node.getLhs());
+        GoLiteType rightExprType = this.getType(node.getRhs());
+
+        // Throw an error if the types are not compatible.
+        if (leftExprType.getUnderlyingType().equals(rightExprType))
+            this.throwTypeCheckException(node, "Invalid operation '-=': Mismatched types "
+            	+ leftExprType + " and " + rightExprType);
+
+        // Throw an error if the type is not numeric and hence cannot be minused.
+        if (!this.isNumericType(leftExprType))
+            this.throwTypeCheckException(node,
+            	"Invalid operation '-=': Operator '-' not defined on " + leftExprType);
+    }
+
+    // Star-assignment statement.
+    @Override
+    public void outAStarAssignStmt(AStarAssignStmt node) {
+    	// L.H.S. is guaranteed to be an assignable by the grammar.
+        GoLiteType leftExprType = this.getType(node.getLhs());
+        GoLiteType rightExprType = this.getType(node.getRhs());
+
+        // Throw an error if the types are not compatible.
+        if (leftExprType.getUnderlyingType().equals(rightExprType))
+            this.throwTypeCheckException(node, "Invalid operation '*=': Mismatched types "
+            	+ leftExprType + " and " + rightExprType);
+
+        // Throw an error if the type is not numeric and hence cannot be starred.
+        if (!this.isNumericType(leftExprType))
+            this.throwTypeCheckException(node,
+            	"Invalid operation '*=': Operator '*' not defined on " + leftExprType);
+    }
+
+    // Slash-assignment statement.
+    @Override
+    public void outASlashAssignStmt(ASlashAssignStmt node) {
+    	// L.H.S. is guaranteed to be an assignable by the grammar.
+        GoLiteType leftExprType = this.getType(node.getLhs());
+        GoLiteType rightExprType = this.getType(node.getRhs());
+
+        // Throw an error if the types are not compatible.
+        if (leftExprType.getUnderlyingType().equals(rightExprType))
+            this.throwTypeCheckException(node, "Invalid operation '/=': Mismatched types "
+            	+ leftExprType + " and " + rightExprType);
+
+        // Throw an error if the type is not numeric and hence cannot be slashed.
+        if (!this.isNumericType(leftExprType))
+            this.throwTypeCheckException(node,
+            	"Invalid operation '/=': Operator '/' not defined on " + leftExprType);
+    }
+
+    // Perc-assignment statement.
+    @Override
+    public void outAPercAssignStmt(APercAssignStmt node) {
+    	// L.H.S. is guaranteed to be an assignable by the grammar.
+        GoLiteType leftExprType = this.getType(node.getLhs());
+        GoLiteType rightExprType = this.getType(node.getRhs());
+
+        // Throw an error if the types are not compatible.
+        if (leftExprType.getUnderlyingType().equals(rightExprType))
+            this.throwTypeCheckException(node, "Invalid operation '%=': Mismatched types "
+            	+ leftExprType + " and " + rightExprType);
+
+        // Throw an error if the type is not integer or rune and hence cannot be perc'd.
+        if (!this.isIntOrRuneType(leftExprType))
+            this.throwTypeCheckException(node,
+            	"Invalid operation '%=': Operator '%' not defined on " + leftExprType);
+    }
+
 
     // Expression statement.
     @Override
