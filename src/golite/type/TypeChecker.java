@@ -553,6 +553,25 @@ public class TypeChecker extends DepthFirstAdapter {
             this.throwTypeCheckException(node, "No new variables on left side of :=");
     }
 
+    // Assignment statement.
+    @Override
+    public void outAAssignStmt(AAssignStmt node) {
+    	// L.H.S. and R.H.S. expressions (Both sides are checked to be the same size by the weeder).
+        LinkedList<PExpr> pExprsLHS = node.getLhs();
+        LinkedList<PExpr> pExprsRHS = node.getRhs();
+
+        for (int i = 0; i < pExprsLHS.size(); i++) {
+            GoLiteType leftExprType = this.getType(pExprsLHS.get(i));
+
+            PExpr rightExpr = pExprsRHS.get(i);
+            GoLiteType rightExprType = this.getType(rightExpr);
+
+            if (!leftExprType.getUnderlyingType().equals(rightExprType))
+                this.throwTypeCheckException(rightExpr, "Cannot use type " + rightExprType
+        				+ " as type " + leftExprType + " in assignment");
+        }
+    }
+
     // Expression statement.
     @Override
     public void outAExprStmt(AExprStmt node) {
