@@ -1116,7 +1116,7 @@ public class TypeChecker extends DepthFirstAdapter {
             this.throwTypeCheckException(node,
             	"Invalid operation '==': undefined for type " + leftExprType);
 
-        typeTable.put(node, new BoolType());
+        this.typeTable.put(node, new BoolType());
     }
 
     // '!=' expression.
@@ -1137,7 +1137,7 @@ public class TypeChecker extends DepthFirstAdapter {
             this.throwTypeCheckException(node,
             	"Invalid operation '!=': undefined for type " + leftExprType);
 
-        typeTable.put(node, new BoolType());
+        this.typeTable.put(node, new BoolType());
     }
 
     // "<" expression.
@@ -1158,7 +1158,7 @@ public class TypeChecker extends DepthFirstAdapter {
             this.throwTypeCheckException(node,
             	"Invalid operation '<': undefined for type " + leftExprType);
  
-        typeTable.put(node, new BoolType());
+        this.typeTable.put(node, new BoolType());
     }
 
     // "<=" expression.
@@ -1179,7 +1179,7 @@ public class TypeChecker extends DepthFirstAdapter {
             this.throwTypeCheckException(node,
             	"Invalid operation '<=': undefined for type " + leftExprType);
  
-        typeTable.put(node, new BoolType());
+        this.typeTable.put(node, new BoolType());
     }
 
     // ">" expression.
@@ -1200,7 +1200,7 @@ public class TypeChecker extends DepthFirstAdapter {
             this.throwTypeCheckException(node,
             	"Invalid operation '>': undefined for type " + leftExprType);
  
-        typeTable.put(node, new BoolType());
+        this.typeTable.put(node, new BoolType());
     }
 
     // ">=" expression.
@@ -1221,7 +1221,49 @@ public class TypeChecker extends DepthFirstAdapter {
             this.throwTypeCheckException(node,
             	"Invalid operation '>=': undefined for type " + leftExprType);
  
-        typeTable.put(node, new BoolType());
+        this.typeTable.put(node, new BoolType());
+    }
+
+    /* Logical expressions. */
+
+    // And expression.
+    @Override
+    public void outAAndExpr(AAndExpr node) {
+        // Left and right hand expressions their types.
+        PExpr leftExpr = node.getLeft();
+        PExpr rightExpr = node.getRight();
+        GoLiteType leftExprType = this.getType(leftExpr);
+        GoLiteType rightExprType = this.getType(rightExpr);
+
+        if (!(leftExprType instanceof BoolType))
+        	this.throwTypeCheckException(node,
+        		"Invalid operation '&&': undefined for type "+ leftExprType);
+
+        if (!(rightExprType instanceof BoolType))
+            this.throwTypeCheckException(node,
+            	"Invalid operation '&&': undefined for type " + rightExprType);
+
+        this.typeTable.put(node, new BoolType());
+    }
+
+    // Or expression.
+    @Override
+    public void outAOrExpr(AOrExpr node) {
+        // Left and right hand expressions their types.
+        PExpr leftExpr = node.getLeft();
+        PExpr rightExpr = node.getRight();
+        GoLiteType leftExprType = this.getType(leftExpr);
+        GoLiteType rightExprType = this.getType(rightExpr);
+
+        if (!(leftExprType instanceof BoolType))
+        	this.throwTypeCheckException(node,
+        		"Invalid operation '||': undefined for type " + leftExprType);
+
+        if (!(rightExprType instanceof BoolType))
+            this.throwTypeCheckException(node, 
+            	"Invalid operation '||': undefined for type " + rightExprType);
+
+        this.typeTable.put(node, new BoolType());
     }
 
     // Function call.
