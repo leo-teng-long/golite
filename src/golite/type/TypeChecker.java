@@ -169,6 +169,26 @@ public class TypeChecker extends DepthFirstAdapter {
 	}
 
 	/**
+	 * Returns whether the given type is numeric (i.e. integer, rune, or float).
+	 *
+	 * @param type - Type
+	 * @return True if it's numeric, false otherwise
+	 */
+    private boolean isNumericType(GoLiteType type) {
+        return type instanceof IntType || type instanceof RuneType || type instanceof FloatType;
+    }
+
+    /**
+	 * Returns whether the given type is ordinal (i.e. integer, rune, float, or string).
+	 *
+	 * @param type - Type
+	 * @return True if it's ordinal, false otherwise
+	 */
+    private boolean isOrdinalType(GoLiteType type) {
+        return this.isNumericType(type) || type instanceof StringType;
+    }
+
+	/**
 	 * Get Id tokens from the given AST node.
 	 *
 	 * @param node - AST node
@@ -491,7 +511,52 @@ public class TypeChecker extends DepthFirstAdapter {
             this.throwTypeCheckException(node, "No new variables on left side of :=");
     }
 
+    // Loop statement.
+    @Override
+    public void caseALoopStmt(ALoopStmt node) {
+    	// Create a new scope for the loop body.
+        this.symbolTable.scope();
+    }
+
+    @Override
+    public void outALoopStmt(ALoopStmt node) {
+    	// Loop condition.
+    	PExpr pExpr = node.getExpr();
+
+    	// If the condition is not empty, make sure it evaluates to a boolean.
+    	if (pExpr != null) {
+            GoLiteType condType = this.typeTable.get(pExpr);
+            if (!(condType instanceof BoolType))
+                this.throwTypeCheckException(pExpr,
+                	"Non-bool (type " + condType + ") used as for condition");
+        }
+
+    	this.symbolTable.unscope();
+    }
+
     /** Type check expressions. **/
+
+    // "Less than" expression.
+    @Override
+    public void outALtExpr(ALtExpr node) {
+    	// Left and right hand expression types.
+        GoLiteType leftExprType = this.typeTable.get(node.getLeft());
+        GoLiteType rightExprType = this.typeTable.get(node.getRight());
+
+        // Make sure operands have the same surface type, otherwise throw an error.
+        if (!leftExprType.equals(rightExprType)) {
+            this.throwTypeCheckException(node.getLeft(),
+            	"Invalid operation '<': (mismatched types " + leftExprType
+            		+ " and " + rightExprType + ")");
+        }
+
+        // Make sure the underlying operand type is ordinal, otherwise throw an error.
+        if (!this.isOrdinalType(leftExprType.getUnderlyingType()))
+            this.throwTypeCheckException(node,
+            	"Invalid operation '<': undefined for type " + leftExprType);
+ 
+        typeTable.put(node, new BoolType());
+    }
 
     // Function call.
     @Override
