@@ -852,6 +852,59 @@ public class TypeChecker extends DepthFirstAdapter {
         }
     }
 
+    // If-else statement.
+    @Override
+    public void caseAIfElseStmt(AIfElseStmt node) {
+        // Create a new scope for the if-else initializer and blocks.
+        this.symbolTable.scope();
+
+        // Type check the condition, if it exists.
+        PCondition cond = node.getCondition();
+        if (cond != null)
+            cond.apply(this);
+
+        // Enter the if-block if it exists.
+        LinkedList<PStmt> pStmts = node.getIfBlock();
+        if (pStmts != null) {
+        	// Create a new scope for the if-block.
+	        this.symbolTable.scope();
+	        // Type check the if-block statements.
+	        for (PStmt s : pStmts)
+	            s.apply(this);
+	        // Exit the scope for the if-block.
+	        this.symbolTable.unscope();
+        }
+
+        // Enter the else-block if it exists.
+        pStmts = node.getElseBlock();
+        if (pStmts != null) {
+		    // Create a new scope for the else-block.
+		    this.symbolTable.scope();
+		    // Type check the else-block statements.
+		    for (PStmt s : pStmts)
+		        s.apply(this);
+		    // Exit the scope for the else-block.
+		    this.symbolTable.unscope();
+		}
+
+        // Exit the scope for the if-else initializer and blocks.
+    	this.symbolTable.unscope();
+    }
+
+    // If-else statement condition.
+    @Override
+    public void outAConditionCondition(AConditionCondition node) {
+    	// If-else expression.
+        PExpr pExpr = node.getExpr();
+        if (pExpr != null) {
+        	// Make sure the expression evaluates to a boolean, otherwise throw an error.
+            GoLiteType type = this.getType(pExpr);
+            if (!(type instanceof BoolType))
+                this.throwTypeCheckException(pExpr,
+                	"Non-bool (type " + type + ") used as if condition");
+        }
+    }
+
     // Loop statement.
     @Override
     public void caseALoopStmt(ALoopStmt node) {
