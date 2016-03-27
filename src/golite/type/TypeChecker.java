@@ -493,6 +493,12 @@ public class TypeChecker extends DepthFirstAdapter {
 
     /* Type check statements */
 
+    // Empty statement.
+    @Override
+    public void outAEmptyStmt(AEmptyStmt node) {
+    	// Trivially typed.
+    }
+
     // Short assignment statement.
     @Override
     public void outAShortAssignStmt(AShortAssignStmt node) {
@@ -545,6 +551,24 @@ public class TypeChecker extends DepthFirstAdapter {
         // Throw an error is no new variables are declared on the L.H.S.
         if (!hasNewDecInCurrentScope)
             this.throwTypeCheckException(node, "No new variables on left side of :=");
+    }
+
+    // Expression statement.
+    @Override
+    public void outAExprStmt(AExprStmt node) {
+    	// Well-typedness is checked in expression nodes.
+    }
+
+    // Continue statement.
+    @Override
+    public void outAContinueStmt(AContinueStmt node) {
+    	// Trivially typed.
+    }
+
+    // Break statement.
+    @Override
+    public void outABreakStmt(ABreakStmt node) {
+    	// Trivially typed.
     }
 
     // Return statement.
