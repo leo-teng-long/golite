@@ -188,18 +188,18 @@ public class StructType extends GoLiteType {
 	@Override
 	public String toString() {
 		StringBuilder s = new StringBuilder();
-		s.append("struct(");
+		s.append("struct { ");
 
 		boolean rest = false;
 		for (Field f : this.fields) {
 			if (rest)
-				s.append(", ");
+				s.append("; ");
 			else
 				rest = true;
 			s.append(f.toString());
 		}
 			
-		s.append(")");
+		s.append(" }");
 		return s.toString();
 	}
 
