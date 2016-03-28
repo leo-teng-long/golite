@@ -1,7 +1,8 @@
-/* Append function */
+/* Append function application. */
+
 package main
 
 func main() {
 	var slice [] int
-	println(append(slice, 5))
+	append(slice, 5)
 }
