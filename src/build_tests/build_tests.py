@@ -45,11 +45,6 @@ SUITE_TEMPALTE_FPATH = os.path.join("build_tests",
 TEST_IGNORE_PATH = os.path.join("build_tests", "test_ignore.txt")
 
 
-# Assert method names.
-ASSERT_TRUE = "assertTrue"
-ASSERT_FALSE = "assertFalse"
-
-
 # Test directory path.
 OUT_TEST_DIRPATH = "test"
 # Output test suite source filepath.
@@ -158,6 +153,40 @@ def create_test_method_str(prog_fname, prog_fpath, tpe):
 	@return Corresponding test method source
 	"""
 
+	# Assert method names.
+	ASSERT_TRUE = "assertTrue"
+	ASSERT_FALSE = "assertFalse"
+
+	# Create the method body for a test asserting the truth of a boolean method
+	# acting on the given filepath to a program. 
+	def create_assert_true_method_body(check_method_name, prog_fpath, tabs):
+		return ('\t' * tabs) + "assertTrue(%s(\"%s\"));" % \
+			(check_method_name, prog_fpath)
+
+	# Create the method body for a test asserting the throwing of a list of
+	# exceptions from a given method acting on the given filepath to a program.
+	def create_assert_exception_method_body(check_method_name, exceptions,
+		prog_fpath, tabs):
+
+		if len(exceptions) == 1:
+			body = ('\t' * tabs)
+			body += "assertThatThrownBy(() -> { %s(\"%s\"); }).isInstanceOf(%s.class);" \
+				% (check_method_name, prog_fpath, exceptions[0])
+		else:
+			body = ('\t' * tabs) + "try {\n"
+			
+			body += ('\t' * (tabs + 1))
+			body += "assertThatThrownBy(() -> { %s(\"%s\"); }).isInstanceOf(%s.class);\n" \
+				% (check_method_name, prog_fpath, exceptions[0])
+
+			body += ('\t' * tabs) + "} catch (AssertionError e%d) {\n" \
+				% (len(exceptions) - 1)
+			body += create_assert_exception_method_body(check_method_name,
+				exceptions[1:], prog_fpath, tabs + 1) + "\n"
+			body += ('\t' * tabs) + "}"
+
+		return body
+
 	test_name = to_test_name(prog_fname)
 
 	if is_other_groups_test(prog_fpath):
@@ -165,28 +194,27 @@ def create_test_method_str(prog_fname, prog_fpath, tpe):
 			capitalize(test_name)
 
 	if tpe == 'valid_parse':
-		assert_method_name = ASSERT_TRUE
-		check_method_name = 'parse'
+		method_body = create_assert_true_method_body("parse", prog_fpath, 2)
 	elif tpe == 'invalid_parse':
-		assert_method_name = ASSERT_FALSE
-		check_method_name = 'parse'
+		method_body = create_assert_exception_method_body("parse",
+			["LexerException", "ParserException", "WeederException"],
+			prog_fpath, 2)
 	elif tpe == 'pretty':
-		assert_method_name = ASSERT_TRUE
-		check_method_name = 'checkPrettyInvariant'
+		method_body = create_assert_true_method_body("checkPrettyInvariant",
+			prog_fpath, 2)
 	elif tpe == 'valid_type':
-		assert_method_name = ASSERT_TRUE
-		check_method_name = 'typeCheck'
+		method_body = create_assert_true_method_body("typeCheck", prog_fpath, 2)
 	elif tpe == 'invalid_type':
-		assert_method_name = ASSERT_FALSE
-		check_method_name = 'typeCheck'
+		method_body = create_assert_exception_method_body("typeCheck",
+			["SymbolTableException", "TypeCheckException"], prog_fpath, 2)
 	else:
 		raise ValueError("'tpe' argument must be 'valid_parse', "
 			"'invalid_parse', 'pretty', 'valid_type', or 'invalid_type'.")
 
 	test_method_str = "\t@Test\n"
-	test_method_str += "\tpublic void %s() throws IOException {\n" % test_name
-	test_method_str += "\t\t%s(%s(\"%s\"));\n" % \
-		(assert_method_name, check_method_name, prog_fpath)
+	test_method_str += "\tpublic void %s() " % test_name
+	test_method_str += "throws IOException, LexerException, ParserException {\n"
+	test_method_str += "%s\n" % method_body
 	test_method_str += "\t}"
 
 	return test_method_str

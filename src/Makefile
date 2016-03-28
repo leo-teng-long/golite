@@ -1,10 +1,10 @@
 run_tests: compile_tests
-	-java -cp jars/hamcrest-core-1.3.jar:jars/junit-4.12.jar: org.junit.runner.JUnitCore test.GoLiteTestSuite > run_tests.log
+	-java -cp jars/hamcrest-core-1.3.jar:jars/junit-4.12.jar:jars/assertj-core-3.3.0.jar: org.junit.runner.JUnitCore test.GoLiteTestSuite > run_tests.log
 	less run_tests.log
 	rm -f run_tests.log .pretty.go
 
 compile_tests: build_tests
-	javac -cp jars/junit-4.12.jar: test/*.java
+	javac -cp jars/junit-4.12.jar:jars/assertj-core-3.3.0.jar: test/*.java
 
 build_tests: build
 	python build_tests/build_tests.py
