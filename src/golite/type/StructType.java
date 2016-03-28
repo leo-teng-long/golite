@@ -101,6 +101,47 @@ public class StructType extends GoLiteType {
 	}
 
 	/**
+	 * Checks if a field with the given Id exists in the struct.
+	 *
+	 * @param id - Field Id
+	 * @return True if the field exists, false otherwise
+	 */
+	public boolean hasField(String id) {
+		for (Field f : this.fields) {
+			if (f.getId().equals(id))
+				return true;
+		}
+
+		return false;
+	}
+
+	/**
+	 * Returns the field with the given Id.
+	 *
+	 * @param id - Field Id
+	 * @return Corresponding field
+	 * @throws IllegalArgumentException if no such field exists.
+	 */
+	public Field getField(String id) {
+		for (Field f : this.fields) {
+			if (f.getId().equals(id))
+				return f;
+		}
+
+		throw new IllegalArgumentException("No such field " + id);
+	}
+
+	/**
+	 * Returns the type of the field with the given Id.
+	 *
+	 * @param id - Field Id
+	 * @return Type of the field
+	 */
+	public GoLiteType getFieldType(String id) {
+		return this.getField(id).getType();
+	}
+
+	/**
 	 * Adds a field to the struct type.
 	 *
 	 * @param id - Field Id

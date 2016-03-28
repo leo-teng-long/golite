@@ -1664,6 +1664,30 @@ public class TypeChecker extends DepthFirstAdapter {
 				+ " does not support indexing");
     }
 
+    // Field access.
+    @Override
+    public void outAFieldExpr(AFieldExpr node) {
+    	// Object expression and its type.
+    	PExpr pExpr = node.getExpr();
+    	GoLiteType exprType = this.getType(pExpr);
+    	// Field Id and name.
+    	TId fieldId = node.getId();
+    	String fieldName = fieldId.getText();
+
+    	// Make sure the underlying type of the object expression is struct, otherwise throw an
+    	// error.
+		if (!(exprType.getUnderlyingType() instanceof StructType))
+			this.throwTypeCheckException(pExpr,
+				"Undefined: type " + exprType + " has no field " + fieldName);
+
+		// Make sure the struct has a field with the given name, otherwise throw an error.
+		if (!((StructType) exprType).hasField(fieldName))
+			this.throwTypeCheckException(fieldId,
+				"Undefined: type " + exprType + " has no field " + fieldName);
+
+		this.typeTable.put(node, ((StructType) exprType).getFieldType(fieldName));
+	}
+
     // Enter a variable expression into the type table.
     @Override
     public void outAVariableExpr(AVariableExpr node) {
