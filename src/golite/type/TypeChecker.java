@@ -1537,6 +1537,8 @@ public class TypeChecker extends DepthFirstAdapter {
         this.typeTable.put(node, new BoolType());
     }
 
+    /* Function call expressions. */
+
     // Function call.
     @Override
     public void outAFuncCallExpr(AFuncCallExpr node) {
@@ -1607,6 +1609,34 @@ public class TypeChecker extends DepthFirstAdapter {
     	} else
     		this.throwTypeCheckException(id,
         		"Cannot call non-function " + name + " (type " + symbol.getType() + ")");
+    }
+
+    // Append call.
+    @Override
+    public void outAAppendExpr(AAppendExpr node) {
+        // Get the variable symbol corresponding to the Id argument.
+        VariableSymbol variableSymbol = this.getVariableSymbol(node.getId());
+        // Get its type.
+        GoLiteType type = variableSymbol.getType();
+        
+        // Make sure the symbol refers to a slice, otherwise throw an error.
+        if (!(type instanceof SliceType))
+        	this.throwTypeCheckException(node.getId(),
+        		"Cannot use type " + type + " as slice type in argument to append");
+
+    	// Type of each element in the slice.
+    	GoLiteType elemType = ((SliceType) type).getElemType();
+    	// Expression argument and its type.
+    	PExpr pExpr = node.getExpr();
+    	GoLiteType exprType = this.getType(pExpr);
+
+    	// Make sure the element type of the slice and the expression argument are type compatible,
+    	// otherwise throw an error.
+    	if (!elemType.getUnderlyingType().equals(exprType))
+        	this.throwTypeCheckException(pExpr,
+        		"Cannot use type " + exprType + " as type " + elemType + "in argument to append");
+
+        this.typeTable.put(node, type);
     }
 
     // Array access.

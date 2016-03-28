@@ -6,7 +6,7 @@ package golite.type;
  */
 public class ArrayType extends GoLiteType {
 
-	/** Type of the array. */
+	/** Type of each element in the array. */
 	private GoLiteType type;
 	/** Array bound. */
 	private int bound;
@@ -31,6 +31,15 @@ public class ArrayType extends GoLiteType {
 	 */
 	public int getBound() {
 		return this.bound;
+	}
+
+	/**
+	 * Returns the element type.
+	 *
+	 * @return Element type
+	 */
+	public GoLiteType getElemType() {
+		return this.type;
 	}
 
 	@Override

@@ -6,7 +6,7 @@ package golite.type;
  */
 public class SliceType extends GoLiteType {
 
-	/** Type of the slice. */
+	/** Type of each element in the slice. */
 	private GoLiteType type;
 
 	/**
@@ -20,6 +20,15 @@ public class SliceType extends GoLiteType {
 	 * Getter
 	 */
 	public GoLiteType getType() {
+		return this.type;
+	}
+
+	/**
+	 * Returns the element type.
+	 *
+	 * @return Element type
+	 */
+	public GoLiteType getElemType() {
 		return this.type;
 	}
 
