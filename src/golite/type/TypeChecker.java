@@ -1598,7 +1598,8 @@ public class TypeChecker extends DepthFirstAdapter {
     			this.throwTypeCheckException(id,
     				"Type alias " + name + " must map to a non-string primitive type");
 
-    		// Expression must have type that is a non-string primitive.
+    		// Arguemnt expression must have type that is a non-string primitive, otherwise throw an
+			// error.
     		GoLiteType argType = this.getType(pExprs.get(0));
     		if (!(argType instanceof PrimitiveGoLiteType) || argType instanceof StringType)
     			this.throwTypeCheckException(id, "Arugment to conversion to " + name
@@ -1637,6 +1638,31 @@ public class TypeChecker extends DepthFirstAdapter {
         		"Cannot use type " + exprType + " as type " + elemType + "in argument to append");
 
         this.typeTable.put(node, type);
+    }
+
+    // Type cast.
+    @Override
+    public void outATypeCastExpr(ATypeCastExpr node) {
+    	// Type to cast to, guaranteed to be a non-string primitive by the parser and weeder.
+    	PTypeExpr pTypeExpr = node.getTypeExpr();
+    	GoLiteType type = this.getType(pTypeExpr);
+    	// Argument expression and its type.
+    	PExpr pExpr = node.getExpr();
+    	GoLiteType argType = this.getType(pExpr);
+
+    	// Make sure the type to cast to is a non-string primitive, otherwise throw an error (I'm
+    	// pretty sure this case is unreachable).
+		if (!(type instanceof PrimitiveGoLiteType))
+			this.throwTypeCheckException(pTypeExpr,
+				"Type " + type + " must be a non-string primitive type");
+
+		// Arguemnt expression must have type that is a non-string primitive, otherwise throw an
+		// error.
+		if (!(argType instanceof PrimitiveGoLiteType) || argType instanceof StringType)
+			this.throwTypeCheckException(pExpr, "Arugment to conversion to " + type
+				+ " must map to a non-string primitive type");
+
+		this.typeTable.put(node, type);
     }
 
     // Array access.
