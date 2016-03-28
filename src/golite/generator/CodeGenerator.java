@@ -33,7 +33,248 @@ public class CodeGenerator extends DepthFirstAdapter {
     }
 
     /**
-     * Empty expression
+     * Increment, Decrement & Expression Statements
+     *
+     */
+    @Override
+    public void caseAIncrStmt(AIncrStmt node) {
+        this.inAIncrStmt(node);
+
+        if (node.getExpr() != null) {
+            node.getExpr().apply(this);
+        }
+
+        buffer.append(" += 1");
+
+        this.outAIncrStmt(node);
+    }
+
+    @Override
+    public void caseADecrStmt(ADecrStmt node) {
+        this.inADecrStmt(node);
+
+        if (node.getExpr() != null) {
+            node.getExpr().apply(this);
+        }
+
+        buffer.append(" -= 1");
+
+        this.outADecrStmt(node);
+    }
+
+    @Override
+    public void caseAExprStmt(AExprStmt node) {
+        this.inAExprStmt(node);
+
+        if (node.getExpr() != null) {
+            node.getExpr().apply(this);
+        }
+
+        this.outAExprStmt(node);
+    }
+
+    /**
+     * Print & Println Statements
+     *
+     */
+    @Override
+    public void caseAPrintStmt(APrintStmt node) {
+        this.inAPrintStmt(node);
+
+        buffer.append("print");
+        addLeftParen();
+
+        {
+            List<PExpr> copy = new ArrayList<PExpr>(node.getExpr());
+
+            for (int i = 0; i < copy.size(); i++) {
+                if (i > 0) {
+                    buffer.append(" + ");
+                }
+
+                buffer.append("str");
+                addLeftParen();
+
+                copy.get(i).apply(this);
+
+                addRightParen();
+            }
+
+            if (!copy.isEmpty()) {
+                addComma();
+                addSpace();
+            }
+        }
+
+        buffer.append("end = ''");
+        addRightParen();
+
+        this.outAPrintStmt(node);
+    }
+
+    @Override
+    public void caseAPrintlnStmt(APrintlnStmt node) {
+        this.inAPrintlnStmt(node);
+
+        buffer.append("print");
+        addLeftParen();
+
+        {
+            List<PExpr> copy = new ArrayList<PExpr>(node.getExpr());
+
+            for (int i = 0; i < copy.size(); i++) {
+                if (i > 0) {
+                    addComma();
+                    addSpace();
+                }
+
+                copy.get(i).apply(this);
+            }
+        }
+
+        addRightParen();
+
+        this.outAPrintlnStmt(node);
+    }
+
+    /**
+     * Continue, Break & Return Statements
+     *
+     */
+    @Override
+    public void caseAContinueStmt(AContinueStmt node) {
+        this.inAContinueStmt(node);
+
+        buffer.append("continue");
+
+        this.outAContinueStmt(node);
+    }
+
+    @Override
+    public void caseABreakStmt(ABreakStmt node) {
+        this.inABreakStmt(node);
+
+        buffer.append("break");
+
+        this.outABreakStmt(node);
+    }
+
+    @Override
+    public void caseAReturnStmt(AReturnStmt node) {
+        this.inAReturnStmt(node);
+
+        buffer.append("return");
+        addSpace();
+
+        if (node.getExpr() != null) {
+            node.getExpr().apply(this);
+        }
+
+        this.outAReturnStmt(node);
+    }
+
+    /**
+     * If-Else Statements
+     *
+     */
+    @Override
+    public void caseAIfElseStmt(AIfElseStmt node) {
+        /* TODO */
+    }
+
+    @Override
+    public void caseAConditionCondition(AConditionCondition node) {
+        /* TODO */
+    }
+
+    /**
+     * Switch Statements
+     *
+     */
+    @Override
+    public void caseASwitchStmt(ASwitchStmt node) {
+        /* TODO */
+    }
+
+    @Override
+    public void caseABlockCaseBlock(ABlockCaseBlock node) {
+        /* TODO */
+    }
+
+    @Override
+    public void caseAExprsCaseCondition(AExprsCaseCondition node) {
+        /* TODO */
+    }
+
+    @Override
+    public void caseADefaultCaseCondition(ADefaultCaseCondition node) {
+        /* TODO */
+    }
+
+    /**
+     * For & While Loops
+     *
+     */
+    @Override
+    public void caseALoopStmt(ALoopStmt node) {
+        this.inALoopStmt(node);
+
+        if (node.getInit() == null && node.getEnd() == null) {
+            /**
+             * While Loop
+             */
+            buffer.append("while");
+            addSpace();
+
+            if (node.getExpr() == null) {
+                buffer.append("True");
+            } else {
+                node.getExpr().apply(this);
+            }
+
+            addSpace();
+            addColon();
+        } else {
+            /**
+             * For Loop
+             */
+            /* TODO */
+        }
+
+        {
+            enterCodeBlock();
+
+            List<PStmt> copy = new ArrayList<PStmt>(node.getBlock());
+            for (PStmt e : copy) {
+                generateStatement(e);
+            }
+
+            exitCodeBlock();
+        }
+
+        this.outALoopStmt(node);
+    }
+
+    /**
+     * Block Statements
+     *
+     */
+    @Override
+    public void caseABlockStmt(ABlockStmt node) {
+        this.inABlockStmt(node);
+
+        {
+            List<PStmt> copy = new ArrayList<PStmt>(node.getStmt());
+            for (PStmt e : copy) {
+                generateStatement(e);
+            }
+        }
+
+        this.outABlockStmt(node);
+    }
+
+    /**
+     * Empty Expressions
      *  (do we need this?)
      *
      */
@@ -549,22 +790,22 @@ public class CodeGenerator extends DepthFirstAdapter {
             buffer.append(node.getId().getText());
         }
 
+        addLeftParen();
+
         {
-            addLeftParen();
-
             List<PExpr> copy = new ArrayList<PExpr>(node.getExpr());
-            for (PExpr e : copy) {
-                addSpace();
-                e.apply(this);
-                addComma();
-            }
-            if (copy.size() > 0) {
-                deleteLastCharacter();
-            }
 
-            addSpace();
-            addRightParen();
+            for (int i = 0; i < copy.size(); i++) {
+                if (i > 0) {
+                    addComma();
+                    addSpace();
+                }
+
+                copy.get(i).apply(this);
+            }
         }
+
+        addRightParen();
 
         this.outAFuncCallExpr(node);
     }
@@ -676,6 +917,10 @@ public class CodeGenerator extends DepthFirstAdapter {
         buffer.append(',');
     }
 
+    private void addColon() {
+        buffer.append(':');
+    }
+
     private void addLeftParen() {
         buffer.append('(');
     }
@@ -686,6 +931,33 @@ public class CodeGenerator extends DepthFirstAdapter {
 
     private void deleteLastCharacter() {
         buffer.deleteCharAt(buffer.length() - 1);
+    }
+
+    private void addTabs() {
+        for (int i = 0; i < tabDepth; i++) {
+            buffer.append('\t');
+        }
+    }
+
+    private void addLines(int n) {
+        for (int i = 0; i < n; i++) {
+            buffer.append('\n');
+        }
+    }
+
+    private void generateStatement(PStmt e) {
+        addTabs();
+        e.apply(this);
+        addLines(1);
+    }
+
+    private void enterCodeBlock() {
+        addLines(1);
+        tabDepth++;
+    }
+
+    private void exitCodeBlock() {
+        tabDepth--;
     }
 
 }

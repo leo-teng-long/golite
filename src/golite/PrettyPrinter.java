@@ -29,7 +29,7 @@ public class PrettyPrinter extends DepthFirstAdapter {
 
   /**
    * Returns the pretty printed program as a string.
-   * 
+   *
    * @return Pretty printed program as a string.
    **/
   public String getPrettyPrint() {
@@ -79,7 +79,7 @@ public class PrettyPrinter extends DepthFirstAdapter {
         }
       }
     }
-    
+
     this.outAProgProg(node);
   }
 
@@ -656,7 +656,7 @@ public class PrettyPrinter extends DepthFirstAdapter {
       }
       afterCodeBlock();
     }
-    
+
     List<PStmt> copy = new ArrayList<PStmt>(node.getElseBlock());
 
     // Return if block is empty.
@@ -815,13 +815,13 @@ public class PrettyPrinter extends DepthFirstAdapter {
 
     addSemi();
     addSpace();
-    
+
     if (node.getExpr() != null)
       node.getExpr().apply(this);
 
     addSemi();
     addSpace();
-    
+
     if (node.getEnd() != null && !(node.getEnd() instanceof AEmptyStmt)) {
       node.getEnd().apply(this);
       addSpace();
@@ -1663,7 +1663,7 @@ public class PrettyPrinter extends DepthFirstAdapter {
    */
   public void caseAIdOptId(AIdOptId node) {
     if (node.getId() != null) {
-      buffer.append(node.getId().getText()); 
+      buffer.append(node.getId().getText());
     }
   }
 
