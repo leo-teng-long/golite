@@ -172,6 +172,21 @@ public class TypeChecker extends DepthFirstAdapter {
 		return type;
 	}
 
+    /**
+     * Return the type beneath the aliases (if any).
+     *
+     * @param type - Type
+     * @return Non-alias type
+     */
+    private GoLiteType getNonAliasType(GoLiteType type) {
+        do {
+            if (type instanceof AliasType)
+                type = ((AliasType) type).getType();
+        } while (type instanceof AliasType);
+
+        return type;
+    }
+
 	/**
 	 * Returns whether the given type is integer or rune.
 	 *
@@ -465,10 +480,9 @@ public class TypeChecker extends DepthFirstAdapter {
             		// Get its GoLite type.
             		GoLiteType exprType = this.getType(pExpr);
             		
-            		// Check the underlying type (in case of an alias) of the L.H.S for
-            		// compatibility with the surface type of the R.H.S. expression, throwing an
-            		// error if their incompatible.
-            		if (!typeExprType.getUnderlyingType().equals(exprType))
+            		// Check the L.H.S. and R.H.S. are type compatible, throwing an error if their
+            		// not.
+            		if (!(typeExprType.isCompatible(exprType)))
             			this.throwTypeCheckException(pExpr, "Cannot use type " + exprType
             				+ " as type " + typeExprType + " in assignment");
             	}
@@ -543,10 +557,8 @@ public class TypeChecker extends DepthFirstAdapter {
             	// Get the variable symbol.
                 VariableSymbol symbol = this.getVariableSymbol(id);
 
-        		// Check the underlying type (in case of an alias) of the L.H.S for
-        		// compatibility with the surface type of the R.H.S. expression, throwing an
-        		// error if their incompatible.
-        		if (!symbol.getUnderlyingType().equals(exprType))
+        		// Check the L.H.S. and R.H.S. are type compatible, throwing an error if their not.
+        		if (!(symbol.getType().isCompatible(exprType)))
         			this.throwTypeCheckException(pExpr, "Cannot use type " + exprType
         				+ " as type " + symbol.getType() + " in assignment");
             // No such symbol exists in the current scope.
@@ -578,7 +590,8 @@ public class TypeChecker extends DepthFirstAdapter {
             PExpr rightExpr = pExprsRHS.get(i);
             GoLiteType rightExprType = this.getType(rightExpr);
 
-            if (!leftExprType.getUnderlyingType().equals(rightExprType))
+            // Throw an error if the L.H.S. and R.H.S. types are not compatible.
+        	if (!(leftExprType.isCompatible(rightExprType)))
                 this.throwTypeCheckException(rightExpr, "Cannot use type " + rightExprType
         				+ " as type " + leftExprType + " in assignment");
         }
@@ -593,13 +606,13 @@ public class TypeChecker extends DepthFirstAdapter {
         GoLiteType leftExprType = this.getType(node.getLhs());
         GoLiteType rightExprType = this.getType(node.getRhs());
 
-        // Throw an error if the types are not compatible.
-        if (leftExprType.getUnderlyingType().equals(rightExprType))
+        // Throw an error if the L.H.S. and R.H.S. types are not compatible.
+        if (!(leftExprType.isCompatible(rightExprType)))
             this.throwTypeCheckException(node, "Invalid operation '+=': Mismatched types "
             	+ leftExprType + " and " + rightExprType);
 
-        // Throw an error if the type is not ordered and hence cannot be plused.
-        if (!this.isOrderedType(leftExprType))
+        // Throw an error if the underlying type is not numeric and hence cannot be plused.
+        if (!this.isOrderedType(leftExprType.getUnderlyingType()))
             this.throwTypeCheckException(node,
             	"Invalid operation '+=': Operator '+' not defined on " + leftExprType);
     }
@@ -611,13 +624,13 @@ public class TypeChecker extends DepthFirstAdapter {
         GoLiteType leftExprType = this.getType(node.getLhs());
         GoLiteType rightExprType = this.getType(node.getRhs());
 
-        // Throw an error if the types are not compatible.
-        if (leftExprType.getUnderlyingType().equals(rightExprType))
+        // Throw an error if the L.H.S. and R.H.S. types are not compatible.
+        if (!(leftExprType.isCompatible(rightExprType)))
             this.throwTypeCheckException(node, "Invalid operation '-=': Mismatched types "
             	+ leftExprType + " and " + rightExprType);
 
-        // Throw an error if the type is not numeric and hence cannot be minused.
-        if (!this.isNumericType(leftExprType))
+        // Throw an error if the underlying type is not numeric and hence cannot be minused.
+        if (!this.isNumericType(leftExprType.getUnderlyingType()))
             this.throwTypeCheckException(node,
             	"Invalid operation '-=': Operator '-' not defined on " + leftExprType);
     }
@@ -629,13 +642,13 @@ public class TypeChecker extends DepthFirstAdapter {
         GoLiteType leftExprType = this.getType(node.getLhs());
         GoLiteType rightExprType = this.getType(node.getRhs());
 
-        // Throw an error if the types are not compatible.
-        if (leftExprType.getUnderlyingType().equals(rightExprType))
+        // Throw an error if the L.H.S. and R.H.S. types are not compatible.
+        if (!(leftExprType.isCompatible(rightExprType)))
             this.throwTypeCheckException(node, "Invalid operation '*=': Mismatched types "
             	+ leftExprType + " and " + rightExprType);
 
-        // Throw an error if the type is not numeric and hence cannot be multipled.
-        if (!this.isNumericType(leftExprType))
+        // Throw an error if the underlying type is not numeric and hence cannot be multiplied.
+        if (!this.isNumericType(leftExprType.getUnderlyingType()))
             this.throwTypeCheckException(node,
             	"Invalid operation '*=': Operator '*' not defined on " + leftExprType);
     }
@@ -647,13 +660,13 @@ public class TypeChecker extends DepthFirstAdapter {
         GoLiteType leftExprType = this.getType(node.getLhs());
         GoLiteType rightExprType = this.getType(node.getRhs());
 
-        // Throw an error if the types are not compatible.
-        if (leftExprType.getUnderlyingType().equals(rightExprType))
+        // Throw an error if the L.H.S. and R.H.S. types are not compatible.
+        if (!(leftExprType.isCompatible(rightExprType)))
             this.throwTypeCheckException(node, "Invalid operation '/=': Mismatched types "
             	+ leftExprType + " and " + rightExprType);
 
-        // Throw an error if the type is not numeric and hence cannot be divided.
-        if (!this.isNumericType(leftExprType))
+        // Throw an error if the underlying type is not numeric and hence cannot be divided.
+        if (!this.isNumericType(leftExprType.getUnderlyingType()))
             this.throwTypeCheckException(node,
             	"Invalid operation '/=': Operator '/' not defined on " + leftExprType);
     }
@@ -665,13 +678,14 @@ public class TypeChecker extends DepthFirstAdapter {
         GoLiteType leftExprType = this.getType(node.getLhs());
         GoLiteType rightExprType = this.getType(node.getRhs());
 
-        // Throw an error if the types are not compatible.
-        if (leftExprType.getUnderlyingType().equals(rightExprType))
+        // Throw an error if the L.H.S. and R.H.S. types are not compatible.
+        if (!(leftExprType.isCompatible(rightExprType)))
             this.throwTypeCheckException(node, "Invalid operation '%=': Mismatched types "
             	+ leftExprType + " and " + rightExprType);
 
-        // Throw an error if the type is not integer or rune and hence cannot be modulo'd.
-        if (!this.isIntOrRuneType(leftExprType))
+        // Throw an error if the underlying type is not integer or rune and hence cannot be
+        // modulo'd.
+        if (!this.isIntOrRuneType(leftExprType.getUnderlyingType()))
             this.throwTypeCheckException(node,
             	"Invalid operation '%=': Operator '%' not defined on " + leftExprType);
     }
@@ -683,13 +697,14 @@ public class TypeChecker extends DepthFirstAdapter {
         GoLiteType leftExprType = this.getType(node.getLhs());
         GoLiteType rightExprType = this.getType(node.getRhs());
 
-        // Throw an error if the types are not compatible.
-        if (leftExprType.getUnderlyingType().equals(rightExprType))
+        // Throw an error if the L.H.S. and R.H.S. types are not compatible.
+        if (!(leftExprType.isCompatible(rightExprType)))
             this.throwTypeCheckException(node, "Invalid operation '&=': Mismatched types "
             	+ leftExprType + " and " + rightExprType);
 
-        // Throw an error if the type is not integer or rune and hence cannot be bit-anded.
-        if (!this.isIntOrRuneType(leftExprType))
+        // Throw an error if the underlying type is not integer or rune and hence cannot be
+        // bit-anded.
+        if (!this.isIntOrRuneType(leftExprType.getUnderlyingType()))
             this.throwTypeCheckException(node,
             	"Invalid operation '&=': Operator '&' not defined on " + leftExprType);
     }
@@ -701,13 +716,14 @@ public class TypeChecker extends DepthFirstAdapter {
         GoLiteType leftExprType = this.getType(node.getLhs());
         GoLiteType rightExprType = this.getType(node.getRhs());
 
-        // Throw an error if the types are not compatible.
-        if (leftExprType.getUnderlyingType().equals(rightExprType))
+        // Throw an error if the L.H.S. and R.H.S. types are not compatible.
+        if (!(leftExprType.isCompatible(rightExprType)))
             this.throwTypeCheckException(node, "Invalid operation '|=': Mismatched types "
             	+ leftExprType + " and " + rightExprType);
 
-        // Throw an error if the type is not integer or rune and hence cannot be bit-or'd.
-        if (!this.isIntOrRuneType(leftExprType))
+        // Throw an error if the underlying type is not integer or rune and hence cannot be
+        // bit-or'd.
+        if (!this.isIntOrRuneType(leftExprType.getUnderlyingType()))
             this.throwTypeCheckException(node,
             	"Invalid operation '|=': Operator '|' not defined on " + leftExprType);
     }
@@ -719,13 +735,14 @@ public class TypeChecker extends DepthFirstAdapter {
         GoLiteType leftExprType = this.getType(node.getLhs());
         GoLiteType rightExprType = this.getType(node.getRhs());
 
-        // Throw an error if the types are not compatible.
-        if (leftExprType.getUnderlyingType().equals(rightExprType))
+        // Throw an error if the L.H.S. and R.H.S. types are not compatible.
+        if (!(leftExprType.isCompatible(rightExprType)))
             this.throwTypeCheckException(node, "Invalid operation '^=': Mismatched types "
             	+ leftExprType + " and " + rightExprType);
 
-        // Throw an error if the type is not integer or rune and hence cannot be bit-xor'd.
-        if (!this.isIntOrRuneType(leftExprType))
+        // Throw an error if the underlying type is not integer or rune and hence cannot be
+        // bit-xor'd.
+        if (!this.isIntOrRuneType(leftExprType.getUnderlyingType()))
             this.throwTypeCheckException(node,
             	"Invalid operation '^=': Operator '^' not defined on " + leftExprType);
     }
@@ -737,13 +754,14 @@ public class TypeChecker extends DepthFirstAdapter {
         GoLiteType leftExprType = this.getType(node.getLhs());
         GoLiteType rightExprType = this.getType(node.getRhs());
 
-        // Throw an error if the types are not compatible.
-        if (leftExprType.getUnderlyingType().equals(rightExprType))
+        // Throw an error if the L.H.S. and R.H.S. types are not compatible.
+        if (!(leftExprType.isCompatible(rightExprType)))
             this.throwTypeCheckException(node, "Invalid operation '&^=': Mismatched types "
             	+ leftExprType + " and " + rightExprType);
 
-        // Throw an error if the type is not integer or rune and hence cannot be bit-cleared.
-        if (!this.isIntOrRuneType(leftExprType))
+        // Throw an error if the underlying type is not integer or rune and hence cannot be
+        // bit-cleared.
+        if (!this.isIntOrRuneType(leftExprType.getUnderlyingType()))
             this.throwTypeCheckException(node,
             	"Invalid operation '&^=': Operator '&^' not defined on " + leftExprType);
     }
@@ -755,13 +773,14 @@ public class TypeChecker extends DepthFirstAdapter {
         GoLiteType leftExprType = this.getType(node.getLhs());
         GoLiteType rightExprType = this.getType(node.getRhs());
 
-        // Throw an error if the types are not compatible.
-        if (leftExprType.getUnderlyingType().equals(rightExprType))
+        // Throw an error if the L.H.S. and R.H.S. types are not compatible.
+        if (!(leftExprType.isCompatible(rightExprType)))
             this.throwTypeCheckException(node, "Invalid operation '<<=': Mismatched types "
             	+ leftExprType + " and " + rightExprType);
 
-        // Throw an error if the type is not integer or rune and hence cannot be left-shifted.
-        if (!this.isIntOrRuneType(leftExprType))
+        // Throw an error if the underlying type is not integer or rune and hence cannot be
+        // left-shifted.
+        if (!this.isIntOrRuneType(leftExprType.getUnderlyingType()))
             this.throwTypeCheckException(node,
             	"Invalid operation '<<=': Operator '<<' not defined on " + leftExprType);
     }
@@ -773,15 +792,42 @@ public class TypeChecker extends DepthFirstAdapter {
         GoLiteType leftExprType = this.getType(node.getLhs());
         GoLiteType rightExprType = this.getType(node.getRhs());
 
-        // Throw an error if the types are not compatible.
-        if (leftExprType.getUnderlyingType().equals(rightExprType))
+        // Throw an error if the L.H.S. and R.H.S. types are not compatible.
+        if (!(leftExprType.isCompatible(rightExprType)))
             this.throwTypeCheckException(node, "Invalid operation '>>=': Mismatched types "
             	+ leftExprType + " and " + rightExprType);
 
-        // Throw an error if the type is not integer or rune and hence cannot be right-shifted.
-        if (!this.isIntOrRuneType(leftExprType))
+        // Throw an error if the underlying type is not integer or rune and hence cannot be
+        // right-shifted.
+        if (!this.isIntOrRuneType(leftExprType.getUnderlyingType()))
             this.throwTypeCheckException(node,
             	"Invalid operation '>>=': Operator '>>' not defined on " + leftExprType);
+    }
+
+    /* Type check increment & decrement statements. */
+
+    // Increment statement.
+    @Override
+    public void outAIncrStmt(AIncrStmt node) {
+        // Get the expression (Guaranteed to be assignable by the weeder) and its type.
+        PExpr pExpr = node.getExpr();
+        GoLiteType type = this.getType(pExpr);
+
+        // Throw an error if the underlying type is not numeric.
+        if (!this.isNumericType(type.getUnderlyingType()))
+            this.throwTypeCheckException(pExpr, "Invalid operation '++': non-numeric type " + type);
+    }
+
+    // Decrement statement.
+    @Override
+    public void outADecrStmt(ADecrStmt node) {
+        // Get the expression (Guaranteed to be assignable by the weeder) and its type.
+        PExpr pExpr = node.getExpr();
+        GoLiteType type = this.getType(pExpr);
+
+        // Throw an error if the underlying type is not numeric.
+        if (!this.isNumericType(type.getUnderlyingType()))
+            this.throwTypeCheckException(pExpr, "Invalid operation '--': non-numeric type " + type);
     }
 
     // Expression statement.
@@ -846,9 +892,10 @@ public class TypeChecker extends DepthFirstAdapter {
          	if (returnType instanceof VoidType)
                 this.throwTypeCheckException(pExpr, "Too many arguments to return");
 
-            // Check the return type and return expression for type compatibility.
+            // Check the return type and return expression for type compatibility, throw an error if
+            // their not.
             GoLiteType exprType = this.typeTable.get(pExpr);
-            if (returnType.getUnderlyingType().equals(exprType))
+            if (!(returnType.isCompatible(exprType)))
                 this.throwTypeCheckException(pExpr, "Cannot use type " + exprType + " as type "
                 	+ returnType + " in return argument");
         }
@@ -967,7 +1014,7 @@ public class TypeChecker extends DepthFirstAdapter {
         // condition.
         for (PExpr pExpr : node.getExpr()) {
             GoLiteType type = this.typeTable.get(pExpr);
-            if (this.currentSwitchCondType.getUnderlyingType().equals(type))
+            if (!(this.currentSwitchCondType.isCompatible(type)))
                 this.throwTypeCheckException(pExpr, "Invalid case in switch (mismatched types "
                 	+ type + " and " + this.currentSwitchCondType + ")");
         }
@@ -1051,14 +1098,13 @@ public class TypeChecker extends DepthFirstAdapter {
         GoLiteType rightExprType = this.getType(rightExpr);
 
         // Make sure operands are type compatible, otherwise throw an error.
-        if (!(leftExprType.getUnderlyingType().equals(rightExprType)
-        	|| rightExprType.getUnderlyingType().equals(leftExprType)))
+        if (!(leftExprType.isCompatible(rightExprType) || rightExprType.isCompatible(leftExprType)))
             this.throwTypeCheckException(node,
             	"Invalid operation '+': mismatched types " + leftExprType + " and "
             	+ rightExprType);
 
         // Make sure the underlying operand type is ordered, otherwise throw an error.
-        if (!this.isOrderedType(leftExprType))
+        if (!this.isOrderedType(leftExprType.getUnderlyingType()))
             this.throwTypeCheckException(node,
             	"Invalid operation '+': operator not defined on " + leftExprType);
         
@@ -1075,14 +1121,13 @@ public class TypeChecker extends DepthFirstAdapter {
         GoLiteType rightExprType = this.getType(rightExpr);
 
         // Make sure operands are type compatible, otherwise throw an error.
-        if (!(leftExprType.getUnderlyingType().equals(rightExprType)
-        	|| rightExprType.getUnderlyingType().equals(leftExprType)))
+        if (!(leftExprType.isCompatible(rightExprType) || rightExprType.isCompatible(leftExprType)))
             this.throwTypeCheckException(node,
             	"Invalid operation '-': mismatched types " + leftExprType + " and "
             	+ rightExprType);
 
         // Make sure the underlying operand type is numeric, otherwise throw an error.
-        if (!this.isNumericType(leftExprType))
+        if (!this.isNumericType(leftExprType.getUnderlyingType()))
             this.throwTypeCheckException(node,
             	"Invalid operation '-': operator not defined on " + leftExprType);
         
@@ -1099,14 +1144,13 @@ public class TypeChecker extends DepthFirstAdapter {
         GoLiteType rightExprType = this.getType(rightExpr);
 
         // Make sure operands are type compatible, otherwise throw an error.
-        if (!(leftExprType.getUnderlyingType().equals(rightExprType)
-        	|| rightExprType.getUnderlyingType().equals(leftExprType)))
+        if (!(leftExprType.isCompatible(rightExprType) || rightExprType.isCompatible(leftExprType)))
             this.throwTypeCheckException(node,
             	"Invalid operation '*': mismatched types " + leftExprType + " and "
             	+ rightExprType);
 
         // Make sure the underlying operand type is numeric, otherwise throw an error.
-        if (!this.isNumericType(leftExprType))
+        if (!this.isNumericType(leftExprType.getUnderlyingType()))
             this.throwTypeCheckException(node,
             	"Invalid operation '*': operator not defined on " + leftExprType);
         
@@ -1123,14 +1167,13 @@ public class TypeChecker extends DepthFirstAdapter {
         GoLiteType rightExprType = this.getType(rightExpr);
 
         // Make sure operands are type compatible, otherwise throw an error.
-        if (!(leftExprType.getUnderlyingType().equals(rightExprType)
-        	|| rightExprType.getUnderlyingType().equals(leftExprType)))
+        if (!(leftExprType.isCompatible(rightExprType) || rightExprType.isCompatible(leftExprType)))
             this.throwTypeCheckException(node,
             	"Invalid operation '/': mismatched types " + leftExprType + " and "
             	+ rightExprType);
 
         // Make sure the underlying operand type is numeric, otherwise throw an error.
-        if (!this.isNumericType(leftExprType))
+        if (!this.isNumericType(leftExprType.getUnderlyingType()))
             this.throwTypeCheckException(node,
             	"Invalid operation '/': operator not defined on " + leftExprType);
         
@@ -1147,14 +1190,13 @@ public class TypeChecker extends DepthFirstAdapter {
         GoLiteType rightExprType = this.getType(rightExpr);
 
         // Make sure operands are type compatible, otherwise throw an error.
-        if (!(leftExprType.getUnderlyingType().equals(rightExprType)
-        	|| rightExprType.getUnderlyingType().equals(leftExprType)))
+        if (!(leftExprType.isCompatible(rightExprType) || rightExprType.isCompatible(leftExprType)))
             this.throwTypeCheckException(node,
             	"Invalid operation '%': mismatched types " + leftExprType + " and "
             	+ rightExprType);
 
         // Make sure the underlying operand type is integer or rune, otherwise throw an error.
-        if (!this.isIntOrRuneType(leftExprType))
+        if (!this.isIntOrRuneType(leftExprType.getUnderlyingType()))
             this.throwTypeCheckException(node,
             	"Invalid operation '%': operator not defined on " + leftExprType);
         
@@ -1171,14 +1213,13 @@ public class TypeChecker extends DepthFirstAdapter {
         GoLiteType rightExprType = this.getType(rightExpr);
 
        	// Make sure operands are type compatible, otherwise throw an error.
-	    if (!(leftExprType.getUnderlyingType().equals(rightExprType)
-	    	|| rightExprType.getUnderlyingType().equals(leftExprType)))
+	    if (!(leftExprType.isCompatible(rightExprType) || rightExprType.isCompatible(leftExprType)))
 	        this.throwTypeCheckException(node,
 	        	"Invalid operation '&': mismatched types " + leftExprType + " and "
 	        	+ rightExprType);
 
 	    // Make sure the underlying operand type is integer or rune, otherwise throw an error.
-	    if (!this.isIntOrRuneType(leftExprType))
+	    if (!this.isIntOrRuneType(leftExprType.getUnderlyingType()))
 	        this.throwTypeCheckException(node,
 	        	"Invalid operation '&': operator not defined on " + leftExprType);
 	    
@@ -1195,14 +1236,13 @@ public class TypeChecker extends DepthFirstAdapter {
         GoLiteType rightExprType = this.getType(rightExpr);
 
        	// Make sure operands are type compatible, otherwise throw an error.
-	    if (!(leftExprType.getUnderlyingType().equals(rightExprType)
-	    	|| rightExprType.getUnderlyingType().equals(leftExprType)))
+	    if (!(leftExprType.isCompatible(rightExprType) || rightExprType.isCompatible(leftExprType)))
 	        this.throwTypeCheckException(node,
 	        	"Invalid operation '|': mismatched types " + leftExprType + " and "
 	        	+ rightExprType);
 
 	    // Make sure the underlying operand type is integer or rune, otherwise throw an error.
-	    if (!this.isIntOrRuneType(leftExprType))
+	    if (!this.isIntOrRuneType(leftExprType.getUnderlyingType()))
 	        this.throwTypeCheckException(node,
 	        	"Invalid operation '|': operator not defined on " + leftExprType);
 	    
@@ -1219,14 +1259,13 @@ public class TypeChecker extends DepthFirstAdapter {
         GoLiteType rightExprType = this.getType(rightExpr);
 
        	// Make sure operands are type compatible, otherwise throw an error.
-	    if (!(leftExprType.getUnderlyingType().equals(rightExprType)
-	    	|| rightExprType.getUnderlyingType().equals(leftExprType)))
+	    if (!(leftExprType.isCompatible(rightExprType) || rightExprType.isCompatible(leftExprType)))
 	        this.throwTypeCheckException(node,
 	        	"Invalid operation '^': mismatched types " + leftExprType + " and "
 	        	+ rightExprType);
 
 	    // Make sure the underlying operand type is integer or rune, otherwise throw an error.
-	    if (!this.isIntOrRuneType(leftExprType))
+	    if (!this.isIntOrRuneType(leftExprType.getUnderlyingType()))
 	        this.throwTypeCheckException(node,
 	        	"Invalid operation '^': operator not defined on " + leftExprType);
 	    
@@ -1243,14 +1282,13 @@ public class TypeChecker extends DepthFirstAdapter {
         GoLiteType rightExprType = this.getType(rightExpr);
 
        	// Make sure operands are type compatible, otherwise throw an error.
-	    if (!(leftExprType.getUnderlyingType().equals(rightExprType)
-	    	|| rightExprType.getUnderlyingType().equals(leftExprType)))
+	    if (!(leftExprType.isCompatible(rightExprType) || rightExprType.isCompatible(leftExprType)))
 	        this.throwTypeCheckException(node,
 	        	"Invalid operation '&^': mismatched types " + leftExprType + " and "
 	        	+ rightExprType);
 
 	    // Make sure the underlying operand type is integer or rune, otherwise throw an error.
-	    if (!this.isIntOrRuneType(leftExprType))
+	    if (!this.isIntOrRuneType(leftExprType.getUnderlyingType()))
 	        this.throwTypeCheckException(node,
 	        	"Invalid operation '&^': operator not defined on " + leftExprType);
 	    
@@ -1267,14 +1305,13 @@ public class TypeChecker extends DepthFirstAdapter {
         GoLiteType rightExprType = this.getType(rightExpr);
 
        	// Make sure operands are type compatible, otherwise throw an error.
-	    if (!(leftExprType.getUnderlyingType().equals(rightExprType)
-	    	|| rightExprType.getUnderlyingType().equals(leftExprType)))
+	    if (!(leftExprType.isCompatible(rightExprType) || rightExprType.isCompatible(leftExprType)))
 	        this.throwTypeCheckException(node,
 	        	"Invalid operation '<<': mismatched types " + leftExprType + " and "
 	        	+ rightExprType);
 
 	    // Make sure the underlying operand type is integer or rune, otherwise throw an error.
-	    if (!this.isIntOrRuneType(leftExprType))
+	    if (!this.isIntOrRuneType(leftExprType.getUnderlyingType()))
 	        this.throwTypeCheckException(node,
 	        	"Invalid operation '<<': operator not defined on " + leftExprType);
 	    
@@ -1291,14 +1328,13 @@ public class TypeChecker extends DepthFirstAdapter {
         GoLiteType rightExprType = this.getType(rightExpr);
 
        	// Make sure operands are type compatible, otherwise throw an error.
-	    if (!(leftExprType.getUnderlyingType().equals(rightExprType)
-	    	|| rightExprType.getUnderlyingType().equals(leftExprType)))
+	    if (!(leftExprType.isCompatible(rightExprType) || rightExprType.isCompatible(leftExprType)))
 	        this.throwTypeCheckException(node,
 	        	"Invalid operation '>>': mismatched types " + leftExprType + " and "
 	        	+ rightExprType);
 
 	    // Make sure the underlying operand type is integer or rune, otherwise throw an error.
-	    if (!this.isIntOrRuneType(leftExprType))
+	    if (!this.isIntOrRuneType(leftExprType.getUnderlyingType()))
 	        this.throwTypeCheckException(node,
 	        	"Invalid operation '>>': operator not defined on " + leftExprType);
 	    
@@ -1315,11 +1351,11 @@ public class TypeChecker extends DepthFirstAdapter {
         GoLiteType type = this.getType(pExpr);
 
         // Throw an error if the expression is not numeric.
-        if (!this.isNumericType(type))
+        if (!this.isNumericType(type.getUnderlyingType()))
             this.throwTypeCheckException(pExpr,
             	"Invalid oepration '+': undefined for type " + type);
 
-        this.typeTable.put(node, type);
+        this.typeTable.put(node, type.getUnderlyingType());
     }
 
     // Minus unary expression.
@@ -1330,11 +1366,11 @@ public class TypeChecker extends DepthFirstAdapter {
         GoLiteType type = this.getType(pExpr);
 
         // Throw an error if the expression is not numeric.
-        if (!this.isNumericType(type))
+        if (!this.isNumericType(type.getUnderlyingType()))
             this.throwTypeCheckException(pExpr,
             	"Invalid oepration '-': undefined for type " + type);
 
-        this.typeTable.put(node, type);
+        this.typeTable.put(node, type.getUnderlyingType());
     }
 
     // Bit complement unary expression.
@@ -1345,11 +1381,11 @@ public class TypeChecker extends DepthFirstAdapter {
         GoLiteType type = this.getType(pExpr);
 
         // Throw an error if the expression is not integer or rune.
-        if (!this.isIntOrRuneType(type))
+        if (!this.isIntOrRuneType(type.getUnderlyingType()))
             this.throwTypeCheckException(pExpr,
             	"Invalid oepration '^': undefined for type " + type);
 
-        this.typeTable.put(node, type);
+        this.typeTable.put(node, type.getUnderlyingType());
     }
 
     // Not unary expression.
@@ -1360,11 +1396,11 @@ public class TypeChecker extends DepthFirstAdapter {
         GoLiteType type = this.getType(pExpr);
 
         // Throw an error if the expression is not boolean.
-        if (!(type instanceof BoolType))
+        if (!(type.getUnderlyingType() instanceof BoolType))
             this.throwTypeCheckException(pExpr,
             	"Invalid oepration '!': undefined for type " + type);
 
-        this.typeTable.put(node, type);
+        this.typeTable.put(node, new BoolType());
     }
 
     /* Type check comparison expressions. */
@@ -1376,14 +1412,14 @@ public class TypeChecker extends DepthFirstAdapter {
         GoLiteType leftExprType = this.getType(node.getLeft());
         GoLiteType rightExprType = this.getType(node.getRight());
 
-        // Make sure operands have the same surface type, otherwise throw an error.
-        if (!leftExprType.equals(rightExprType))
+        // Make sure operands are type compatible, otherwise throw an error.
+        if (!(leftExprType.isCompatible(rightExprType) || rightExprType.isCompatible(leftExprType)))
             this.throwTypeCheckException(node.getLeft(),
             	"Invalid operation '==': (mismatched types " + leftExprType
             		+ " and " + rightExprType + ")");
 
         // Make sure the underlying operand type is comparable, otherwise throw an error.
-        if (!isComparableType(leftExprType))
+        if (!this.isComparableType(leftExprType.getUnderlyingType()))
             this.throwTypeCheckException(node,
             	"Invalid operation '==': undefined for type " + leftExprType);
 
@@ -1397,14 +1433,14 @@ public class TypeChecker extends DepthFirstAdapter {
         GoLiteType leftExprType = this.getType(node.getLeft());
         GoLiteType rightExprType = this.getType(node.getRight());
 
-        // Make sure operands have the same surface type, otherwise throw an error.
-        if (!leftExprType.equals(rightExprType))
+        // Make sure operands are type compatible, otherwise throw an error.
+        if (!(leftExprType.isCompatible(rightExprType) || rightExprType.isCompatible(leftExprType)))
             this.throwTypeCheckException(node.getLeft(),
             	"Invalid operation '!=': (mismatched types " + leftExprType
             		+ " and " + rightExprType + ")");
 
         // Make sure the underlying operand type is comparable, otherwise throw an error.
-        if (!isComparableType(leftExprType))
+        if (!isComparableType(leftExprType.getUnderlyingType()))
             this.throwTypeCheckException(node,
             	"Invalid operation '!=': undefined for type " + leftExprType);
 
@@ -1418,8 +1454,8 @@ public class TypeChecker extends DepthFirstAdapter {
         GoLiteType leftExprType = this.getType(node.getLeft());
         GoLiteType rightExprType = this.getType(node.getRight());
 
-        // Make sure operands have the same surface type, otherwise throw an error.
-        if (!leftExprType.equals(rightExprType))
+       	// Make sure operands are type compatible, otherwise throw an error.
+        if (!(leftExprType.isCompatible(rightExprType) || rightExprType.isCompatible(leftExprType)))
             this.throwTypeCheckException(node.getLeft(),
             	"Invalid operation '<': (mismatched types " + leftExprType
             		+ " and " + rightExprType + ")");
@@ -1439,8 +1475,8 @@ public class TypeChecker extends DepthFirstAdapter {
         GoLiteType leftExprType = this.getType(node.getLeft());
         GoLiteType rightExprType = this.getType(node.getRight());
 
-        // Make sure operands have the same surface type, otherwise throw an error.
-        if (!leftExprType.equals(rightExprType))
+       	// Make sure operands are type compatible, otherwise throw an error.
+        if (!(leftExprType.isCompatible(rightExprType) || rightExprType.isCompatible(leftExprType)))
             this.throwTypeCheckException(node.getLeft(),
             	"Invalid operation '<=': (mismatched types " + leftExprType
             		+ " and " + rightExprType + ")");
@@ -1460,8 +1496,8 @@ public class TypeChecker extends DepthFirstAdapter {
         GoLiteType leftExprType = this.getType(node.getLeft());
         GoLiteType rightExprType = this.getType(node.getRight());
 
-        // Make sure operands have the same surface type, otherwise throw an error.
-        if (!leftExprType.equals(rightExprType))
+        // Make sure operands are type compatible, otherwise throw an error.
+        if (!(leftExprType.isCompatible(rightExprType) || rightExprType.isCompatible(leftExprType)))
             this.throwTypeCheckException(node.getLeft(),
             	"Invalid operation '>': (mismatched types " + leftExprType
             		+ " and " + rightExprType + ")");
@@ -1481,8 +1517,8 @@ public class TypeChecker extends DepthFirstAdapter {
         GoLiteType leftExprType = this.getType(node.getLeft());
         GoLiteType rightExprType = this.getType(node.getRight());
 
-        // Make sure operands have the same surface type, otherwise throw an error.
-        if (!leftExprType.equals(rightExprType))
+       	// Make sure operands are type compatible, otherwise throw an error.
+        if (!(leftExprType.isCompatible(rightExprType) || rightExprType.isCompatible(leftExprType)))
             this.throwTypeCheckException(node.getLeft(),
             	"Invalid operation '>=': (mismatched types " + leftExprType
             		+ " and " + rightExprType + ")");
@@ -1506,13 +1542,16 @@ public class TypeChecker extends DepthFirstAdapter {
         GoLiteType leftExprType = this.getType(leftExpr);
         GoLiteType rightExprType = this.getType(rightExpr);
 
-        if (!(leftExprType instanceof BoolType))
+        // Make sure operands are type compatible, otherwise throw an error.
+	    if (!(leftExprType.isCompatible(rightExprType) || rightExprType.isCompatible(leftExprType)))
+	        this.throwTypeCheckException(node,
+	        	"Invalid operation '&&' mismatched types " + leftExprType + " and "
+	        	+ rightExprType);
+
+	    // Make sure operands are boolean, otherwise throw an error.
+        if (!(leftExprType.getUnderlyingType() instanceof BoolType))
         	this.throwTypeCheckException(node,
         		"Invalid operation '&&': undefined for type "+ leftExprType);
-
-        if (!(rightExprType instanceof BoolType))
-            this.throwTypeCheckException(node,
-            	"Invalid operation '&&': undefined for type " + rightExprType);
 
         this.typeTable.put(node, new BoolType());
     }
@@ -1526,13 +1565,16 @@ public class TypeChecker extends DepthFirstAdapter {
         GoLiteType leftExprType = this.getType(leftExpr);
         GoLiteType rightExprType = this.getType(rightExpr);
 
-        if (!(leftExprType instanceof BoolType))
-        	this.throwTypeCheckException(node,
-        		"Invalid operation '||': undefined for type " + leftExprType);
+        // Make sure operands are type compatible, otherwise throw an error.
+	    if (!(leftExprType.isCompatible(rightExprType) || rightExprType.isCompatible(leftExprType)))
+	        this.throwTypeCheckException(node,
+	        	"Invalid operation '||' mismatched types " + leftExprType + " and "
+	        	+ rightExprType);
 
-        if (!(rightExprType instanceof BoolType))
-            this.throwTypeCheckException(node, 
-            	"Invalid operation '||': undefined for type " + rightExprType);
+	    // Make sure operands are boolean, otherwise throw an error.
+        if (!(leftExprType.getUnderlyingType() instanceof BoolType))
+        	this.throwTypeCheckException(node,
+        		"Invalid operation '||': undefined for type "+ leftExprType);
 
         this.typeTable.put(node, new BoolType());
     }
@@ -1575,7 +1617,7 @@ public class TypeChecker extends DepthFirstAdapter {
 	        	GoLiteType argType = argTypes.get(i);
 	        	GoLiteType exprType = this.getType(pExprs.get(i));
 
-	        	if (!argType.getUnderlyingType().equals(exprType))
+	        	if (!(argType.isCompatible(exprType)))
 	        		this.throwTypeCheckException(node, "Cannot use type " + exprType + " as type "
 	        			+ argType + " in argument to " + name);
 	        }
@@ -1633,7 +1675,7 @@ public class TypeChecker extends DepthFirstAdapter {
 
     	// Make sure the element type of the slice and the expression argument are type compatible,
     	// otherwise throw an error.
-    	if (!elemType.getUnderlyingType().equals(exprType))
+    	if (!(elemType.isCompatible(exprType)))
         	this.throwTypeCheckException(pExpr,
         		"Cannot use type " + exprType + " as type " + elemType + "in argument to append");
 
@@ -1693,25 +1735,28 @@ public class TypeChecker extends DepthFirstAdapter {
     // Field access.
     @Override
     public void outAFieldExpr(AFieldExpr node) {
-    	// Object expression and its type.
+    	// Object expression and its type and underlying type.
     	PExpr pExpr = node.getExpr();
     	GoLiteType exprType = this.getType(pExpr);
+    	GoLiteType exprUnderlyingType = exprType.getUnderlyingType();
     	// Field Id and name.
     	TId fieldId = node.getId();
     	String fieldName = fieldId.getText();
 
     	// Make sure the underlying type of the object expression is struct, otherwise throw an
     	// error.
-		if (!(exprType.getUnderlyingType() instanceof StructType))
+		if (!(exprUnderlyingType instanceof StructType))
 			this.throwTypeCheckException(pExpr,
 				"Undefined: type " + exprType + " has no field " + fieldName);
 
+        StructType structType = ((StructType) this.getNonAliasType(exprType));
+
 		// Make sure the struct has a field with the given name, otherwise throw an error.
-		if (!((StructType) exprType).hasField(fieldName))
+		if (!(structType.hasField(fieldName)))
 			this.throwTypeCheckException(fieldId,
 				"Undefined: type " + exprType + " has no field " + fieldName);
 
-		this.typeTable.put(node, ((StructType) exprType).getFieldType(fieldName));
+		this.typeTable.put(node, structType.getFieldType(fieldName));
 	}
 
     // Enter a variable expression into the type table.

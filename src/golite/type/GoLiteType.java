@@ -15,4 +15,12 @@ public abstract class GoLiteType {
 		return this;
 	}
 
+	/**
+	 * Checks whether the given type is compatible.
+	 *
+	 * @param type - Type
+	 * @return True if the types are compatible, false otherwise. 
+	 */
+	public abstract boolean isCompatible(GoLiteType type);
+
 }

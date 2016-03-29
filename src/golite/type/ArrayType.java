@@ -47,6 +47,16 @@ public class ArrayType extends GoLiteType {
 		return new ArrayType(this.type.getUnderlyingType(), this.bound);
 	}
 
+	@Override
+	public boolean isCompatible(GoLiteType type) {
+		// Other type must be an array.
+		return type instanceof ArrayType
+			// The bounds of the arrays must match.
+			&& this.bound == ((ArrayType) type).getBound()
+			// The element types must be compatible.
+			&& this.type.isCompatible(((ArrayType) type).getType());
+	}
+
 	// Equality is performed on the type and bound.
 	@Override
     public boolean equals(Object o) {

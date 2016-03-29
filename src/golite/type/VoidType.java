@@ -6,17 +6,15 @@ package golite.type;
  */
 public class VoidType extends GoLiteType {
 
+    @Override
+    public boolean isCompatible(GoLiteType type) {
+        return type.getUnderlyingType() instanceof VoidType;
+    }
+
 	// Equality is performed on the class.
 	@Override
     public boolean equals(Object o) {
-    	if (!(o instanceof VoidType))
-        	return false;
-
-        if (this == o)
-        	return true;
-
-        VoidType other = (VoidType) o;
-        return this.getClass().equals(other.getClass());
+    	return o instanceof VoidType;
     }
 
     // Hash code is derived from the class.

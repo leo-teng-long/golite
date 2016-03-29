@@ -29,6 +29,30 @@ class UnTypedAliasType extends GoLiteType {
 	}
 
 	@Override
+	public boolean isCompatible(GoLiteType type) {
+        return this.equals(type);
+	}
+
+	// Equality performed on the alias.
+	@Override
+    public boolean equals(Object o) {
+    	if (!(o instanceof UnTypedAliasType))
+        	return false;
+
+        if (this == o)
+        	return true;
+
+        UnTypedAliasType other = (UnTypedAliasType) o;
+        return this.alias.equals(other.getAlias());
+    }
+
+    // Hash code derived from the alias.
+    @Override
+    public int hashCode() {
+        return this.alias.hashCode();
+    }
+
+	@Override
 	public String toString() {
 		return this.alias;
 	}

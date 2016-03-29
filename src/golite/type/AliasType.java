@@ -41,6 +41,22 @@ public class AliasType extends GoLiteType {
 		return this.type.getUnderlyingType();
 	}
 
+	@Override
+	public boolean isCompatible(GoLiteType type) {
+		// Check if the given type appears anywhere in the chain of aliases for
+		// this alias type.
+		GoLiteType t = this;
+		do {
+            if (t.equals(type))
+                return true;
+
+            if (t instanceof AliasType)
+                t = ((AliasType) t).getType();
+        } while (t instanceof AliasType);
+
+        return false;
+	}
+
 	// Equality performed on the alias.
 	@Override
     public boolean equals(Object o) {

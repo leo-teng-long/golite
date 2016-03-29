@@ -37,6 +37,14 @@ public class SliceType extends GoLiteType {
 		return new SliceType(this.type.getUnderlyingType());
 	}
 
+	@Override
+	public boolean isCompatible(GoLiteType type) {
+		// Other type must be a slice.
+		return type instanceof SliceType
+			// The element types must be compatible.
+			&& this.type.isCompatible(((SliceType) type).getType());
+	}
+
 	// Equality is performed on the type.
 	@Override
     public boolean equals(Object o) {

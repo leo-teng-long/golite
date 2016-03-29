@@ -152,6 +152,11 @@ public class StructType extends GoLiteType {
 	}
 
 	@Override
+	public boolean isCompatible(GoLiteType type) {
+		return this.equals(type.getUnderlyingType());
+	}
+
+	@Override
 	public GoLiteType getUnderlyingType() {
 		StructType underlyingStructType = new StructType();
 
