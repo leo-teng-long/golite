@@ -33,6 +33,58 @@ public class CodeGenerator extends DepthFirstAdapter {
     }
 
     /**
+     * Overhead for Generated Python Code
+     *
+     */
+    @Override
+    public void inAProgProg(AProgProg node) {
+        generateImport();
+    }
+
+    @Override
+    public void outAProgProg(AProgProg node) {
+        generateMain();
+    }
+
+    private void generateImport() {
+        buffer.append("from __future__ import print_function\n");
+        addLines(1);
+    }
+
+    private void generateMain() {
+        buffer.append("if __name__ == '__main__':\n");
+        buffer.append("\tmain()\n");
+    }
+
+    /**
+     * Top-Level Variable Declarations
+     *
+     */
+    @Override
+    public void caseAVarsTopDec(AVarsTopDec node) {
+        /* TODO */
+    }
+
+    @Override
+    public void caseASpecVarSpec(ASpecVarSpec node) {
+        /* TODO */
+    }
+
+    /**
+     * Top-Level Type Declarations
+     *
+     */
+    @Override
+    public void caseATypesTopDec(ATypesTopDec node) {
+        /* TODO */
+    }
+
+    @Override
+    public void caseASpecTypeSpec(ASpecTypeSpec node) {
+        /* TODO */
+    }
+
+    /**
      * Top-Level Function Declarations
      *
      */
@@ -135,7 +187,7 @@ public class CodeGenerator extends DepthFirstAdapter {
             }
         }
 
-        buffer.append(" := ");
+        buffer.append(" = ");
 
         {
             List<PExpr> copy = new ArrayList<PExpr>(node.getExpr());

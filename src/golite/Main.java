@@ -3,6 +3,7 @@ package golite;
 import golite.exception.*;
 import golite.symbol.*;
 import golite.type.*;
+import golite.generator.*;
 import golite.lexer.*;
 import golite.parser.*;
 import golite.node.*;
@@ -61,6 +62,8 @@ class Main {
                 type(args[1]);
             } else if (args[0].equals("-dumpsymtab")) {
                 dumpSymbolTable(args[1]);
+            } else if (args[0].equals("-code")) {
+                generateCode(args[1]);
             } else {
                 printUsage();
             }
@@ -74,7 +77,7 @@ class Main {
      */
     public static void printUsage() {
         System.err.println("Usage: Main -[scan | parse | pretty | pptype | printTokens | "
-            + "dumpsymtab | weed | weedv | type | typev ] filename");
+            + "dumpsymtab | weed | weedv | type | typev | code] filename");
     }
 
     /**
@@ -323,6 +326,27 @@ class Main {
         PrintWriter out = new PrintWriter(new FileWriter(name + ext));
         out.print(data);
         out.close();
+    }
+
+    private static void generateCode(String inPath) throws IOException {
+        try {
+            Lexer lexer = new GoLiteLexer(new PushbackReader(new FileReader(inPath), 1024));
+            Parser parser = new Parser(lexer);
+            Start start = parser.parse();
+
+            CodeGenerator generator = new CodeGenerator();
+            start.apply(generator);
+
+            String pythonCode = generator.getGeneratedCode();
+            String filename = new File(inPath).getName();
+            String name = filename.substring(0, filename.indexOf('.'));
+            PrintWriter out = new PrintWriter(new FileWriter(name + ".golite.py"));
+            out.print(pythonCode);
+            out.close();
+        } catch (Exception e) {
+            System.err.println("ERROR: " + e);
+            e.printStackTrace();
+        }
     }
 
 }
