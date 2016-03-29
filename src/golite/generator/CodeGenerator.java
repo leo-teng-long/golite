@@ -1,4 +1,4 @@
-package golite.generator;
+    package golite.generator;
 
 import golite.analysis.*;
 import golite.node.*;
@@ -30,6 +30,320 @@ public class CodeGenerator extends DepthFirstAdapter {
      */
     public String getGeneratedCode() {
         return this.buffer.toString();
+    }
+
+    /**
+     * Empty Statements
+     *
+     */
+    @Override
+    public void caseAEmptyStmt(AEmptyStmt node) {
+        // do nothing;
+    }
+
+    /**
+     * Variable Declaration Statements
+     *
+     */
+    @Override
+    public void caseAVarDecStmt(AVarDecStmt node) {
+        /* TODO */
+    }
+
+    @Override
+    public void caseAShortAssignStmt(AShortAssignStmt node) {
+        this.inAShortAssignStmt(node);
+
+        {
+            List<POptId> copy = new ArrayList<POptId>(node.getOptId());
+
+            for (int i = 0; i < copy.size(); i++) {
+                if (i > 0) {
+                    addComma();
+                    addSpace();
+                }
+                copy.get(i).apply(this);
+            }
+        }
+
+        buffer.append(" := ");
+
+        {
+            List<PExpr> copy = new ArrayList<PExpr>(node.getExpr());
+
+            for (int i = 0; i < copy.size(); i++) {
+                if (i > 0) {
+                    addComma();
+                    addSpace();
+                }
+                copy.get(i).apply(this);
+            }
+        }
+
+        this.outAShortAssignStmt(node);
+    }
+
+    @Override
+    public void caseABlankOptId(ABlankOptId node) {
+        this.inABlankOptId(node);
+
+        buffer.append('_');
+
+        this.outABlankOptId(node);
+    }
+
+    @Override
+    public void caseAIdOptId(AIdOptId node) {
+        this.inAIdOptId(node);
+
+        if (node.getId() != null) {
+            buffer.append(node.getId().getText());
+        }
+
+        this.outAIdOptId(node);
+    }
+
+    /**
+     * Type Declaration Statements
+     *
+     */
+    @Override
+    public void caseATypeDecStmt(ATypeDecStmt node) {
+        /* TODO */
+    }
+
+    /**
+     * Assignment Statements
+     *
+     */
+    @Override
+    public void caseAAssignStmt(AAssignStmt node) {
+        this.inAAssignStmt(node);
+
+        {
+            List<PExpr> copy = new ArrayList<PExpr>(node.getLhs());
+
+            for (int i = 0; i < copy.size(); i++) {
+                if (i > 0) {
+                    addComma();
+                    addSpace();
+                }
+                copy.get(i).apply(this);
+            }
+        }
+
+        buffer.append(" = ");
+
+        {
+            List<PExpr> copy = new ArrayList<PExpr>(node.getRhs());
+
+            for (int i = 0; i < copy.size(); i++) {
+                if (i > 0) {
+                    addComma();
+                    addSpace();
+                }
+                copy.get(i).apply(this);
+            }
+        }
+
+        this.outAAssignStmt(node);
+    }
+
+    /**
+     * Arithmetic Op-Assign Statements:
+     *  '+=', '-=', '*=', '/=', '%='
+     *
+     */
+    @Override
+    public void caseAPlusAssignStmt(APlusAssignStmt node) {
+        this.inAPlusAssignStmt(node);
+
+        if (node.getLhs() != null) {
+            node.getLhs().apply(this);
+        }
+
+        buffer.append(" += ");
+
+        if (node.getRhs() != null) {
+            node.getRhs().apply(this);
+        }
+
+        this.outAPlusAssignStmt(node);
+    }
+
+    @Override
+    public void caseAMinusAssignStmt(AMinusAssignStmt node) {
+        this.inAMinusAssignStmt(node);
+
+        if (node.getLhs() != null) {
+            node.getLhs().apply(this);
+        }
+
+        buffer.append(" -= ");
+
+        if (node.getRhs() != null) {
+            node.getRhs().apply(this);
+        }
+
+        this.outAMinusAssignStmt(node);
+    }
+
+    @Override
+    public void caseAStarAssignStmt(AStarAssignStmt node) {
+        this.inAStarAssignStmt(node);
+
+        if (node.getLhs() != null) {
+            node.getLhs().apply(this);
+        }
+
+        buffer.append(" *= ");
+
+        if (node.getRhs() != null) {
+            node.getRhs().apply(this);
+        }
+
+        this.outAStarAssignStmt(node);
+    }
+
+    @Override
+    public void caseASlashAssignStmt(ASlashAssignStmt node) {
+        this.inASlashAssignStmt(node);
+
+        if (node.getLhs() != null) {
+            node.getLhs().apply(this);
+        }
+
+        buffer.append(" /= ");
+
+        if (node.getRhs() != null) {
+            node.getRhs().apply(this);
+        }
+
+        this.outASlashAssignStmt(node);
+    }
+
+    @Override
+    public void caseAPercAssignStmt(APercAssignStmt node) {
+        this.inAPercAssignStmt(node);
+
+        if (node.getLhs() != null) {
+            node.getLhs().apply(this);
+        }
+
+        buffer.append(" %= ");
+
+        if (node.getRhs() != null) {
+            node.getRhs().apply(this);
+        }
+
+        this.outAPercAssignStmt(node);
+    }
+
+    /**
+     * Bit Op-Assign Statements:
+     *  '&=', '|=', '^=', '&^=', '<<=', '>>='
+     *
+     */
+    @Override
+    public void caseAAndAssignStmt(AAndAssignStmt node) {
+        this.inAAndAssignStmt(node);
+
+        if (node.getLhs() != null) {
+            node.getLhs().apply(this);
+        }
+
+        buffer.append(" &= ");
+
+        if (node.getRhs() != null) {
+            node.getRhs().apply(this);
+        }
+
+        this.outAAndAssignStmt(node);
+    }
+
+    @Override
+    public void caseAPipeAssignStmt(APipeAssignStmt node) {
+        this.inAPipeAssignStmt(node);
+
+        if (node.getLhs() != null) {
+            node.getLhs().apply(this);
+        }
+
+        buffer.append(" |= ");
+
+        if (node.getRhs() != null) {
+            node.getRhs().apply(this);
+        }
+
+        this.outAPipeAssignStmt(node);
+    }
+
+    @Override
+    public void caseACarotAssignStmt(ACarotAssignStmt node) {
+        this.inACarotAssignStmt(node);
+
+        if (node.getLhs() != null) {
+            node.getLhs().apply(this);
+        }
+
+        buffer.append(" ^= ");
+
+        if (node.getRhs() != null) {
+            node.getRhs().apply(this);
+        }
+
+        this.outACarotAssignStmt(node);
+    }
+
+    @Override
+    public void caseAAmpCarotAssignStmt(AAmpCarotAssignStmt node) {
+        this.inAAmpCarotAssignStmt(node);
+
+        if (node.getLhs() != null) {
+            node.getLhs().apply(this);
+        }
+
+        buffer.append(" &= ~ ");
+
+        if (node.getRhs() != null) {
+            node.getRhs().apply(this);
+        }
+
+        this.outAAmpCarotAssignStmt(node);
+    }
+
+    @Override
+    public void caseALshiftAssignStmt(ALshiftAssignStmt node) {
+        this.inALshiftAssignStmt(node);
+
+        if (node.getLhs() != null) {
+            node.getLhs().apply(this);
+        }
+
+        buffer.append(" <<= ");
+
+        if (node.getRhs() != null) {
+            node.getRhs().apply(this);
+        }
+
+        this.outALshiftAssignStmt(node);
+    }
+
+    @Override
+    public void caseARshiftAssignStmt(ARshiftAssignStmt node) {
+        this.inARshiftAssignStmt(node);
+
+        if (node.getLhs() != null) {
+            node.getLhs().apply(this);
+        }
+
+        buffer.append(" >>= ");
+
+        if (node.getRhs() != null) {
+            node.getRhs().apply(this);
+        }
+
+        this.outARshiftAssignStmt(node);
     }
 
     /**
