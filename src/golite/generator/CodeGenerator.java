@@ -46,6 +46,22 @@ public class CodeGenerator extends DepthFirstAdapter {
         generateMain();
     }
 
+    @Override
+    public void caseAProgProg(AProgProg node) {
+        this.inAProgProg(node);
+
+        {
+            List<PTopDec> copy = new ArrayList<PTopDec>(node.getTopDec());
+
+            for (PTopDec e : copy) {
+                e.apply(this);
+                addLines(1);
+            }
+        }
+
+        this.outAProgProg(node);
+    }
+
     private void generateImport() {
         buffer.append("from __future__ import print_function\n");
         addLines(1);
