@@ -33,6 +33,75 @@ public class CodeGenerator extends DepthFirstAdapter {
     }
 
     /**
+     * Top-Level Function Declarations
+     *
+     */
+    @Override
+    public void caseAFuncTopDec(AFuncTopDec node) {
+        this.inAFuncTopDec(node);
+
+        buffer.append("def");
+        addSpace();
+
+        if (node.getId() != null) {
+            buffer.append(node.getId().getText());
+        }
+
+        addLeftParen();
+
+        {
+            List<PArgGroup> copy = new ArrayList<PArgGroup>(node.getArgGroup());
+
+            for (int i = 0; i < copy.size(); i++) {
+                if (i > 0) {
+                    addComma();
+                    addSpace();
+                }
+                copy.get(i).apply(this);
+            }
+        }
+
+        addRightParen();
+        addColon();
+
+        // do nothing with return type info;
+
+        {
+            enterCodeBlock();
+
+            List<PStmt> copy = new ArrayList<PStmt>(node.getStmt());
+            for (PStmt e : copy) {
+                generateStatement(e);
+            }
+
+            exitCodeBlock();
+        }
+
+        this.outAFuncTopDec(node);
+    }
+
+    @Override
+    public void caseAArgArgGroup(AArgArgGroup node) {
+        this.inAArgArgGroup(node);
+
+        {
+            List<TId> copy = new ArrayList<TId>(node.getId());
+
+            for (int i = 0; i < copy.size(); i++) {
+                if (i > 0) {
+                    addComma();
+                    addSpace();
+                }
+                buffer.append(copy.get(i).getText());
+            }
+        }
+
+        // do nothing with argument type info;
+
+        this.outAArgArgGroup(node);
+    }
+
+    /**
      * Empty Statements
      *
      */
