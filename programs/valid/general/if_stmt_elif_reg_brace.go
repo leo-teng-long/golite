@@ -4,9 +4,9 @@ package main
 
 func main() {
 
-	if z:= true; y {
+	if z:= true; true {
 		println(z)
-	} else if z:= true; x {
+	} else if z:= true; true {
 		println(z)
 	}
 	

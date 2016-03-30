@@ -1,7 +1,5 @@
 package main
 
-var s []this
-
 type this struct {
 	a, b int
 }
@@ -9,6 +7,8 @@ type this struct {
 type that struct {
 	a, b this
 }
+
+var s []this
 
 func main() {
 	var e that

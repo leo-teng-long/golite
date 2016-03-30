@@ -4,7 +4,7 @@ package main
 
 func main() {
 	x := true
-	if z:= true; y {
+	if z:= true; x {
 		println(z)
 	} else if z:= true; x {
 		println(z)

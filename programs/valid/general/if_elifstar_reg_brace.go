@@ -5,7 +5,7 @@ package main
 func main() {
 	x := true
 
-	if y {
+	if x {
 		//Do nothing
 	} else if x {
 		//Do nothing

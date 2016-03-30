@@ -1,1733 +1,1918 @@
 package golite.type;
 
+import golite.exception.TypeCheckException;
+import golite.symbol.FunctionSymbol;
+import golite.symbol.Symbol;
+import golite.symbol.SymbolTable;
+import golite.symbol.TypeAliasSymbol;
+import golite.symbol.VariableSymbol;
+import golite.util.LineAndPosTracker;
 import golite.analysis.*;
 import golite.node.*;
-import golite.exception.*;
-import golite.util.*;
-import golite.symbol.*;
-import java.util.*;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
+
+
+/**
+ * Type checker.
+ */
 public class TypeChecker extends DepthFirstAdapter {
 
-    /* Class attributes */
-    private SymbolTable symbolTable;
-    private HashMap<Node, PTypeExpr> typeTable;
-    private LineAndPos lineAndPos;
+	/** Symbol table. */
+	private SymbolTable symbolTable;
+    /** Flag for whether a symbol table is passed (from {@link golite.symbol.SymbolTableBuilder}) or
+      * not (If it's passed, then top declarations can occur in any order, otherwise top
+      * declarations using other declarations must occur before). */
+    private boolean passedSymbolTable;
 
-    /** Constructor **/
+	/** Type table. */
+	private HashMap<Node, GoLiteType> typeTable;
+	/** Line and position tracker for AST nodes. */
+    private LineAndPosTracker lineAndPosTracker;
+
+    // Keeps track of the function symbol when entering the body of a function.
+    private FunctionSymbol currentFunctionSymbol;
+    // Keeps track of the switch condition type when entering the body of a switch.
+    private GoLiteType currentSwitchCondType;
+
+	/**
+	 * Constructor.
+	 *
+	 * @param table - Symbol table with 0th and global scopes initialized (Check out
+	 * {@link golite.symbol.SymbolTableBuilder})
+	 */
+	public TypeChecker(SymbolTable table) {
+		super();
+		this.symbolTable = table;
+        this.passedSymbolTable = true;
+
+		this.typeTable = new HashMap<Node, GoLiteType>();
+		this.lineAndPosTracker = new LineAndPosTracker();
+	}
+	
+    /**
+     * Constructor.
+     */
     public TypeChecker() {
-        symbolTable = new SymbolTable();
-        typeTable = new HashMap<Node, PTypeExpr>();
-        lineAndPos = new LineAndPos();
-    }
+        super();
+        this.symbolTable = new SymbolTable();
+        this.passedSymbolTable = false;
 
-    public TypeChecker(SymbolTable symbolTable, HashMap<Node, PTypeExpr> typeTable) {
-        this.symbolTable = symbolTable;
-        this.typeTable = typeTable;
-        typeTable = new HashMap<Node, PTypeExpr>();
-        lineAndPos = new LineAndPos();
+        this.typeTable = new HashMap<Node, GoLiteType>();
+        this.lineAndPosTracker = new LineAndPosTracker();
     }
 
     /**
      * Getter.
      */
-    public HashMap<Node, PTypeExpr> getTypeTable() {
-        return this.typeTable;
+    public SymbolTable getSymbolTable() {
+        return this.symbolTable;
+    }
+
+	/**
+     * Returns the GoLite type for the given type expression.
+     *
+     * @param node - Type expression AST node
+     * @return Corresponding GoLite type
+     * @throws TypeCheckerException
+     */
+    private GoLiteType getType(PTypeExpr node) {
+        if (node == null)
+            return null;
+
+        if (node instanceof ABoolTypeExpr)
+            return new BoolType();
+        else if (node instanceof AIntTypeExpr)
+            return new IntType();
+        else if (node instanceof AFloatTypeExpr)
+            return new FloatType();
+        else if (node instanceof ARuneTypeExpr)
+            return new RuneType();
+        else if (node instanceof AStringTypeExpr)
+            return new StringType();
+        else if (node instanceof AAliasTypeExpr) {
+        	TId id = ((AAliasTypeExpr) node).getId();
+            GoLiteType type = this.symbolTable.getSymbolType(id.getText());
+
+            if (type == null)
+            	this.throwTypeCheckException(id, "Undefined: " + id.getText());
+            
+            return new AliasType(id.getText(), type);
+        } else if (node instanceof AArrayTypeExpr) {
+            PExpr pExpr = ((AArrayTypeExpr) node).getExpr();
+
+            int bound = 0;
+            if (pExpr instanceof AIntLitExpr)
+                bound = Integer.parseInt(((AIntLitExpr) pExpr).getIntLit().getText());
+            else if (pExpr instanceof AOctLitExpr)
+                bound = Integer.parseInt(((AOctLitExpr) pExpr).getOctLit().getText(), 8);
+            else if (pExpr instanceof AHexLitExpr)
+                bound = Integer.parseInt(((AHexLitExpr) pExpr).getHexLit().getText(), 16);
+            else 
+                this.throwTypeCheckException(pExpr, "Non-integer array bound");
+
+            return new ArrayType(getType(((AArrayTypeExpr) node).getTypeExpr()),
+                bound);
+        } else if (node instanceof ASliceTypeExpr)
+            return new SliceType(getType(((ASliceTypeExpr) node).getTypeExpr()));
+        else if (node instanceof AStructTypeExpr) {
+            StructType structType = new StructType();
+
+            // Keep track of the field Id's to ensure there are no duplicates.
+            HashSet<String> fieldIds = new HashSet<String>();
+
+            // Loop over the field specifications.
+            for (PFieldSpec pFieldSpec : ((AStructTypeExpr) node).getFieldSpec()) {
+                // Get the optional Id's.
+                LinkedList<POptId> pOptIds = ((ASpecFieldSpec) pFieldSpec).getOptId();
+
+                // Loop over each Id.
+                for(POptId pOptId : pOptIds) {
+                    // Do not consider blank Id's.
+                    if (pOptId instanceof AIdOptId) {
+                        TId id = ((AIdOptId) pOptId).getId();
+
+                        // Throw an error if a duplicate field is encountered.
+                        if (fieldIds.contains(id.getText()))
+                            this.throwTypeCheckException(id, "Duplicate field " + id.getText());
+
+                        structType.addField(id.getText(),
+                            getType(((ASpecFieldSpec) pFieldSpec).getTypeExpr()));
+                        fieldIds.add(id.getText());
+                    }
+                }
+            }
+
+            return structType;
+        }
+
+        return null;
+    }
+
+
+	/**
+     * Throws a type check exception after annotating the message with line and position
+     * information.
+     *
+     * @param node - AST node
+     * @param msg - Error message
+     * @throws TypeCheckException
+     */
+    private void throwTypeCheckException(Node node, String msg) {
+        Integer line = this.lineAndPosTracker.getLine(node);
+        Integer pos = this.lineAndPosTracker.getPos(node);
+
+        throw new TypeCheckException("[" + line + "," + pos + "] " + msg);
+    }
+
+    /**
+     * Checks if the given Id has already been defined in the current scope.
+     *
+     * @param id - Id token
+     * @throws TypeCheckException if the Id is already defined in the current scope
+     */
+    private void checkifDeclaredInCurrentScope(TId id) {
+        if (this.symbolTable.defSymbolInCurrentScope(id.getText()))
+            this.throwTypeCheckException(id, id.getText() + " redeclared in this block");
+    }
+
+    /**
+     * Get the type of the given AST node from the type table.
+     *
+     * @param node - AST node
+     * @return Type
+     * @throws TypeCheckException if the node doesn't exist in the table.
+     */
+	private GoLiteType getType(Node node) {
+		GoLiteType type = this.typeTable.get(node);
+
+		if (type == null)
+			this.throwTypeCheckException(node,
+				"Type missing for " + node.getClass().getSimpleName());
+
+		return type;
+	}
+
+    /**
+     * Return the type beneath the aliases (if any).
+     *
+     * @param type - Type
+     * @return Non-alias type
+     */
+    private GoLiteType getNonAliasType(GoLiteType type) {
+        do {
+            if (type instanceof AliasType)
+                type = ((AliasType) type).getType();
+        } while (type instanceof AliasType);
+
+        return type;
+    }
+
+	/**
+	 * Returns whether the given type is integer or rune.
+	 *
+	 * @param type - Type
+	 * @return True if it's integer or rune, false otherwise
+	 */
+    private boolean isIntOrRuneType(GoLiteType type) {
+        return type instanceof IntType || type instanceof RuneType;
+    }
+
+	/**
+	 * Returns whether the given type is numeric (i.e. integer, rune, or float).
+	 *
+	 * @param type - Type
+	 * @return True if it's numeric, false otherwise
+	 */
+    private boolean isNumericType(GoLiteType type) {
+        return this.isIntOrRuneType(type) || type instanceof FloatType;
+    }
+
+    /**
+	 * Returns whether the given type is ordered (i.e. integer, rune, float, or string).
+	 *
+	 * @param type - Type
+	 * @return True if it's ordered, false otherwise
+	 */
+    private boolean isOrderedType(GoLiteType type) {
+        return this.isNumericType(type) || type instanceof StringType;
+    }
+
+    /**
+	 * Returns whether the given type is comparable (i.e. boolean, ordered, array, or struct).
+	 *
+	 * @param type - Type
+	 * @return True if it's comparable, false otherwise
+	 */
+    private boolean isComparableType(GoLiteType type) {
+        // Boolean's and ordered's are comparable.
+        if (type instanceof BoolType || this.isOrderedType(type))
+        	return true;
+
+        // Arrays are comparable if their element type is comparable.
+        if (type instanceof ArrayType)
+        	return this.isComparableType(((ArrayType) type).getType());
+
+        // Structs are comparable if all their fields are comparable.
+        if (type instanceof StructType) {
+        	Iterator<StructType.Field> fieldIter = ((StructType) type).getFieldIterator();
+        	while (fieldIter.hasNext()) {
+        		if (!this.isComparableType(fieldIter.next().getType()))
+        			return false;
+        	}
+
+        	return true;
+        }
+
+        return false;
+    }
+
+	/**
+	 * Get Id tokens from the given AST node.
+	 *
+	 * @param node - AST node
+	 * @return List of Id tokens
+	 */
+	private ArrayList<TId> getIds(Node node) {
+        ArrayList<TId> ids = new ArrayList<TId>();
+
+        // Variable specification.
+        if (node instanceof ASpecVarSpec) {
+            LinkedList<POptId> pOptIds = ((ASpecVarSpec) node).getOptId();
+            
+            for (POptId o: pOptIds) {
+            	// Ignore blank Id's.
+                if (o instanceof AIdOptId)
+                    ids.add(((AIdOptId) o).getId());
+            }
+        // Type specification.
+        } else if (node instanceof ASpecTypeSpec) {
+            POptId pOptId = ((ASpecTypeSpec) node).getOptId();
+            
+            if (pOptId instanceof AIdOptId)
+                ids.add(((AIdOptId) pOptId).getId());
+        } else if (node instanceof AArgArgGroup)
+        	ids = new ArrayList<TId>(((AArgArgGroup) node).getId());
+        else if (node instanceof AShortAssignStmt) {
+            LinkedList<POptId> pOptIds = ((AShortAssignStmt) node).getOptId();
+            
+            for (POptId o: pOptIds) {
+            	// Ignore blank Id's.
+                if (o instanceof AIdOptId)
+                    ids.add(((AIdOptId) o).getId());
+            }
+        }
+
+        return ids;
+    }
+
+    /**
+     * Get the variable symbol corresponding to the given Id token.
+     *
+     * @param id - Id token
+     * @return Corresponding variable symbol
+     * @throws TypeCheckException if the symbol is undefined or is not a variable symbol
+     */
+    private VariableSymbol getVariableSymbol(TId id) {
+    	// Get the corresponding symbol.
+        Symbol symbol = this.symbolTable.getSymbol(id.getText());
+
+        // Symbol was never declared, so throw an error.
+        if (symbol == null)
+			this.throwTypeCheckException(id, "Undefined: " + id.getText());
+		// Symbol is not a variable, so throw an error.
+		else if (!(symbol instanceof VariableSymbol))
+			this.throwTypeCheckException(id,
+				id.getText() + " is not a variable");
+
+		return (VariableSymbol) symbol;
+    }
+
+	@Override
+    public void inStart(Start node) {
+    	// Gather all line and position information.
+        node.apply(this.lineAndPosTracker);
+
+        if (!this.passedSymbolTable) {
+             // Enter the 0th scope.
+            this.symbolTable = new SymbolTable();
+            this.symbolTable.scope();
+
+            // Initialize boolean literals.
+            Symbol trueSymbol = new VariableSymbol("true", new BoolType(), node);
+            Symbol falseSymbol = new VariableSymbol("false", new BoolType(), node);
+            this.symbolTable.putSymbol(trueSymbol);
+            this.symbolTable.putSymbol(falseSymbol);
+        }
+    }
+
+    // Unscope the 0th scope upon exit.
+    @Override
+    public void outStart(Start node) {
+        this.symbolTable.unscope();
     }
 
     @Override
     public void inAProgProg(AProgProg node) {
-
+        if (!this.passedSymbolTable) {
+            // Enter the global scope.
+            this.symbolTable.scope();
+        }
     }
 
+    // Unscope the global scope upon program exit.
     @Override
     public void outAProgProg(AProgProg node) {
-        symbolTable.exitScope();
+    	this.symbolTable.unscope();
     }
 
+    // Adds global variables to the symbol table and if the symbol table is passed, then add those
+    // that require type inference and check other global variables have declared types that are
+    // consistent with their initializing expressions (if any).
     @Override
-    public void caseAVarsTopDec(AVarsTopDec node) {
-        List<PVarSpec> varSpecs = new ArrayList<PVarSpec>(node.getVarSpec());
-        for (PVarSpec  s : varSpecs) {
-            {
-                List<POptId> copy = new ArrayList<POptId>(((ASpecVarSpec) s).getOptId());
-                for (POptId e : copy) {
-                    e.apply(this);
+    public void outAVarsTopDec(AVarsTopDec node) {
+        // Loop over the variable specifications.
+        for(PVarSpec pVarSpec : node.getVarSpec()) {
+            // Get the expressions on the R.H.S.
+            LinkedList<PExpr> pExprs = ((ASpecVarSpec) pVarSpec).getExpr();
+
+	        // Flag for whether the variables are initialized with expressions.
+	        boolean isInitialized = (pExprs.size() > 0);
+
+            // Loop over each Id, tracking the position in the specfication.
+            int i = 0;
+            for (TId id : this.getIds(((ASpecVarSpec) pVarSpec))) {
+                // Throw an error if the name is already taken by another identifier in the
+                // global scope.
+                this.checkifDeclaredInCurrentScope(id);
+
+                PTypeExpr pTypeExpr = ((ASpecVarSpec) pVarSpec).getTypeExpr();
+                // Type must be inferred.
+                if (pTypeExpr == null) {
+                	// Expression should exist, otherwise a parser or weeder would've caught the
+                	// Error.
+                	PExpr pExpr = ((ASpecVarSpec) pVarSpec).getExpr().get(i);
+
+                	GoLiteType type = this.getType(pExpr);
+
+                	// Expression is a void function call 
+                	if (type instanceof VoidType) {
+                		TId funcId = ((AFuncCallExpr) pExpr).getId();
+                		this.throwTypeCheckException(pExpr,
+                			funcId.getText() + "() used as a value");
+                	}
+                		
+                	this.symbolTable.putSymbol(new VariableSymbol(id.getText(), type, pVarSpec));
+                // Type is declared and so check that the type declaration and initializing
+                // expressions (if any) are type compatible.
+                } else {
+                	// GoLite type of the type expression.
+                	GoLiteType typeExprType = this.getType(pTypeExpr);
+
+                	// Variable is initialized with an expression.
+                	if (isInitialized) {
+                		// Get the corresponding expression node.
+                		PExpr pExpr = ((ASpecVarSpec) pVarSpec).getExpr().get(i);
+                		// Get its GoLite type.
+                		GoLiteType exprType = this.getType(pExpr);
+                		
+                		// Check the types for compatibility, throwing an error if not.
+                		if (!typeExprType.equals(exprType))
+                			this.throwTypeCheckException(pExpr,
+                				"Cannot use value of type " + exprType + " for "
+                				+ typeExprType);
+                	}
+
+                    if (!this.passedSymbolTable)
+                        this.symbolTable.putSymbol(new VariableSymbol(id.getText(), typeExprType,
+                            pVarSpec));
                 }
-            }
-            {
-                PTypeExpr copy = ((ASpecVarSpec) s).getTypeExpr();
-                if (copy != null)
-                {
-                    copy.apply(this);
-                }
-            }    
-            {
-                List<PExpr> copy = new ArrayList<PExpr>(((ASpecVarSpec) s).getExpr());
-                for (PExpr e : copy) {
-                    e.apply(this);
-                }
+
+                // Increment to next position.
+                i++;
             }
         }
     }
 
-    @Override
-    public void outAArrayTypeExpr(AArrayTypeExpr node)
-    {
-        PExpr e = node.getExpr();
-        if (!(e instanceof AIntLitExpr|e instanceof AOctLitExpr|e instanceof AHexLitExpr))
-        {
-            callTypeCheckException(node, "Must index arrays with int type");
-        }
-    }
-
+    // Add top-level type variables into the symbol table if it hasn't been passed.
     @Override
     public void caseATypesTopDec(ATypesTopDec node) {
-        // taken care of by SymbolTableBuilder
-    }
+        if (!this.passedSymbolTable) {
+            // Loop over the type specifications.
+            for(PTypeSpec pTypeSpec : node.getTypeSpec()) {
+                // Get the optional Id.
+                POptId pOptId = ((ASpecTypeSpec) pTypeSpec).getOptId();
 
-    /* Type check plus op-assign statement */
-    @Override
-    public void outAPlusAssignStmt(APlusAssignStmt node) {
-        if (!isAssignable(node.getLhs())) {
-            callTypeCheckException(node.getLhs(), "Op-assign '+=': LHS not assignable");
-        }
-        PTypeExpr lhs = typeTable.get(node.getLhs());
-        PTypeExpr rhs = typeTable.get(node.getRhs());
-        if (!isSameType(lhs, rhs)) {
-            callTypeCheckException(node.getLhs(), "Op-assign '+=': mismatched operand type");
-        }
-        if (!isOrderedType(lhs) || !isOrderedType(rhs)) {
-            Node errorNode = !isOrderedType(lhs) ? node.getLhs() : node.getRhs();
-            callTypeCheckException(errorNode, "Op-assign '+=': not defined for non-numeric or non-string");
-        }
-    }
+                // Do not consider a blank Id.
+                if (pOptId instanceof AIdOptId) {
+                    TId id = ((AIdOptId) pOptId).getId();
 
-    /* Type check numeric op-assign statement */
-    @Override
-    public void outAMinusAssignStmt(AMinusAssignStmt node) {
-        if (!isAssignable(node.getLhs())) {
-            callTypeCheckException(node.getLhs(), "Op-assign '-=': LHS not assignable");
-        }
-        PTypeExpr lhs = typeTable.get(node.getLhs());
-        PTypeExpr rhs = typeTable.get(node.getRhs());
-        if (!isSameType(lhs, rhs)) {
-            callTypeCheckException(node.getLhs(), "Op-assign '-=': mismatched operand type");
-        }
-        if (!isNumericType(lhs) || !isNumericType(rhs)) {
-            Node errorNode = !isNumericType(lhs) ? node.getLhs() : node.getRhs();
-            callTypeCheckException(errorNode, "Op-assign '-=': not defined for non-numeric");
-        }
-    }
+                    // Throw an error if the name is already taken by another identifier in the
+                    // global scope.
+                    this.checkifDeclaredInCurrentScope(id);
 
-    @Override
-    public void outAStarAssignStmt(AStarAssignStmt node) {
-        if (!isAssignable(node.getLhs())) {
-            callTypeCheckException(node.getLhs(), "Op-assign '*=': LHS not assignable");
-        }
-        PTypeExpr lhs = typeTable.get(node.getLhs());
-        PTypeExpr rhs = typeTable.get(node.getRhs());
-        if (!isSameType(lhs, rhs)) {
-            callTypeCheckException(node.getLhs(), "Op-assign '*=': mismatched operand type");
-        }
-        if (!isNumericType(lhs) || !isNumericType(rhs)) {
-            Node errorNode = !isNumericType(lhs) ? node.getLhs() : node.getRhs();
-            callTypeCheckException(errorNode, "Op-assign '*=': not defined for non-numeric");
-        }
-    }
-
-    @Override
-    public void outASlashAssignStmt(ASlashAssignStmt node) {
-        if (!isAssignable(node.getLhs())) {
-            callTypeCheckException(node.getLhs(), "Op-assign '/=': LHS not assignable");
-        }
-        PTypeExpr lhs = typeTable.get(node.getLhs());
-        PTypeExpr rhs = typeTable.get(node.getRhs());
-        if (!isSameType(lhs, rhs)) {
-            callTypeCheckException(node.getLhs(), "Op-assign '/=': mismatched operand type");
-        }
-        if (!isNumericType(lhs) || !isNumericType(rhs)) {
-            Node errorNode = !isNumericType(lhs) ? node.getLhs() : node.getRhs();
-            callTypeCheckException(errorNode, "Op-assign '/=': not defined for non-numeric");
-        }
-    }
-
-    /* Type check int op-assign statements */
-    @Override
-    public void outAPercAssignStmt(APercAssignStmt node) {
-        if (!isAssignable(node.getLhs())) {
-            callTypeCheckException(node.getLhs(), "Op-assign '%=': LHS not assignable");
-        }
-        PTypeExpr lhs = typeTable.get(node.getLhs());
-        PTypeExpr rhs = typeTable.get(node.getRhs());
-        if (!isSameType(lhs, rhs)) {
-            callTypeCheckException(node.getLhs(), "Op-assign '%=': mismatched operand type");
-        }
-        if (!isIntOrRuneType(lhs) || !isIntOrRuneType(rhs)) {
-            Node errorNode = !isIntOrRuneType(lhs) ? node.getLhs() : node.getRhs();
-            callTypeCheckException(errorNode, "Op-assign '%=': not defined for non-integer");
-        }
-    }
-
-    @Override
-    public void outAAndAssignStmt(AAndAssignStmt node) {
-        if (!isAssignable(node.getLhs())) {
-            callTypeCheckException(node.getLhs(), "Op-assign '&=': LHS not assignable");
-        }
-        PTypeExpr lhs = typeTable.get(node.getLhs());
-        PTypeExpr rhs = typeTable.get(node.getRhs());
-        if (!isSameType(lhs, rhs)) {
-            callTypeCheckException(node.getLhs(), "Op-assign '&=': mismatched operand type");
-        }
-        if (!isIntOrRuneType(lhs) || !isIntOrRuneType(rhs)) {
-            Node errorNode = !isIntOrRuneType(lhs) ? node.getLhs() : node.getRhs();
-            callTypeCheckException(errorNode, "Op-assign '&=': not defined for non-integer");
-        }
-    }
-
-    @Override
-    public void outAPipeAssignStmt(APipeAssignStmt node) {
-        if (!isAssignable(node.getLhs())) {
-            callTypeCheckException(node.getLhs(), "Op-assign '|=': LHS not assignable");
-        }
-        PTypeExpr lhs = typeTable.get(node.getLhs());
-        PTypeExpr rhs = typeTable.get(node.getRhs());
-        if (!isSameType(lhs, rhs)) {
-            callTypeCheckException(node.getLhs(), "Op-assign '|=': mismatched operand type");
-        }
-        if (!isIntOrRuneType(lhs) || !isIntOrRuneType(rhs)) {
-            Node errorNode = !isIntOrRuneType(lhs) ? node.getLhs() : node.getRhs();
-            callTypeCheckException(errorNode, "Op-assign '|=': not defined for non-integer");
-        }
-    }
-
-    @Override
-    public void outACarotAssignStmt(ACarotAssignStmt node) {
-        if (!isAssignable(node.getLhs())) {
-            callTypeCheckException(node.getLhs(), "Op-assign '^=': LHS not assignable");
-        }
-        PTypeExpr lhs = typeTable.get(node.getLhs());
-        PTypeExpr rhs = typeTable.get(node.getRhs());
-        if (!isSameType(lhs, rhs)) {
-            callTypeCheckException(node.getLhs(), "Op-assign '^=': mismatched operand type");
-        }
-        if (!isIntOrRuneType(lhs) || !isIntOrRuneType(rhs)) {
-            Node errorNode = !isIntOrRuneType(lhs) ? node.getLhs() : node.getRhs();
-            callTypeCheckException(errorNode, "Op-assign '^=': not defined for non-integer");
-        }
-    }
-
-    @Override
-    public void outAAmpCarotAssignStmt(AAmpCarotAssignStmt node) {
-        if (!isAssignable(node.getLhs())) {
-            callTypeCheckException(node.getLhs(), "Op-assign '&^=': LHS not assignable");
-        }
-        PTypeExpr lhs = typeTable.get(node.getLhs());
-        PTypeExpr rhs = typeTable.get(node.getRhs());
-        if (!isSameType(lhs, rhs)) {
-            callTypeCheckException(node.getLhs(), "Op-assign '&^=': mismatched operand type");
-        }
-        if (!isIntOrRuneType(lhs) || !isIntOrRuneType(rhs)) {
-            Node errorNode = !isIntOrRuneType(lhs) ? node.getLhs() : node.getRhs();
-            callTypeCheckException(errorNode, "Op-assign '&^=': not defined for non-integer");
-        }
-    }
-
-    @Override
-    public void outALshiftAssignStmt(ALshiftAssignStmt node) {
-        if (!isAssignable(node.getLhs())) {
-            callTypeCheckException(node.getLhs(), "Op-assign '<<=': LHS not assignable");
-        }
-        PTypeExpr lhs = typeTable.get(node.getLhs());
-        PTypeExpr rhs = typeTable.get(node.getRhs());
-        if (!isSameType(lhs, rhs)) {
-            callTypeCheckException(node.getLhs(), "Op-assign '<<=': mismatched operand type");
-        }
-        if (!isIntOrRuneType(lhs) || !isIntOrRuneType(rhs)) {
-            Node errorNode = !isIntOrRuneType(lhs) ? node.getLhs() : node.getRhs();
-            callTypeCheckException(errorNode, "Op-assign '<<=': not defined for non-integer");
-        }
-    }
-
-    @Override
-    public void outARshiftAssignStmt(ARshiftAssignStmt node) {
-        if (!isAssignable(node.getLhs())) {
-            callTypeCheckException(node.getLhs(), "Op-assign '>>=': LHS not assignable");
-        }
-        PTypeExpr lhs = typeTable.get(node.getLhs());
-        PTypeExpr rhs = typeTable.get(node.getRhs());
-        if (!isSameType(lhs, rhs)) {
-            callTypeCheckException(node.getLhs(), "Op-assign '>>=': mismatched operand type");
-        }
-        if (!isIntOrRuneType(lhs) || !isIntOrRuneType(rhs)) {
-            Node errorNode = !isIntOrRuneType(lhs) ? node.getLhs() : node.getRhs();
-            callTypeCheckException(errorNode, "Op-assign '>>=': not defined for non-integer");
-        }
-    }
-
-    /* Type check increment & decrement statements */
-    @Override
-    public void outAIncrStmt(AIncrStmt node) {
-        if (!isAssignable(node.getExpr())) {
-            callTypeCheckException(node.getExpr(), "Increment '++': expression not assignable");
-        }
-        PTypeExpr type = typeTable.get(node.getExpr());
-        if (!isNumericType(type)) {
-            callTypeCheckException(node.getExpr(), "Increment '++': expression not of numeric type");
-        }
-    }
-
-    @Override
-    public void outADecrStmt(ADecrStmt node) {
-        if (!isAssignable(node.getExpr())) {
-            callTypeCheckException(node.getExpr(), "Decrement '--': expression not assignable");
-        }
-        PTypeExpr type = typeTable.get(node.getExpr());
-        if (!isNumericType(type)) {
-            callTypeCheckException(node.getExpr(), "Decrement '--': expression not of numeric type");
-        }
-    }
-
-    /* Type check print & println statements */
-    @Override
-    public void caseAPrintStmt(APrintStmt node) {
-        List<PExpr> copy = new ArrayList<PExpr>(node.getExpr());
-        for (PExpr e : copy) {
-            e.apply(this);
-            PTypeExpr type = typeTable.get(e);
-            if (!isBaseType(type)) {
-                callTypeCheckException(e, "Print: expression is not of base type");
-            }
-        }
-    }
-
-    @Override
-    public void caseAPrintlnStmt(APrintlnStmt node) {
-        List<PExpr> copy = new ArrayList<PExpr>(node.getExpr());
-        for (PExpr e : copy) {
-            e.apply(this);
-            PTypeExpr type = typeTable.get(e);
-            if (!isBaseType(type)) {
-                callTypeCheckException(e, "Println: expression is not of base type");
-            }
-        }
-    }
-
-    /* Type check continue & break statement */
-    @Override
-    public void caseAContinueStmt(AContinueStmt node) {
-        // Trivially well-typed
-    }
-
-    @Override
-    public void caseABreakStmt(ABreakStmt node) {
-        // Trivially well-typed
-    }
-
-    /* Type check return statement */
-    @Override
-    public void caseAReturnStmt(AReturnStmt node) {
-        AFuncTopDec funcDec = getParentFuncDec(node);
-        if (node.getExpr() != null) {
-            if (funcDec.getTypeExpr() == null) {
-                callTypeCheckException(node.getExpr(), "Return: declared function has no return type");
-            }
-            node.getExpr().apply(this);
-            PTypeExpr type = typeTable.get(node.getExpr());
-            if (!isSameType(type, funcDec.getTypeExpr())) {
-                callTypeCheckException(node.getExpr(), "Return: expression returned not matched function return type");
-            }
-        } else {
-            if (funcDec.getTypeExpr() != null) {
-                callTypeCheckException(funcDec, "Return: declared function cannot return void");
-            }
-        }
-    }
-
-    /* Type check if-else statement */
-    @Override
-    public void caseAIfElseStmt(AIfElseStmt node) {
-        symbolTable.enterScope();
-        if (node.getCondition() != null) {
-            node.getCondition().apply(this);
-        }
-        {
-            symbolTable.enterScope();
-            List<PStmt> copy = new ArrayList<PStmt>(node.getIfBlock());
-            for (PStmt e : copy) {
-                e.apply(this);
-            }
-            symbolTable.exitScope();
-        }
-        {
-            symbolTable.enterScope();
-            List<PStmt> copy = new ArrayList<PStmt>(node.getElseBlock());
-            for (PStmt e : copy) {
-                e.apply(this);
-            }
-            symbolTable.exitScope();
-        }
-    }
-
-    @Override
-    public void caseAConditionCondition(AConditionCondition node) {
-        if (node.getStmt() != null) {
-            node.getStmt().apply(this);
-        }
-        if (node.getExpr() != null) {
-            node.getExpr().apply(this);
-            PTypeExpr type = typeTable.get(node.getExpr());
-            if (!isBoolType(type)) {
-                callTypeCheckException(node.getExpr(), "If-else: condition expression not evaluated to bool type");
-            }
-        }
-    }
-
-    /* Type check swtich statement */
-    @Override
-    public void caseASwitchStmt(ASwitchStmt node) {
-        symbolTable.enterScope();
-        if (node.getStmt() != null) {
-            node.getStmt().apply(this);
-        }
-        if (node.getExpr() != null) {
-            node.getExpr().apply(this);
-        }
-        {
-            symbolTable.enterScope();
-            List<PCaseBlock> copy = new ArrayList<PCaseBlock>(node.getCaseBlock());
-            for (PCaseBlock e : copy) {
-                e.apply(this);
-            }
-            symbolTable.exitScope();
-        }
-        symbolTable.exitScope();
-    }
-
-    @Override
-    public void caseABlockCaseBlock(ABlockCaseBlock node) {
-        if (node.getCaseCondition() != null) {
-            node.getCaseCondition().apply(this);
-        }
-        {
-            List<PStmt> copy = new ArrayList<PStmt>(node.getStmt());
-            for (PStmt e : copy) {
-                e.apply(this);
-            }
-        }
-    }
-
-    @Override
-    public void caseAExprsCaseCondition(AExprsCaseCondition node) {
-        if (((ASwitchStmt) node.parent().parent()).getExpr() != null) {
-            PExpr expr = ((ASwitchStmt) node.parent().parent()).getExpr();
-            PTypeExpr exprType = typeTable.get(expr);
-            List<PExpr> copy = new ArrayList<PExpr>(node.getExpr());
-            for (PExpr e : copy) {
-                e.apply(this);
-                PTypeExpr type = typeTable.get(e);
-                if (!isSameType(exprType, type)) {
-                    callTypeCheckException(e, "Switch: case expression mismatched with switch expression");
-                }
-            }
-        } else {
-            List<PExpr> copy = new ArrayList<PExpr>(node.getExpr());
-            for (PExpr e : copy) {
-                e.apply(this);
-                PTypeExpr type = typeTable.get(e);
-                if (!isBoolType(type)) {
-                    callTypeCheckException(e, "Switch: case expression not evaluated to bool type");
+                    PTypeExpr pTypeExpr = ((ASpecTypeSpec) pTypeSpec).getTypeExpr();
+                    // Add a type alias symbol to the symbol table.
+                    this.symbolTable.putSymbol(new TypeAliasSymbol(id.getText(), this.getType(pTypeExpr),
+                        pTypeSpec));
                 }
             }
         }
     }
 
+    // Add top-level function declarations and enter the body (If a symbol table has been passed,
+    // then just enter the body).
     @Override
-    public void caseADefaultCaseCondition(ADefaultCaseCondition node) {
-        // Trivially well-typed
-    }
+    public void caseAFuncTopDec(AFuncTopDec node) {
+        // Function Id token and name.
+        TId id = node.getId();
+        String name =id.getText();
 
-    /* Type check loop (for & while) statements */
-    @Override
-    public void caseALoopStmt(ALoopStmt node)
-    {
-        symbolTable.enterScope();
-        if (node.getInit() != null)
-        {
-            node.getInit().apply(this);
-        }
-        if (node.getExpr() != null) {
-            node.getExpr().apply(this);
-            PTypeExpr type = typeTable.get(node.getExpr());
-            if (!isBoolType(type)) {
-                callTypeCheckException(node.getExpr(), "For: loop expression not evaluated to bool type");
-            }
-        }
-        if (node.getEnd() != null) {
-            node.getEnd().apply(this);
-        }
-        {
-            List<PStmt> copy = new ArrayList<PStmt>(node.getBlock());
-            for (PStmt e : copy) {
-                e.apply(this);
-            }
-        }
-        symbolTable.exitScope();
-    }
+        // Throw an error if the name is already taken by another identifier in the global scope.
+        this.checkifDeclaredInCurrentScope(id);
 
-    /* Type check binary arithemic operators */
-    @Override
-    public void outAAddExpr(AAddExpr node) {
-        PTypeExpr left = typeTable.get(node.getLeft());
-        PTypeExpr right = typeTable.get(node.getRight());
-        if (!isSameType(left, right)) {
-            callTypeCheckException(node.getLeft(), "Binary '+': mismatched operand type");
-        }
-        if (!isOrderedType(left) || !isOrderedType(right)) {
-            Node errorNode = !isOrderedType(left) ? node.getLeft() : node.getRight();
-            callTypeCheckException(errorNode, "Binary '+': not defined for non-numeric or non-string");
-        }
-        if (isIntType(left)) {
-            typeTable.put(node, new AIntTypeExpr(new TInt()));
-        } else if (isFloatType(left)) {
-            typeTable.put(node, new AFloatTypeExpr(new TFloat64()));
-        } else if (isRuneType(left)) {
-            typeTable.put(node, new ARuneTypeExpr(new TRune()));
-        } else {
-            typeTable.put(node, new AStringTypeExpr(new TString()));
-        }
-    }
+        FunctionSymbol funcSymbol = null;
+        // Enter a function symbol into the symbol table if it hasn't been passed.
+        if (!this.passedSymbolTable) {
+            // Return type expression.
+            PTypeExpr pTypeExpr = node.getTypeExpr();
 
-    @Override
-    public void outASubtractExpr(ASubtractExpr node) {
-        PTypeExpr left = typeTable.get(node.getLeft());
-        PTypeExpr right = typeTable.get(node.getRight());
-        if (!isSameType(left, right)) {
-            callTypeCheckException(node.getLeft(), "Binary '-': mismatched operand type");
-        }
-        if (!isNumericType(left) || !isNumericType(right)) {
-            Node errorNode = !isNumericType(left) ? node.getLeft() : node.getRight();
-            callTypeCheckException(errorNode, "Binary '-': not defined for non-numeric");
-        }
-        if (isIntType(left)) {
-            typeTable.put(node, new AIntTypeExpr(new TInt()));
-        } else if (isFloatType(left)) {
-            typeTable.put(node, new AFloatTypeExpr(new TFloat64()));
-        } else {
-            typeTable.put(node, new ARuneTypeExpr(new TRune()));
-        }
-    }
-
-    @Override
-    public void outAMultExpr(AMultExpr node) {
-        PTypeExpr left = typeTable.get(node.getLeft());
-        PTypeExpr right = typeTable.get(node.getRight());
-        if (!isSameType(left, right)) {
-            callTypeCheckException(node.getLeft(), "Binary '*': mismatched operand type");
-        }
-        if (!isNumericType(left) || !isNumericType(right)) {
-            Node errorNode = !isNumericType(left) ? node.getLeft() : node.getRight();
-            callTypeCheckException(errorNode, "Binary '*': not defined for non-numeric");
-        }
-        if (isIntType(left)) {
-            typeTable.put(node, new AIntTypeExpr(new TInt()));
-        } else if (isFloatType(left)) {
-            typeTable.put(node, new AFloatTypeExpr(new TFloat64()));
-        } else {
-            typeTable.put(node, new ARuneTypeExpr(new TRune()));
-        }
-    }
-
-    @Override
-    public void outADivExpr(ADivExpr node) {
-        PTypeExpr left = typeTable.get(node.getLeft());
-        PTypeExpr right = typeTable.get(node.getRight());
-        if (!isSameType(left, right)) {
-            callTypeCheckException(node.getLeft(), "Binary '/': mismatched operand type");
-        }
-        if (!isNumericType(left) || !isNumericType(right)) {
-            Node errorNode = !isNumericType(left) ? node.getLeft() : node.getRight();
-            callTypeCheckException(errorNode, "Binary '/': not defined for non-numeric");
-        }
-        if (isIntType(left)) {
-            typeTable.put(node, new AIntTypeExpr(new TInt()));
-        } else if (isFloatType(left)) {
-            typeTable.put(node, new AFloatTypeExpr(new TFloat64()));
-        } else {
-            typeTable.put(node, new ARuneTypeExpr(new TRune()));
-        }
-    }
-
-    @Override
-    public void outAModExpr(AModExpr node) {
-        PTypeExpr left = typeTable.get(node.getLeft());
-        PTypeExpr right = typeTable.get(node.getRight());
-        if (!isSameType(left, right)) {
-            callTypeCheckException(node.getLeft(), "Binary '%': mismatched operand type");
-        }
-        if (!isIntOrRuneType(left) || !isIntOrRuneType(right)) {
-            Node errorNode = !isIntOrRuneType(left) ? node.getLeft() : node.getRight();
-            callTypeCheckException(errorNode, "Binary '%': not defined for non-integer");
-        }
-        if (isIntType(left)) {
-            typeTable.put(node, new AIntTypeExpr(new TInt()));
-        } else {
-            typeTable.put(node, new ARuneTypeExpr(new TRune()));
-        }
-    }
-
-    /* Type check binary bit operators */
-    @Override
-    public void outABitAndExpr(ABitAndExpr node) {
-        PTypeExpr left = typeTable.get(node.getLeft());
-        PTypeExpr right = typeTable.get(node.getRight());
-        if (!isSameType(left, right)) {
-            callTypeCheckException(node.getLeft(), "Binary '&': mismatched operand type");
-        }
-        if (!isIntOrRuneType(left) || !isIntOrRuneType(right)) {
-            Node errorNode = !isIntOrRuneType(left) ? node.getLeft() : node.getRight();
-            callTypeCheckException(errorNode, "Binary '&': not defined for non-integer");
-        }
-        if (isIntType(left)) {
-            typeTable.put(node, new AIntTypeExpr(new TInt()));
-        } else {
-            typeTable.put(node, new ARuneTypeExpr(new TRune()));
-        }
-    }
-
-    @Override
-    public void outABitOrExpr(ABitOrExpr node) {
-        PTypeExpr left = typeTable.get(node.getLeft());
-        PTypeExpr right = typeTable.get(node.getRight());
-        if (!isSameType(left, right)) {
-            callTypeCheckException(node.getLeft(), "Binary '|': mismatched operand type");
-        }
-        if (!isIntOrRuneType(left) || !isIntOrRuneType(right)) {
-            Node errorNode = !isIntOrRuneType(left) ? node.getLeft() : node.getRight();
-            callTypeCheckException(errorNode, "Binary '|': not defined for non-integer");
-        }
-        if (isIntType(left)) {
-            typeTable.put(node, new AIntTypeExpr(new TInt()));
-        } else {
-            typeTable.put(node, new ARuneTypeExpr(new TRune()));
-        }
-    }
-
-    @Override
-    public void outABitXorExpr(ABitXorExpr node) {
-        PTypeExpr left = typeTable.get(node.getLeft());
-        PTypeExpr right = typeTable.get(node.getRight());
-        if (!isSameType(left, right)) {
-            callTypeCheckException(node.getLeft(), "Binary '^': mismatched operand type");
-        }
-        if (!isIntOrRuneType(left) || !isIntOrRuneType(right)) {
-            Node errorNode = !isIntOrRuneType(left) ? node.getLeft() : node.getRight();
-            callTypeCheckException(errorNode, "Binary '^': not defined for non-integer");
-        }
-        if (isIntType(left)) {
-            typeTable.put(node, new AIntTypeExpr(new TInt()));
-        } else {
-            typeTable.put(node, new ARuneTypeExpr(new TRune()));
-        }
-    }
-
-    @Override
-    public void outABitClearExpr(ABitClearExpr node) {
-        PTypeExpr left = typeTable.get(node.getLeft());
-        PTypeExpr right = typeTable.get(node.getRight());
-        if (!isSameType(left, right)) {
-            callTypeCheckException(node.getLeft(), "Binary '&^': mismatched operand type");
-        }
-        if (!isIntOrRuneType(left) || !isIntOrRuneType(right)) {
-            Node errorNode = !isIntOrRuneType(left) ? node.getLeft() : node.getRight();
-            callTypeCheckException(errorNode, "Binary '&^': not defined for non-integer");
-        }
-        if (isIntType(left)) {
-            typeTable.put(node, new AIntTypeExpr(new TInt()));
-        } else {
-            typeTable.put(node, new ARuneTypeExpr(new TRune()));
-        }
-    }
-
-    @Override
-    public void outABitLshiftExpr(ABitLshiftExpr node) {
-        PTypeExpr left = typeTable.get(node.getLeft());
-        PTypeExpr right = typeTable.get(node.getRight());
-        if (!isSameType(left, right)) {
-            callTypeCheckException(node.getLeft(), "Binary '<<': mismatched operand type");
-        }
-        if (!isIntOrRuneType(left) || !isIntOrRuneType(right)) {
-            Node errorNode = !isIntOrRuneType(left) ? node.getLeft() : node.getRight();
-            callTypeCheckException(errorNode, "Binary '<<': not defined for non-integer");
-        }
-        if (isIntType(left)) {
-            typeTable.put(node, new AIntTypeExpr(new TInt()));
-        } else {
-            typeTable.put(node, new ARuneTypeExpr(new TRune()));
-        }
-    }
-
-    @Override
-    public void outABitRshiftExpr(ABitRshiftExpr node) {
-        PTypeExpr left = typeTable.get(node.getLeft());
-        PTypeExpr right = typeTable.get(node.getRight());
-        if (!isSameType(left, right)) {
-            callTypeCheckException(node.getLeft(), "Binary '>>': mismatched operand type");
-        }
-        if (!isIntOrRuneType(left) || !isIntOrRuneType(right)) {
-            Node errorNode = !isIntOrRuneType(left) ? node.getLeft() : node.getRight();
-            callTypeCheckException(errorNode, "Binary '>>': not defined for non-integer");
-        }
-        if (isIntType(left)) {
-            typeTable.put(node, new AIntTypeExpr(new TInt()));
-        } else {
-            typeTable.put(node, new ARuneTypeExpr(new TRune()));
-        }
-    }
-
-    /* Type check unary operators */
-    @Override
-    public void outAPosExpr(APosExpr node) {
-        PTypeExpr type = typeTable.get(node.getExpr());
-        if (!isNumericType(type)) {
-            callTypeCheckException(node.getExpr(), "Unary '+': not defined for non-numeric");
-        }
-        if (isIntType(type)) {
-            typeTable.put(node, new AIntTypeExpr(new TInt()));
-        } else if (isFloatType(type)) {
-            typeTable.put(node, new AFloatTypeExpr(new TFloat64()));
-        } else {
-            typeTable.put(node, new ARuneTypeExpr(new TRune()));
-        }
-    }
-
-    @Override
-    public void outANegExpr(ANegExpr node) {
-        PTypeExpr type = typeTable.get(node.getExpr());
-        if (!isNumericType(type)) {
-            callTypeCheckException(node.getExpr(), "Unary '-': not defined for non-numeric");
-        }
-        if (isIntType(type)) {
-            typeTable.put(node, new AIntTypeExpr(new TInt()));
-        } else if (isFloatType(type)) {
-            typeTable.put(node, new AFloatTypeExpr(new TFloat64()));
-        } else {
-            typeTable.put(node, new ARuneTypeExpr(new TRune()));
-        }
-    }
-
-    @Override
-    public void outABitCompExpr(ABitCompExpr node) {
-        PTypeExpr type = typeTable.get(node.getExpr());
-        if (!isIntOrRuneType(type)) {
-            callTypeCheckException(node.getExpr(), "Unary '^': not defined for non-integer");
-        }
-        if (isIntType(type)) {
-            typeTable.put(node, new AIntTypeExpr(new TInt()));
-        } else {
-            typeTable.put(node, new ARuneTypeExpr(new TRune()));
-        }
-    }
-
-    @Override
-    public void outANotExpr(ANotExpr node) {
-        PTypeExpr type = typeTable.get(node.getExpr());
-        if (!isBoolType(type)) {
-            callTypeCheckException(node.getExpr(), "Unary '!': not defined for non-boolean");
-        }
-        typeTable.put(node, new ABoolTypeExpr(new TBool()));
-    }
-
-    /* Type check relational operands */
-    @Override
-    public void outAEqExpr(AEqExpr node) {
-        PTypeExpr left = typeTable.get(node.getLeft());
-        PTypeExpr right = typeTable.get(node.getRight());
-        if (!isSameType(left, right)) {
-            callTypeCheckException(node.getLeft(), "Relational '==': mismatched operand type");
-        }
-        if (!isComparableType(left) || !isComparableType(right)) {
-            Node errorNode = !isComparableType(left) ? node.getLeft() : node.getRight();
-            callTypeCheckException(errorNode, "Relational '==': not defined for non-comparable");
-        }
-        typeTable.put(node, new ABoolTypeExpr(new TBool()));
-    }
-
-    @Override
-    public void outANeqExpr(ANeqExpr node) {
-        PTypeExpr left = typeTable.get(node.getLeft());
-        PTypeExpr right = typeTable.get(node.getRight());
-        if (!isSameType(left, right)) {
-            callTypeCheckException(node.getLeft(), "Relational '!=': mismatched operand type");
-        }
-        if (!isComparableType(left) || !isComparableType(right)) {
-            Node errorNode = !isComparableType(left) ? node.getLeft() : node.getRight();
-            callTypeCheckException(errorNode, "Relational '!=': not defined for non-comparable");
-        }
-        typeTable.put(node, new ABoolTypeExpr(new TBool()));
-    }
-
-    @Override
-    public void outALtExpr(ALtExpr node) {
-        PTypeExpr left = typeTable.get(node.getLeft());
-        PTypeExpr right = typeTable.get(node.getRight());
-        if (!isSameType(left, right)) {
-            callTypeCheckException(node.getLeft(), "Relational '<': mismatched operand type");
-        }
-        if (!isOrderedType(left) || !isOrderedType(right)) {
-            Node errorNode = !isOrderedType(left) ? node.getLeft() : node.getRight();
-            callTypeCheckException(errorNode, "Relational '<': not defined for non-ordered");
-        }
-        typeTable.put(node, new ABoolTypeExpr(new TBool()));
-    }
-
-    @Override
-    public void outALteExpr(ALteExpr node) {
-        PTypeExpr left = typeTable.get(node.getLeft());
-        PTypeExpr right = typeTable.get(node.getRight());
-        if (!isSameType(left, right)) {
-            callTypeCheckException(node.getLeft(), "Relational '<=': mismatched operand type");
-        }
-        if (!isOrderedType(left) || !isOrderedType(right)) {
-            Node errorNode = !isOrderedType(left) ? node.getLeft() : node.getRight();
-            callTypeCheckException(errorNode, "Relational '<=': not defined for non-ordered");
-        }
-        typeTable.put(node, new ABoolTypeExpr(new TBool()));
-    }
-
-    @Override
-    public void outAGtExpr(AGtExpr node) {
-        PTypeExpr left = typeTable.get(node.getLeft());
-        PTypeExpr right = typeTable.get(node.getRight());
-        if (!isSameType(left, right)) {
-            callTypeCheckException(node.getLeft(), "Relational '>': mismatched operand type");
-        }
-        if (!isOrderedType(left) || !isOrderedType(right)) {
-            Node errorNode = !isOrderedType(left) ? node.getLeft() : node.getRight();
-            callTypeCheckException(errorNode, "Relational '>': not defined for non-ordered");
-        }
-        typeTable.put(node, new ABoolTypeExpr(new TBool()));
-    }
-
-    @Override
-    public void outAGteExpr(AGteExpr node) {
-        PTypeExpr left = typeTable.get(node.getLeft());
-        PTypeExpr right = typeTable.get(node.getRight());
-        if (!isSameType(left, right)) {
-            callTypeCheckException(node.getLeft(), "Relational '>=': mismatched operand type");
-        }
-        if (!isOrderedType(left) || !isOrderedType(right)) {
-            Node errorNode = !isOrderedType(left) ? node.getLeft() : node.getRight();
-            callTypeCheckException(errorNode, "Relational '>=': not defined for non-ordered");
-        }
-        typeTable.put(node, new ABoolTypeExpr(new TBool()));
-    }
-
-    /* Type check conditional operators */
-    @Override
-    public void outAAndExpr(AAndExpr node) {
-        PTypeExpr left = typeTable.get(node.getLeft());
-        PTypeExpr right = typeTable.get(node.getRight());
-        if (!isBoolType(left) || !isBoolType(right)) {
-            Node errorNode = !isBoolType(left) ? node.getLeft() : node.getRight();
-            callTypeCheckException(errorNode, "Conditional '&&': not defined for non-boolean");
-        }
-        typeTable.put(node, new ABoolTypeExpr(new TBool()));
-    }
-
-    @Override
-    public void outAOrExpr(AOrExpr node) {
-        PTypeExpr left = typeTable.get(node.getLeft());
-        PTypeExpr right = typeTable.get(node.getRight());
-        if (!isBoolType(left) || !isBoolType(right)) {
-            Node errorNode = !isBoolType(left) ? node.getLeft() : node.getRight();
-            callTypeCheckException(errorNode, "Conditional '||': not defined for non-boolean");
-        }
-        typeTable.put(node, new ABoolTypeExpr(new TBool()));
-    }
-
-    /* Type check variables */
-    @Override
-    public void outAVariableExpr(AVariableExpr node) {
-        PTypeExpr type = getType(node.getId());
-        typeTable.put(node, type);
-    }
-
-    /* Type check numeric literals */
-    @Override
-    public void outAIntLitExpr(AIntLitExpr node) {
-        typeTable.put(node, new AIntTypeExpr(new TInt()));
-    }
-
-    @Override
-    public void outAOctLitExpr(AOctLitExpr node) {
-        typeTable.put(node, new AIntTypeExpr(new TInt()));
-    }
-
-    @Override
-    public void outAHexLitExpr(AHexLitExpr node) {
-        typeTable.put(node, new AIntTypeExpr(new TInt()));
-    }
-
-    @Override
-    public void outAFloatLitExpr(AFloatLitExpr node) {
-        typeTable.put(node, new AFloatTypeExpr(new TFloat64()));
-    }
-
-    @Override
-    public void outARuneLitExpr(ARuneLitExpr node) {
-        typeTable.put(node, new ARuneTypeExpr(new TRune()));
-    }
-
-    /* Type check string literals */
-    @Override
-    public void outAInterpretedStringLitExpr(AInterpretedStringLitExpr node) {
-        typeTable.put(node, new AStringTypeExpr(new TString()));
-    }
-
-    @Override
-    public void outARawStringLitExpr(ARawStringLitExpr node) {
-        typeTable.put(node, new AStringTypeExpr(new TString()));
-    }
-
-    /* Helper methods */
-    private boolean isBoolType(PTypeExpr node) {
-        return node instanceof ABoolTypeExpr;
-    }
-
-    private boolean isIntType(PTypeExpr node) {
-        return node instanceof AIntTypeExpr;
-    }
-
-    private boolean isFloatType(PTypeExpr node) {
-        return node instanceof AFloatTypeExpr;
-    }
-
-    private boolean isRuneType(PTypeExpr node) {
-        return node instanceof ARuneTypeExpr;
-    }
-
-    private boolean isStringType(PTypeExpr node) {
-        return node instanceof AStringTypeExpr;
-    }
-
-    private boolean isIntOrRuneType(PTypeExpr node) {
-        return isIntType(node) || isRuneType(node);
-    }
-
-    private boolean isNumericType(PTypeExpr node) {
-        return isIntOrRuneType(node) || isFloatType(node);
-    }
-
-    private boolean isOrderedType(PTypeExpr node) {
-        return isNumericType(node) || isStringType(node);
-    }
-
-    private boolean isComparableType(PTypeExpr node) {
-        return isBoolType(node) || isOrderedType(node) || isArrayType(node);
-    }
-
-    private boolean isBaseType(PTypeExpr node) {
-        return isBoolType(node) || isNumericType(node) || isStringType(node);
-    }
-
-    private boolean isCustomType(PTypeExpr node) {
-        return node instanceof ACustomTypeExpr;
-    }
-
-    private boolean isArrayType(PTypeExpr node) {
-        return node instanceof AArrayTypeExpr;
-    }
-
-    private boolean isSliceType(PTypeExpr node) {
-        return node instanceof ASliceTypeExpr;
-    }
-
-    private boolean isStructType(PTypeExpr node) {
-        return node instanceof AStructTypeExpr;
-    }
-
-    private boolean isSameType(PTypeExpr node1, PTypeExpr node2) {
-        boolean isSameType = node1.getClass() == node2.getClass();
-        if (isSameType && node1 instanceof ACustomTypeExpr) {
-            return isSameCustomType((ACustomTypeExpr) node1, (ACustomTypeExpr) node2);
-        }
-        else if (isSameType && node1 instanceof AStructTypeExpr)
-        {
-            return isSameStruct((AStructTypeExpr) node1, (AStructTypeExpr) node2);
-        }
-        else if (isSameType && node1 instanceof AArrayTypeExpr)
-        {
-            String length1 = getNum(((AArrayTypeExpr) node1).getExpr());
-            String length2 = getNum(((AArrayTypeExpr) node2).getExpr());
-            int dimension1 = getDimension((AArrayTypeExpr) node1);
-            int dimension2 = getDimension((AArrayTypeExpr) node2);
-            boolean recursive = true;
-            if (dimension1 > 0)
-            {
-                recursive = isSameType(((AArrayTypeExpr) node1).getTypeExpr(), ((AArrayTypeExpr) node2).getTypeExpr());
-            }
-            return (length1.equals(length2) && dimension1 == dimension2 && recursive && (isSameType(((AArrayTypeExpr) node1).getTypeExpr(), ((AArrayTypeExpr) node2).getTypeExpr())));
-        }
-        else if (isSameType && node1 instanceof ASliceTypeExpr)
-        {
-            int dimension1 = getDimension((ASliceTypeExpr) node1);
-            int dimension2 = getDimension((ASliceTypeExpr) node2);
-            return ((dimension1 == dimension2) && (isSameType(((ASliceTypeExpr) node1).getTypeExpr(), ((ASliceTypeExpr) node2).getTypeExpr())));
-        }
-        return isSameType;
-    }
-
-    private String getNum(PExpr node)
-    {
-        if (node instanceof AOctLitExpr)
-        {
-            return getNum((AOctLitExpr) node);
-        }
-        else if (node instanceof AHexLitExpr)
-        {
-            return getNum((AHexLitExpr) node);
-        }
-        else if (node instanceof AIntLitExpr)
-        {
-            return getNum((AIntLitExpr) node);
-        }
-        callTypeCheckException(node, "Invalid array length");
-        return null;
-    }
-
-    private String getNum(AOctLitExpr node)
-    {
-        return node.getOctLit().getText();
-    }
-
-    private String getNum(AIntLitExpr node)
-    {
-        return node.getIntLit().getText();
-    }
-
-    private String getNum(AHexLitExpr node)
-    {
-        return node.getHexLit().getText();
-    }
-
-    private boolean isSameCustomType(ACustomTypeExpr node1, ACustomTypeExpr node2)
-    {
-        PTypeExpr t1 = getType(node1);
-        PTypeExpr t2 = getType(node2);
-        boolean theSame = isSameType(t1, t2);
-        if (theSame)
-        {
-            if (t1 instanceof AStructTypeExpr)
-            {
-                return isSameStruct((AStructTypeExpr) t1, (AStructTypeExpr) t2);
-            }
-            return true;
-        }
-        return false;
-    }
-
-    private ArrayList<TId> getIds(Node node)
-    {
-        if (node instanceof ASpecVarSpec)
-        {
-            ArrayList<POptId> optIds = new ArrayList<POptId>(((ASpecVarSpec) node).getOptId());
-            ArrayList<TId> ids = new ArrayList<TId>();
-            for (POptId o: optIds)
-            {
-                if (o instanceof AIdOptId)
-                {
-                    ids.add(((AIdOptId) o).getId());
-                }
-            }
-            return ids;
-        }
-        else if (node instanceof ASpecTypeSpec)
-        {
-            POptId optId = ((ASpecTypeSpec) node).getOptId();
-            ArrayList<TId> ids = new ArrayList<TId>();
-            if (optId instanceof AIdOptId)
-            {
-                ids.add(((AIdOptId) optId).getId());
-            }
-            return ids;
-        }
-        else if (node instanceof AShortAssignStmt)
-        {
-            ArrayList<POptId> optIds = new ArrayList<POptId>(((AShortAssignStmt) node).getOptId());
-            ArrayList<TId> ids = new ArrayList<TId>();
-            for (POptId o: optIds)
-            {
-                if (o instanceof AIdOptId)
-                {
-                    ids.add(((AIdOptId) o).getId());
-                }
-            }
-            return ids;
-        }
-        else if (node instanceof AStructSubStructSub)
-        {
-            ArrayList<POptId> optIds = new ArrayList<POptId>(((AStructSubStructSub) node).getOptId());
-            ArrayList<TId> ids = new ArrayList<TId>();
-            for (POptId o: optIds)
-            {
-                if (o instanceof AIdOptId)
-                {
-                    ids.add(((AIdOptId) o).getId());
-                }
-            }
-            return ids;
-        }
-        else if (node instanceof AStructTypeExpr)
-        {
-            List<PStructSub> subs = ((AStructTypeExpr) node).getStructSub();
-            ArrayList<TId> ids = new ArrayList<TId>();
-            for (PStructSub s: subs)
-            {
-                ids.addAll(getIds(s));
-            }
-            return ids;
-        }
-        return new ArrayList<TId>();
-    }
-
-    private boolean isSameStruct(AStructTypeExpr node1, AStructTypeExpr node2)
-    {
-        Node p1 = node1.parent();
-        Node p2 = node2.parent();
-        if (p1 instanceof PTypeSpec && p2 instanceof PTypeSpec)
-        {
-            String structName1 = getIds((ASpecTypeSpec) p1).get(0).getText();
-            String structName2 = getIds((ASpecTypeSpec) p2).get(0).getText();
-            if (!structName1.equals(structName2))
-            {
-                return false;
-            }
-        }
-        ArrayList<TId> ids1 = getIds(node1);
-        ArrayList<TId> ids2 = getIds(node2);
-        boolean sameLength = ids1.size() == ids2.size();
-        if(sameLength)
-        {
-            boolean sameName = true;
-            for (int i=0; i<ids1.size(); i++)
-            {
-                String name1 = getIds(node1).get(i).getText();
-                String name2 = getIds(node2).get(i).getText();
-                sameName = name1.equals(name2);
-                if (!sameName)
-                {
-                    return sameName;
-                }
-            }
-        }
-        return sameLength;
-    }
-
-    private boolean isAssignable(PExpr node) {
-        return (node instanceof AVariableExpr) || (node instanceof AFieldExpr) || (node instanceof AArrayElemExpr);
-    }
-
-    private AFuncTopDec getParentFuncDec(AReturnStmt node) {
-        Node parent = node;
-        while (!(parent instanceof AFuncTopDec)) {
-            parent = parent.parent();
-        }
-        return (AFuncTopDec) parent;
-    }
-
-    /**
-     * Throws a type check exception after annotating the message with line and position information.
-     *
-     * @param node - AST node
-     * @param s - Error message
-     * @throws TypeCheckException
-     */
-    private void callTypeCheckException(Node node, String s) {
-        String message = "";
-        if (node != null) {
-            node.apply(lineAndPos);
-            message += "[" + lineAndPos.getLine(node) + "," + lineAndPos.getPos(node) + "] ";
-        }
-        message += s;
-        throw new TypeCheckException(message);
-    }
-
-    /* Change scope when entering and exiting functions */
-    @Override
-    public void inAFuncTopDec(AFuncTopDec node)
-    {
-        symbolTable.enterScope();
-        List<PArgGroup> argGroups = node.getArgGroup();
-        for (PArgGroup a: argGroups)
-        {
-            for(TId i: ((AArgArgGroup) a).getId())
-            {
-                symbolTable.addSymbol(i.getText(), a);
-                typeTable.put(a, ((AArgArgGroup) a).getTypeExpr());
-            }
-        }
-        defaultIn(node);
-    }
-
-    @Override
-    public void outAFuncTopDec(AFuncTopDec node)
-    {
-        defaultOut(node);
-        symbolTable.exitScope();
-    }
-
-    /* Add var and type specifications to symbol table */
-
-    @Override
-    public void outASpecVarSpec(ASpecVarSpec node)
-    {
-        {
-            List<TId> ids = new ArrayList<TId>(getIds(node));
-            List<PExpr> exprs = node.getExpr();
-            for (TId e: ids)
-            {
-                symbolTable.addSymbol(e.getText(), node);
-            }
-            if (node.getTypeExpr() != null)
-            {
-                for (PExpr e: exprs)
-                {
-                    if (typeTable.get(e).getClass() != node.getTypeExpr().getClass())
-                    {
-                        callTypeCheckException(e, "Expression type does not match declared variable type");
-                    }
-
-                }
-                for (TId e: ids)
-                {
-                        typeTable.put(e, node.getTypeExpr());
-                }
-            }
+            // No return type.
+            if (pTypeExpr == null)
+                funcSymbol = new FunctionSymbol(name, node);
+            // Has return type.
             else
-            {
-                for (int i = 0; i < ids.size(); i++)
-                {
-                    typeTable.put(ids.get(i), typeTable.get(exprs.get(i)));
-                }
+                funcSymbol = new FunctionSymbol(name, this.getType(pTypeExpr), node);
+
+            // Add argument types to the function symbol.
+            AArgArgGroup g = null;
+            for (PArgGroup p : node.getArgGroup()) {
+                g = (AArgArgGroup) p;
+                funcSymbol.addArgType(this.getType(g.getTypeExpr()), g.getId().size());
             }
+
+            // Enter symbol into the table.
+            this.symbolTable.putSymbol(funcSymbol);
+        // Function symbol is already assumed to be in the symbol table.
+        } else
+            funcSymbol = (FunctionSymbol) this.symbolTable.getSymbol(name);
+        
+        // Set the current function symbol so descendants can access function information.
+        this.currentFunctionSymbol = funcSymbol;
+
+     	// Enter the function body.
+     	this.symbolTable.scope();
+
+     	// Add the argument symbols to the current scope.
+     	for (PArgGroup p : node.getArgGroup())
+     		p.apply(this);
+
+     	// Recurse on each statement.
+     	for (PStmt s: node.getStmt())
+     		s.apply(this);
+
+     	// Exit the fucntion body.
+     	this.symbolTable.unscope();
+
+     	this.currentFunctionSymbol = null;
+    }
+
+    // Add function arguments as variable symbols into the current scope.
+    @Override
+    public void inAArgArgGroup(AArgArgGroup node) {
+        GoLiteType type = this.getType(node.getTypeExpr());
+
+        // Loop over each identifier in the group and add a new variable symbol into the function
+        // scope for each.
+        for (TId id : this.getIds(node)) {
+        	// Throw an error if multiple arguments have the same Id.
+            this.checkifDeclaredInCurrentScope(id);
+            this.symbolTable.putSymbol(new VariableSymbol(id.getText(), type, node));
         }
     }
 
-    private void putTypeExpr(String name, PTypeExpr node)
-    {
-        if (isStructType(node))
-        {
-            for (PStructSub a: ((AStructTypeExpr) node).getStructSub())
-            {
-                for (TId id: (getIds((AStructSubStructSub) a)))
-                {
-                    String newName = name + "." + id.getText();
-                    symbolTable.addSymbol(newName, a);
-                    typeTable.put(a, getType(a));
-                    putTypeExpr(newName, ((AStructSubStructSub) a).getTypeExpr());
-                }
+    // Add non-global variables declared into the symbol table, performing type compatability checks
+    // and type inference, if necessary.
+    @Override
+    public void outASpecVarSpec(ASpecVarSpec node) {
+        // Get the expressions on the R.H.S.
+        LinkedList<PExpr> pExprs = node.getExpr();
+
+        // Flag for whether the variables are initialized with expressions.
+        boolean isInitialized = (pExprs.size() > 0);
+
+        // Loop over each Id, tracking the position in the specfication.
+        int i = 0;
+       	for (TId id : this.getIds(node)) {
+           	// Skip variable specifications in the global scope, they're already taken care of in
+           	// symbol table building.
+            if (this.symbolTable.inGlobalScope())
+            	return;
+
+           	// Throw an error if a symbol with the given Id already exists in the current scope
+           	// and the current scope.
+            this.checkifDeclaredInCurrentScope(id);
+
+            PTypeExpr pTypeExpr = node.getTypeExpr();
+            // Type not declared and so must be inferred.
+            if (pTypeExpr == null) {
+            	// Expression should exist, otherwise a parser or weeder would've caught the
+            	// Error.
+            	PExpr pExpr = node.getExpr().get(i);
+
+            	GoLiteType type = this.getType(pExpr);
+
+            	// Expression is a void function call 
+            	if (type instanceof VoidType) {
+            		TId funcId = ((AFuncCallExpr) pExpr).getId();
+            		this.throwTypeCheckException(pExpr,
+            			funcId.getText() + "() used as a value");
+            	}
+            		
+            	this.symbolTable.putSymbol(new VariableSymbol(id.getText(), type, node));
+            } else {
+            	// GoLite type of the type expression.
+            	GoLiteType typeExprType = this.getType(pTypeExpr);
+
+            	// Variable is initialized with an expression.
+            	if (isInitialized) {
+            		// Get the corresponding expression node.
+            		PExpr pExpr = node.getExpr().get(i);
+            		// Get its GoLite type.
+            		GoLiteType exprType = this.getType(pExpr);
+            		
+            		// Check the L.H.S. and R.H.S. are type compatible, throwing an error if their
+            		// not.
+            		if (!(typeExprType.isCompatible(exprType)))
+            			this.throwTypeCheckException(pExpr, "Cannot use type " + exprType
+            				+ " as type " + typeExprType + " in assignment");
+            	}
+
+            	// Put a new variable symbol into the symbol table.
+            	this.symbolTable.putSymbol(new VariableSymbol(id.getText(), typeExprType,
+            		node));
             }
+
+            // Increment the position.
+            i++;
         }
     }
 
     @Override
-    public void inASpecTypeSpec(ASpecTypeSpec node)
-    {
-        for (TId t: getIds(node))
-        {
-            String name = t.getText();
-            symbolTable.addSymbol(name, node.getTypeExpr());
-            putTypeExpr(name, node.getTypeExpr());
+    public void inASpecTypeSpec(ASpecTypeSpec node) {
+    	// Skip type specifications in the global scope, they're already taken care of in symbol
+    	// table building.
+        if (this.symbolTable.inGlobalScope())
+        	return;
+
+        for (TId id: this.getIds(node)) {
+        	// Throw an error if the name is already taken by another identifier in the current
+        	// scope.
+            this.checkifDeclaredInCurrentScope(id);
+
+            // Get the GoLite type of the type expression.
+            GoLiteType type = this.getType(node.getTypeExpr());
+            // Add a type alias symbol to the symbol table.
+            this.symbolTable.putSymbol(new TypeAliasSymbol(id.getText(), type, node));
+            this.typeTable.put(node, type);
         }
     }
 
+    /** Type check statements. **/
+
+    // Empty statement.
+    @Override
+    public void outAEmptyStmt(AEmptyStmt node) {
+    	// Trivially typed.
+    }
+
+    // Short assignment statement.
     @Override
     public void outAShortAssignStmt(AShortAssignStmt node) {
-        List<TId> ids = new ArrayList<TId>(getIds(node));
-        List<PExpr> exprs = new ArrayList<PExpr>(node.getExpr());
-        boolean hasNewId = false;
+       	// Get L.H.S. (non-blank) Id's.
+        ArrayList<TId> ids = this.getIds(node);
+        // Get R.H.S. expressions.
+        ArrayList<PExpr> pExprs = new ArrayList<PExpr>(node.getExpr());
+
+        // Flag for whether the L.H.S. has any new variables declared in the current scope.
+        boolean hasNewDecInCurrentScope = false;
+        // Loop through the Id's in sequence, tracking the position.
         for (int i = 0; i < ids.size(); i++) {
-            if (symbolTable.containsId(ids.get(i).getText())) {
-                String identifier = ids.get(i).getText();
-                TId idNode = getIdentifierTIdNode(identifier, symbolTable.getSymbol(identifier, node));
-                PTypeExpr idType = typeTable.get(idNode);
-                PTypeExpr exprType = typeTable.get(exprs.get(i));
-                if (!isSameType(idType, exprType)) {
-                    callTypeCheckException(exprs.get(i), "Short assign ':=': mismatched expression type");
-                }
-                symbolTable.removeSymbol(ids.get(i).getText());
-                typeTable.remove(idNode);
+        	TId id = ids.get(i);
+        	String name = id.getText();
+
+        	// Get the corresponding expression node.
+    		PExpr pExpr = pExprs.get(i);
+    		// Get its GoLite type.
+    		GoLiteType exprType = this.getType(pExpr);
+
+    		// Expression is a void function call.
+        	if (exprType instanceof VoidType) {
+        		TId funcId = ((AFuncCallExpr) pExpr).getId();
+        		this.throwTypeCheckException(pExpr,
+        			funcId.getText() + "() used as a value");
+        	}
+
+        	// A symbol with the given name already exists in the current scope.
+            if (symbolTable.defSymbolInCurrentScope(name)) {
+            	// Get the variable symbol.
+                VariableSymbol symbol = this.getVariableSymbol(id);
+
+        		// Check the L.H.S. and R.H.S. are type compatible, throwing an error if their not.
+        		if (!(symbol.getType().isCompatible(exprType)))
+        			this.throwTypeCheckException(pExpr, "Cannot use type " + exprType
+        				+ " as type " + symbol.getType() + " in assignment");
+            // No such symbol exists in the current scope.
             } else {
-                hasNewId = true;
-            }
-            symbolTable.addSymbol(ids.get(i).getText(), node);
-            typeTable.put(ids.get(i), getType(exprs.get(i)));
+            	// Go ahead and add it to the symbol table, using its inferred type, which may
+            	// shadow an outer scope symbol with the same name.
+            	this.symbolTable.putSymbol(new VariableSymbol(name, exprType, node));
+                hasNewDecInCurrentScope = true;
+	        }
+
+	        this.typeTable.put(id, exprType);
         }
-        if (!hasNewId) {
-            callTypeCheckException(node, "Short assign ':=': no new variables declared");
+
+        // Throw an error is no new variables are declared on the L.H.S.
+        if (!hasNewDecInCurrentScope)
+            this.throwTypeCheckException(node, "No new variables on left side of :=");
+    }
+
+    // Assignment statement.
+    @Override
+    public void outAAssignStmt(AAssignStmt node) {
+    	// L.H.S. and R.H.S. expressions (Both sides are checked to be the same size by the weeder).
+        LinkedList<PExpr> pExprsLHS = node.getLhs();
+        LinkedList<PExpr> pExprsRHS = node.getRhs();
+
+        for (int i = 0; i < pExprsLHS.size(); i++) {
+            GoLiteType leftExprType = this.getType(pExprsLHS.get(i));
+
+            PExpr rightExpr = pExprsRHS.get(i);
+            GoLiteType rightExprType = this.getType(rightExpr);
+
+            // Throw an error if the L.H.S. and R.H.S. types are not compatible.
+        	if (!(leftExprType.isCompatible(rightExprType)))
+                this.throwTypeCheckException(rightExpr, "Cannot use type " + rightExprType
+        				+ " as type " + leftExprType + " in assignment");
         }
     }
 
-    /* Help method for handling short assign */
-    private TId getIdentifierTIdNode(String id, Node node) {
-        List<TId> copy;
-        if (node instanceof ASpecVarSpec) {
-            copy = new ArrayList<TId>(getIds((ASpecVarSpec) node));
+    /* Type check op-assign statements. */
+
+    // Plus-assignment statement.
+    @Override
+    public void outAPlusAssignStmt(APlusAssignStmt node) {
+    	// L.H.S. is guaranteed to be an assignable by the grammar.
+        GoLiteType leftExprType = this.getType(node.getLhs());
+        GoLiteType rightExprType = this.getType(node.getRhs());
+
+        // Throw an error if the L.H.S. and R.H.S. types are not compatible.
+        if (!(leftExprType.isCompatible(rightExprType)))
+            this.throwTypeCheckException(node, "Invalid operation '+=': Mismatched types "
+            	+ leftExprType + " and " + rightExprType);
+
+        // Throw an error if the underlying type is not numeric and hence cannot be plused.
+        if (!this.isOrderedType(leftExprType.getUnderlyingType()))
+            this.throwTypeCheckException(node,
+            	"Invalid operation '+=': Operator '+' not defined on " + leftExprType);
+    }
+
+    // Minus-assignment statement.
+    @Override
+    public void outAMinusAssignStmt(AMinusAssignStmt node) {
+    	// L.H.S. is guaranteed to be an assignable by the grammar.
+        GoLiteType leftExprType = this.getType(node.getLhs());
+        GoLiteType rightExprType = this.getType(node.getRhs());
+
+        // Throw an error if the L.H.S. and R.H.S. types are not compatible.
+        if (!(leftExprType.isCompatible(rightExprType)))
+            this.throwTypeCheckException(node, "Invalid operation '-=': Mismatched types "
+            	+ leftExprType + " and " + rightExprType);
+
+        // Throw an error if the underlying type is not numeric and hence cannot be minused.
+        if (!this.isNumericType(leftExprType.getUnderlyingType()))
+            this.throwTypeCheckException(node,
+            	"Invalid operation '-=': Operator '-' not defined on " + leftExprType);
+    }
+
+    // Mult-assignment statement.
+    @Override
+    public void outAStarAssignStmt(AStarAssignStmt node) {
+    	// L.H.S. is guaranteed to be an assignable by the grammar.
+        GoLiteType leftExprType = this.getType(node.getLhs());
+        GoLiteType rightExprType = this.getType(node.getRhs());
+
+        // Throw an error if the L.H.S. and R.H.S. types are not compatible.
+        if (!(leftExprType.isCompatible(rightExprType)))
+            this.throwTypeCheckException(node, "Invalid operation '*=': Mismatched types "
+            	+ leftExprType + " and " + rightExprType);
+
+        // Throw an error if the underlying type is not numeric and hence cannot be multiplied.
+        if (!this.isNumericType(leftExprType.getUnderlyingType()))
+            this.throwTypeCheckException(node,
+            	"Invalid operation '*=': Operator '*' not defined on " + leftExprType);
+    }
+
+    // Div-assignment statement.
+    @Override
+    public void outASlashAssignStmt(ASlashAssignStmt node) {
+    	// L.H.S. is guaranteed to be an assignable by the grammar.
+        GoLiteType leftExprType = this.getType(node.getLhs());
+        GoLiteType rightExprType = this.getType(node.getRhs());
+
+        // Throw an error if the L.H.S. and R.H.S. types are not compatible.
+        if (!(leftExprType.isCompatible(rightExprType)))
+            this.throwTypeCheckException(node, "Invalid operation '/=': Mismatched types "
+            	+ leftExprType + " and " + rightExprType);
+
+        // Throw an error if the underlying type is not numeric and hence cannot be divided.
+        if (!this.isNumericType(leftExprType.getUnderlyingType()))
+            this.throwTypeCheckException(node,
+            	"Invalid operation '/=': Operator '/' not defined on " + leftExprType);
+    }
+
+    // Mod-assignment statement.
+    @Override
+    public void outAPercAssignStmt(APercAssignStmt node) {
+    	// L.H.S. is guaranteed to be an assignable by the grammar.
+        GoLiteType leftExprType = this.getType(node.getLhs());
+        GoLiteType rightExprType = this.getType(node.getRhs());
+
+        // Throw an error if the L.H.S. and R.H.S. types are not compatible.
+        if (!(leftExprType.isCompatible(rightExprType)))
+            this.throwTypeCheckException(node, "Invalid operation '%=': Mismatched types "
+            	+ leftExprType + " and " + rightExprType);
+
+        // Throw an error if the underlying type is not integer or rune and hence cannot be
+        // modulo'd.
+        if (!this.isIntOrRuneType(leftExprType.getUnderlyingType()))
+            this.throwTypeCheckException(node,
+            	"Invalid operation '%=': Operator '%' not defined on " + leftExprType);
+    }
+
+    // Bit-and-assignment statement.
+    @Override
+    public void outAAndAssignStmt(AAndAssignStmt node) {
+        // L.H.S. is guaranteed to be an assignable by the grammar.
+        GoLiteType leftExprType = this.getType(node.getLhs());
+        GoLiteType rightExprType = this.getType(node.getRhs());
+
+        // Throw an error if the L.H.S. and R.H.S. types are not compatible.
+        if (!(leftExprType.isCompatible(rightExprType)))
+            this.throwTypeCheckException(node, "Invalid operation '&=': Mismatched types "
+            	+ leftExprType + " and " + rightExprType);
+
+        // Throw an error if the underlying type is not integer or rune and hence cannot be
+        // bit-anded.
+        if (!this.isIntOrRuneType(leftExprType.getUnderlyingType()))
+            this.throwTypeCheckException(node,
+            	"Invalid operation '&=': Operator '&' not defined on " + leftExprType);
+    }
+
+    // Bit-or-assignment statement.
+    @Override
+    public void outAPipeAssignStmt(APipeAssignStmt node) {
+        // L.H.S. is guaranteed to be an assignable by the grammar.
+        GoLiteType leftExprType = this.getType(node.getLhs());
+        GoLiteType rightExprType = this.getType(node.getRhs());
+
+        // Throw an error if the L.H.S. and R.H.S. types are not compatible.
+        if (!(leftExprType.isCompatible(rightExprType)))
+            this.throwTypeCheckException(node, "Invalid operation '|=': Mismatched types "
+            	+ leftExprType + " and " + rightExprType);
+
+        // Throw an error if the underlying type is not integer or rune and hence cannot be
+        // bit-or'd.
+        if (!this.isIntOrRuneType(leftExprType.getUnderlyingType()))
+            this.throwTypeCheckException(node,
+            	"Invalid operation '|=': Operator '|' not defined on " + leftExprType);
+    }
+
+    // Bit-xor-assignment statement.
+    @Override
+    public void outACarotAssignStmt(ACarotAssignStmt node) {
+        // L.H.S. is guaranteed to be an assignable by the grammar.
+        GoLiteType leftExprType = this.getType(node.getLhs());
+        GoLiteType rightExprType = this.getType(node.getRhs());
+
+        // Throw an error if the L.H.S. and R.H.S. types are not compatible.
+        if (!(leftExprType.isCompatible(rightExprType)))
+            this.throwTypeCheckException(node, "Invalid operation '^=': Mismatched types "
+            	+ leftExprType + " and " + rightExprType);
+
+        // Throw an error if the underlying type is not integer or rune and hence cannot be
+        // bit-xor'd.
+        if (!this.isIntOrRuneType(leftExprType.getUnderlyingType()))
+            this.throwTypeCheckException(node,
+            	"Invalid operation '^=': Operator '^' not defined on " + leftExprType);
+    }
+
+    // Bit-clear-assignment statement.
+    @Override
+    public void outAAmpCarotAssignStmt(AAmpCarotAssignStmt node) {
+        // L.H.S. is guaranteed to be an assignable by the grammar.
+        GoLiteType leftExprType = this.getType(node.getLhs());
+        GoLiteType rightExprType = this.getType(node.getRhs());
+
+        // Throw an error if the L.H.S. and R.H.S. types are not compatible.
+        if (!(leftExprType.isCompatible(rightExprType)))
+            this.throwTypeCheckException(node, "Invalid operation '&^=': Mismatched types "
+            	+ leftExprType + " and " + rightExprType);
+
+        // Throw an error if the underlying type is not integer or rune and hence cannot be
+        // bit-cleared.
+        if (!this.isIntOrRuneType(leftExprType.getUnderlyingType()))
+            this.throwTypeCheckException(node,
+            	"Invalid operation '&^=': Operator '&^' not defined on " + leftExprType);
+    }
+
+    // Left-shift-assignment statement.
+    @Override
+    public void outALshiftAssignStmt(ALshiftAssignStmt node) {
+        // L.H.S. is guaranteed to be an assignable by the grammar.
+        GoLiteType leftExprType = this.getType(node.getLhs());
+        GoLiteType rightExprType = this.getType(node.getRhs());
+
+        // Throw an error if the L.H.S. and R.H.S. types are not compatible.
+        if (!(leftExprType.isCompatible(rightExprType)))
+            this.throwTypeCheckException(node, "Invalid operation '<<=': Mismatched types "
+            	+ leftExprType + " and " + rightExprType);
+
+        // Throw an error if the underlying type is not integer or rune and hence cannot be
+        // left-shifted.
+        if (!this.isIntOrRuneType(leftExprType.getUnderlyingType()))
+            this.throwTypeCheckException(node,
+            	"Invalid operation '<<=': Operator '<<' not defined on " + leftExprType);
+    }
+
+    // Right-shift-assignment statement.
+    @Override
+    public void outARshiftAssignStmt(ARshiftAssignStmt node) {
+        // L.H.S. is guaranteed to be an assignable by the grammar.
+        GoLiteType leftExprType = this.getType(node.getLhs());
+        GoLiteType rightExprType = this.getType(node.getRhs());
+
+        // Throw an error if the L.H.S. and R.H.S. types are not compatible.
+        if (!(leftExprType.isCompatible(rightExprType)))
+            this.throwTypeCheckException(node, "Invalid operation '>>=': Mismatched types "
+            	+ leftExprType + " and " + rightExprType);
+
+        // Throw an error if the underlying type is not integer or rune and hence cannot be
+        // right-shifted.
+        if (!this.isIntOrRuneType(leftExprType.getUnderlyingType()))
+            this.throwTypeCheckException(node,
+            	"Invalid operation '>>=': Operator '>>' not defined on " + leftExprType);
+    }
+
+    /* Type check increment & decrement statements. */
+
+    // Increment statement.
+    @Override
+    public void outAIncrStmt(AIncrStmt node) {
+        // Get the expression (Guaranteed to be assignable by the weeder) and its type.
+        PExpr pExpr = node.getExpr();
+        GoLiteType type = this.getType(pExpr);
+
+        // Throw an error if the underlying type is not numeric.
+        if (!this.isNumericType(type.getUnderlyingType()))
+            this.throwTypeCheckException(pExpr, "Invalid operation '++': non-numeric type " + type);
+    }
+
+    // Decrement statement.
+    @Override
+    public void outADecrStmt(ADecrStmt node) {
+        // Get the expression (Guaranteed to be assignable by the weeder) and its type.
+        PExpr pExpr = node.getExpr();
+        GoLiteType type = this.getType(pExpr);
+
+        // Throw an error if the underlying type is not numeric.
+        if (!this.isNumericType(type.getUnderlyingType()))
+            this.throwTypeCheckException(pExpr, "Invalid operation '--': non-numeric type " + type);
+    }
+
+    // Expression statement.
+    @Override
+    public void outAExprStmt(AExprStmt node) {
+    	// Well-typedness is checked in expression nodes.
+    }
+
+    // Print statement.
+    @Override
+    public void outAPrintStmt(APrintStmt node) {
+        for (PExpr pExpr : node.getExpr()) {
+            GoLiteType type = this.getType(pExpr);
+            
+            // Only primitive types can be printed.
+            if (!(type instanceof PrimitiveGoLiteType))
+                this.throwTypeCheckException(pExpr, "Cannot print type " + type);
+        }
+    }
+
+    // Println statement.
+    @Override
+    public void outAPrintlnStmt(APrintlnStmt node) {
+        for (PExpr pExpr : node.getExpr()) {
+            GoLiteType type = this.getType(pExpr);
+            
+            // Only primitive types can be printed.
+            if (!(type instanceof PrimitiveGoLiteType))
+                this.throwTypeCheckException(pExpr, "Cannot println type " + type);
+        }
+    }
+
+    // Continue statement.
+    @Override
+    public void outAContinueStmt(AContinueStmt node) {
+    	// Trivially typed.
+    }
+
+    // Break statement.
+    @Override
+    public void outABreakStmt(ABreakStmt node) {
+    	// Trivially typed.
+    }
+
+    // Return statement.
+    @Override
+    public void outAReturnStmt(AReturnStmt node) {
+        // Current function's return type.
+        GoLiteType returnType = this.currentFunctionSymbol.getReturnType();
+        
+        // Return expression.
+        PExpr pExpr = node.getExpr();
+
+        // Empty return statement.
+        if (pExpr == null) {
+        	// Throw an error if the return type is non-void.
+            if (!(returnType instanceof VoidType))
+                this.throwTypeCheckException(node, "Not enough arguments to return");
+        // Non-empty return statement.
         } else {
-            copy = new ArrayList<TId>(getIds((AShortAssignStmt) node));
-        }
+        	// Throw an error if the return type is void.
+         	if (returnType instanceof VoidType)
+                this.throwTypeCheckException(pExpr, "Too many arguments to return");
 
-        for (TId e : copy) {
-            if (e.getText().equals(id)) {
-                return e;
-            }
+            // Check the return type and return expression for type compatibility, throw an error if
+            // their not.
+            GoLiteType exprType = this.typeTable.get(pExpr);
+            if (!(returnType.isCompatible(exprType)))
+                this.throwTypeCheckException(pExpr, "Cannot use type " + exprType + " as type "
+                	+ returnType + " in return argument");
         }
-        return null;
     }
 
-    /* Type Check Field Expressions */
+    // If-else statement.
+    @Override
+    public void caseAIfElseStmt(AIfElseStmt node) {
+        // Create a new scope for the if-else initializer and blocks.
+        this.symbolTable.scope();
+
+        // Type check the condition, if it exists.
+        PCondition cond = node.getCondition();
+        if (cond != null)
+            cond.apply(this);
+
+        // Enter the if-block if it exists.
+        LinkedList<PStmt> pStmts = node.getIfBlock();
+        if (pStmts != null) {
+        	// Create a new scope for the if-block.
+	        this.symbolTable.scope();
+	        // Type check the if-block statements.
+	        for (PStmt s : pStmts)
+	            s.apply(this);
+	        // Exit the scope for the if-block.
+	        this.symbolTable.unscope();
+        }
+
+        // Enter the else-block if it exists.
+        pStmts = node.getElseBlock();
+        if (pStmts != null) {
+		    // Create a new scope for the else-block.
+		    this.symbolTable.scope();
+		    // Type check the else-block statements.
+		    for (PStmt s : pStmts)
+		        s.apply(this);
+		    // Exit the scope for the else-block.
+		    this.symbolTable.unscope();
+		}
+
+        // Exit the scope for the if-else initializer and blocks.
+    	this.symbolTable.unscope();
+    }
+
+    // If-else statement condition.
+    @Override
+    public void outAConditionCondition(AConditionCondition node) {
+    	// If-else expression.
+        PExpr pExpr = node.getExpr();
+        if (pExpr != null) {
+        	// Make sure the expression evaluates to a boolean, otherwise throw an error.
+            GoLiteType type = this.getType(pExpr);
+            if (!(type instanceof BoolType))
+                this.throwTypeCheckException(pExpr,
+                	"Non-bool (type " + type + ") used as if condition");
+        }
+    }
+
+    // Switch statement.
+    @Override
+    public void caseASwitchStmt(ASwitchStmt node) {
+         // Create a new scope for the switch initializer and blocks.
+        this.symbolTable.scope();
+        
+        // Type check the initial statement, if it exists.
+        PStmt pStmt = node.getStmt();
+        if (pStmt != null)
+            pStmt.apply(this);
+
+        // Store the previous switch condition type and restore it at the end (for handling nested
+        // switches).
+        GoLiteType prevSwitchCondType = this.currentSwitchCondType;
+
+        // Switch condition expression.
+        PExpr pExpr = node.getExpr();
+        if (pExpr == null)
+        	// Set the condition type to boolean if no condition is provided.
+        	this.currentSwitchCondType = new BoolType();
+        else {
+        	pExpr.apply(this);
+        	this.currentSwitchCondType = this.getType(pExpr);
+
+        	// Make sure the condition type is not void, otherwise throw an error.
+        	if (this.currentSwitchCondType instanceof VoidType)
+        		this.throwTypeCheckException(pExpr, "Void used as value");
+        }
+            
+        // Type check each case block.
+        for (PCaseBlock c : node.getCaseBlock())
+            c.apply(this);
+        
+        // Restore the current switch condition type.
+        this.currentSwitchCondType = prevSwitchCondType;
+
+        // Exit the scope for the switch initializer and blocks.
+    	this.symbolTable.unscope();
+    }
+
+    // Case block.
+    @Override
+    public void inABlockCaseBlock(ABlockCaseBlock node) {
+        // Create a new scope for the case block.
+        this.symbolTable.scope();
+    }
 
     @Override
-    public void outAFieldExpr(AFieldExpr node)
-    {
-        PTypeExpr type = getType(node.getExpr());
-        String id = node.getId().getText();
-        if (type instanceof AStructTypeExpr)
-        {
-            for (PStructSub a: ((AStructTypeExpr) type).getStructSub())
-            {
-                PTypeExpr argType = ((AStructSubStructSub) a).getTypeExpr();
-                for (TId argId: (getIds((AStructSubStructSub) a)))
-                {
-                    if (argId.getText().equals(id))
-                    {
-                        typeTable.put(node, argType); // Well typed!
-                    }
-                }
-            }
+    public void outABlockCaseBlock(ABlockCaseBlock node) {
+        // Exit the scope for the case block.
+        this.symbolTable.unscope();
+    }
+
+    // Non-default case block contiion.
+    @Override
+    public void outAExprsCaseCondition(AExprsCaseCondition node) {
+        // Make sure each expression in the case condition is type compatible with the switch
+        // condition.
+        for (PExpr pExpr : node.getExpr()) {
+            GoLiteType type = this.typeTable.get(pExpr);
+            if (!(this.currentSwitchCondType.isCompatible(type)))
+                this.throwTypeCheckException(pExpr, "Invalid case in switch (mismatched types "
+                	+ type + " and " + this.currentSwitchCondType + ")");
         }
-        else if (type instanceof ACustomTypeExpr)
-        {
-            PTypeExpr subType = getType(((ACustomTypeExpr) type).getId());
-            if (subType instanceof AStructTypeExpr)
-            {
-                for (PStructSub a: ((AStructTypeExpr) subType).getStructSub())
-                {
-                    PTypeExpr argType = ((AStructSubStructSub) a).getTypeExpr();
-                    for (TId argId: getIds((AStructSubStructSub) a))
-                    {
-                        if (argId.getText().equals(id))
-                        {
-                            typeTable.put(node, argType); // Well typed!
-                        }
-                    }
-                }
-            }
+    }
+
+    // Default case block condition.
+    @Override
+    public void outADefaultCaseCondition(ADefaultCaseCondition node) {
+        // Trivially well-typed.
+    }
+
+    // Loop statement.
+    @Override
+    public void caseALoopStmt(ALoopStmt node) {
+    	// Create a new scope for the loop initializer and body.
+        this.symbolTable.scope();
+
+        // Type check the initial statement, if it exists.
+        PStmt pStmt = node.getInit();
+        if (pStmt != null)
+            pStmt.apply(this);
+
+        // Loop condition.
+    	PExpr pExpr = node.getExpr();
+    	// If the condition is not empty, make sure it evaluates to a boolean.
+    	if (pExpr != null) {
+            pExpr.apply(this);
+            GoLiteType condType = this.typeTable.get(pExpr);
+            if (!(condType instanceof BoolType))
+                this.throwTypeCheckException(pExpr,
+                	"Non-bool (type " + condType + ") used as for condition");
         }
+
+        // Type check the end statement, if it exists.
+        pStmt = node.getEnd();
+        if (pStmt != null)
+            pStmt.apply(this);
+
+        // Create a new scope for the loop body.
+        this.symbolTable.scope();
+
+        // Type check the body statements.
+        for (PStmt s : node.getBlock())
+            s.apply(this);
+
+        // Exit the scope for the loop body.
+        this.symbolTable.unscope();
+        // Exit the scope for the loop initializer and body.
+    	this.symbolTable.unscope();
+    }
+
+    // Block statement.
+    @Override
+    public void inABlockStmt(ABlockStmt node) {
+    	// Create a new scope.
+		this.symbolTable.scope();
+	}
+
+	@Override
+	public void outABlockStmt(ABlockStmt node) {
+		// Drop the block scope.
+		this.symbolTable.unscope();
+	}
+
+    /** Type check expressions. **/
+
+    @Override
+    public void outAEmptyExpr(AEmptyExpr node) {
+    	// Trivially well-typed.
+    }
+
+    /* Binary arithmetic expressions. */
+
+    // Addition expression.
+    @Override
+    public void outAAddExpr(AAddExpr node) {
+        // Left and right hand expressions their types.
+        PExpr leftExpr = node.getLeft();
+        PExpr rightExpr = node.getRight();
+        GoLiteType leftExprType = this.getType(leftExpr);
+        GoLiteType rightExprType = this.getType(rightExpr);
+
+        // Make sure operands are type compatible, otherwise throw an error.
+        if (!(leftExprType.isCompatible(rightExprType) || rightExprType.isCompatible(leftExprType)))
+            this.throwTypeCheckException(node,
+            	"Invalid operation '+': mismatched types " + leftExprType + " and "
+            	+ rightExprType);
+
+        // Make sure the underlying operand type is ordered, otherwise throw an error.
+        if (!this.isOrderedType(leftExprType.getUnderlyingType()))
+            this.throwTypeCheckException(node,
+            	"Invalid operation '+': operator not defined on " + leftExprType);
+        
+        typeTable.put(node, leftExprType.getUnderlyingType());
+    }
+
+    // Subtraction expression.
+    @Override
+    public void outASubtractExpr(ASubtractExpr node) {
+        // Left and right hand expressions their types.
+        PExpr leftExpr = node.getLeft();
+        PExpr rightExpr = node.getRight();
+        GoLiteType leftExprType = this.getType(leftExpr);
+        GoLiteType rightExprType = this.getType(rightExpr);
+
+        // Make sure operands are type compatible, otherwise throw an error.
+        if (!(leftExprType.isCompatible(rightExprType) || rightExprType.isCompatible(leftExprType)))
+            this.throwTypeCheckException(node,
+            	"Invalid operation '-': mismatched types " + leftExprType + " and "
+            	+ rightExprType);
+
+        // Make sure the underlying operand type is numeric, otherwise throw an error.
+        if (!this.isNumericType(leftExprType.getUnderlyingType()))
+            this.throwTypeCheckException(node,
+            	"Invalid operation '-': operator not defined on " + leftExprType);
+        
+        typeTable.put(node, leftExprType.getUnderlyingType());
+    }
+
+    // Multiplication expression.
+    @Override
+    public void outAMultExpr(AMultExpr node) {
+        // Left and right hand expressions their types.
+        PExpr leftExpr = node.getLeft();
+        PExpr rightExpr = node.getRight();
+        GoLiteType leftExprType = this.getType(leftExpr);
+        GoLiteType rightExprType = this.getType(rightExpr);
+
+        // Make sure operands are type compatible, otherwise throw an error.
+        if (!(leftExprType.isCompatible(rightExprType) || rightExprType.isCompatible(leftExprType)))
+            this.throwTypeCheckException(node,
+            	"Invalid operation '*': mismatched types " + leftExprType + " and "
+            	+ rightExprType);
+
+        // Make sure the underlying operand type is numeric, otherwise throw an error.
+        if (!this.isNumericType(leftExprType.getUnderlyingType()))
+            this.throwTypeCheckException(node,
+            	"Invalid operation '*': operator not defined on " + leftExprType);
+        
+        typeTable.put(node, leftExprType.getUnderlyingType());
+    }
+
+    // Division expression.
+    @Override
+    public void outADivExpr(ADivExpr node) {
+        // Left and right hand expressions their types.
+        PExpr leftExpr = node.getLeft();
+        PExpr rightExpr = node.getRight();
+        GoLiteType leftExprType = this.getType(leftExpr);
+        GoLiteType rightExprType = this.getType(rightExpr);
+
+        // Make sure operands are type compatible, otherwise throw an error.
+        if (!(leftExprType.isCompatible(rightExprType) || rightExprType.isCompatible(leftExprType)))
+            this.throwTypeCheckException(node,
+            	"Invalid operation '/': mismatched types " + leftExprType + " and "
+            	+ rightExprType);
+
+        // Make sure the underlying operand type is numeric, otherwise throw an error.
+        if (!this.isNumericType(leftExprType.getUnderlyingType()))
+            this.throwTypeCheckException(node,
+            	"Invalid operation '/': operator not defined on " + leftExprType);
+        
+        typeTable.put(node, leftExprType.getUnderlyingType());
+    }
+
+    // Modulo expression.
+    @Override
+    public void outAModExpr(AModExpr node) {
+        // Left and right hand expressions their types.
+        PExpr leftExpr = node.getLeft();
+        PExpr rightExpr = node.getRight();
+        GoLiteType leftExprType = this.getType(leftExpr);
+        GoLiteType rightExprType = this.getType(rightExpr);
+
+        // Make sure operands are type compatible, otherwise throw an error.
+        if (!(leftExprType.isCompatible(rightExprType) || rightExprType.isCompatible(leftExprType)))
+            this.throwTypeCheckException(node,
+            	"Invalid operation '%': mismatched types " + leftExprType + " and "
+            	+ rightExprType);
+
+        // Make sure the underlying operand type is integer or rune, otherwise throw an error.
+        if (!this.isIntOrRuneType(leftExprType.getUnderlyingType()))
+            this.throwTypeCheckException(node,
+            	"Invalid operation '%': operator not defined on " + leftExprType);
+        
+        typeTable.put(node, leftExprType.getUnderlyingType());
+    }
+
+    // Bit-and expression.
+    @Override
+    public void outABitAndExpr(ABitAndExpr node) {
+         // Left and right hand expressions their types.
+        PExpr leftExpr = node.getLeft();
+        PExpr rightExpr = node.getRight();
+        GoLiteType leftExprType = this.getType(leftExpr);
+        GoLiteType rightExprType = this.getType(rightExpr);
+
+       	// Make sure operands are type compatible, otherwise throw an error.
+	    if (!(leftExprType.isCompatible(rightExprType) || rightExprType.isCompatible(leftExprType)))
+	        this.throwTypeCheckException(node,
+	        	"Invalid operation '&': mismatched types " + leftExprType + " and "
+	        	+ rightExprType);
+
+	    // Make sure the underlying operand type is integer or rune, otherwise throw an error.
+	    if (!this.isIntOrRuneType(leftExprType.getUnderlyingType()))
+	        this.throwTypeCheckException(node,
+	        	"Invalid operation '&': operator not defined on " + leftExprType);
+	    
+	    typeTable.put(node, leftExprType.getUnderlyingType());
+    }
+
+    // Bit-or expression.
+    @Override
+    public void outABitOrExpr(ABitOrExpr node) {
+         // Left and right hand expressions their types.
+        PExpr leftExpr = node.getLeft();
+        PExpr rightExpr = node.getRight();
+        GoLiteType leftExprType = this.getType(leftExpr);
+        GoLiteType rightExprType = this.getType(rightExpr);
+
+       	// Make sure operands are type compatible, otherwise throw an error.
+	    if (!(leftExprType.isCompatible(rightExprType) || rightExprType.isCompatible(leftExprType)))
+	        this.throwTypeCheckException(node,
+	        	"Invalid operation '|': mismatched types " + leftExprType + " and "
+	        	+ rightExprType);
+
+	    // Make sure the underlying operand type is integer or rune, otherwise throw an error.
+	    if (!this.isIntOrRuneType(leftExprType.getUnderlyingType()))
+	        this.throwTypeCheckException(node,
+	        	"Invalid operation '|': operator not defined on " + leftExprType);
+	    
+	    typeTable.put(node, leftExprType.getUnderlyingType());
+    }
+
+    // Bit-xor expression.
+    @Override
+    public void outABitXorExpr(ABitXorExpr node) {
+         // Left and right hand expressions their types.
+        PExpr leftExpr = node.getLeft();
+        PExpr rightExpr = node.getRight();
+        GoLiteType leftExprType = this.getType(leftExpr);
+        GoLiteType rightExprType = this.getType(rightExpr);
+
+       	// Make sure operands are type compatible, otherwise throw an error.
+	    if (!(leftExprType.isCompatible(rightExprType) || rightExprType.isCompatible(leftExprType)))
+	        this.throwTypeCheckException(node,
+	        	"Invalid operation '^': mismatched types " + leftExprType + " and "
+	        	+ rightExprType);
+
+	    // Make sure the underlying operand type is integer or rune, otherwise throw an error.
+	    if (!this.isIntOrRuneType(leftExprType.getUnderlyingType()))
+	        this.throwTypeCheckException(node,
+	        	"Invalid operation '^': operator not defined on " + leftExprType);
+	    
+	    typeTable.put(node, leftExprType.getUnderlyingType());
+    }
+
+    // Bit-clear expression.
+    @Override
+    public void outABitClearExpr(ABitClearExpr node) {
+         // Left and right hand expressions their types.
+        PExpr leftExpr = node.getLeft();
+        PExpr rightExpr = node.getRight();
+        GoLiteType leftExprType = this.getType(leftExpr);
+        GoLiteType rightExprType = this.getType(rightExpr);
+
+       	// Make sure operands are type compatible, otherwise throw an error.
+	    if (!(leftExprType.isCompatible(rightExprType) || rightExprType.isCompatible(leftExprType)))
+	        this.throwTypeCheckException(node,
+	        	"Invalid operation '&^': mismatched types " + leftExprType + " and "
+	        	+ rightExprType);
+
+	    // Make sure the underlying operand type is integer or rune, otherwise throw an error.
+	    if (!this.isIntOrRuneType(leftExprType.getUnderlyingType()))
+	        this.throwTypeCheckException(node,
+	        	"Invalid operation '&^': operator not defined on " + leftExprType);
+	    
+	    typeTable.put(node, leftExprType.getUnderlyingType());
+    }
+
+    // Bit-left-shift expression.
+    @Override
+    public void outABitLshiftExpr(ABitLshiftExpr node) {
+         // Left and right hand expressions their types.
+        PExpr leftExpr = node.getLeft();
+        PExpr rightExpr = node.getRight();
+        GoLiteType leftExprType = this.getType(leftExpr);
+        GoLiteType rightExprType = this.getType(rightExpr);
+
+       	// Make sure operands are type compatible, otherwise throw an error.
+	    if (!(leftExprType.isCompatible(rightExprType) || rightExprType.isCompatible(leftExprType)))
+	        this.throwTypeCheckException(node,
+	        	"Invalid operation '<<': mismatched types " + leftExprType + " and "
+	        	+ rightExprType);
+
+	    // Make sure the underlying operand type is integer or rune, otherwise throw an error.
+	    if (!this.isIntOrRuneType(leftExprType.getUnderlyingType()))
+	        this.throwTypeCheckException(node,
+	        	"Invalid operation '<<': operator not defined on " + leftExprType);
+	    
+	    typeTable.put(node, leftExprType.getUnderlyingType());
+    }
+
+    // Bit-right-shift expression.
+    @Override
+    public void outABitRshiftExpr(ABitRshiftExpr node) {
+         // Left and right hand expressions their types.
+        PExpr leftExpr = node.getLeft();
+        PExpr rightExpr = node.getRight();
+        GoLiteType leftExprType = this.getType(leftExpr);
+        GoLiteType rightExprType = this.getType(rightExpr);
+
+       	// Make sure operands are type compatible, otherwise throw an error.
+	    if (!(leftExprType.isCompatible(rightExprType) || rightExprType.isCompatible(leftExprType)))
+	        this.throwTypeCheckException(node,
+	        	"Invalid operation '>>': mismatched types " + leftExprType + " and "
+	        	+ rightExprType);
+
+	    // Make sure the underlying operand type is integer or rune, otherwise throw an error.
+	    if (!this.isIntOrRuneType(leftExprType.getUnderlyingType()))
+	        this.throwTypeCheckException(node,
+	        	"Invalid operation '>>': operator not defined on " + leftExprType);
+	    
+	    typeTable.put(node, leftExprType.getUnderlyingType());
+    }
+
+    /* Unary expressions. */
+
+    // Plus unary expression.
+    @Override
+    public void outAPosExpr(APosExpr node) {
+    	PExpr pExpr = node.getExpr();
+    	// Expression type.
+        GoLiteType type = this.getType(pExpr);
+
+        // Throw an error if the expression is not numeric.
+        if (!this.isNumericType(type.getUnderlyingType()))
+            this.throwTypeCheckException(pExpr,
+            	"Invalid oepration '+': undefined for type " + type);
+
+        this.typeTable.put(node, type.getUnderlyingType());
+    }
+
+    // Minus unary expression.
+    @Override
+    public void outANegExpr(ANegExpr node) {
+    	PExpr pExpr = node.getExpr();
+    	// Expression type.
+        GoLiteType type = this.getType(pExpr);
+
+        // Throw an error if the expression is not numeric.
+        if (!this.isNumericType(type.getUnderlyingType()))
+            this.throwTypeCheckException(pExpr,
+            	"Invalid oepration '-': undefined for type " + type);
+
+        this.typeTable.put(node, type.getUnderlyingType());
+    }
+
+    // Bit complement unary expression.
+    @Override
+    public void outABitCompExpr(ABitCompExpr node) {
+    	PExpr pExpr = node.getExpr();
+    	// Expression type.
+        GoLiteType type = this.getType(pExpr);
+
+        // Throw an error if the expression is not integer or rune.
+        if (!this.isIntOrRuneType(type.getUnderlyingType()))
+            this.throwTypeCheckException(pExpr,
+            	"Invalid oepration '^': undefined for type " + type);
+
+        this.typeTable.put(node, type.getUnderlyingType());
+    }
+
+    // Not unary expression.
+    @Override
+    public void outANotExpr(ANotExpr node) {
+    	PExpr pExpr = node.getExpr();
+    	// Expression type.
+        GoLiteType type = this.getType(pExpr);
+
+        // Throw an error if the expression is not boolean.
+        if (!(type.getUnderlyingType() instanceof BoolType))
+            this.throwTypeCheckException(pExpr,
+            	"Invalid oepration '!': undefined for type " + type);
+
+        this.typeTable.put(node, new BoolType());
+    }
+
+    /* Type check comparison expressions. */
+
+    // '==' expression.
+    @Override
+    public void outAEqExpr(AEqExpr node) {
+        // Left and right hand expression types.
+        GoLiteType leftExprType = this.getType(node.getLeft());
+        GoLiteType rightExprType = this.getType(node.getRight());
+
+        // Make sure operands are type compatible, otherwise throw an error.
+        if (!(leftExprType.isCompatible(rightExprType) || rightExprType.isCompatible(leftExprType)))
+            this.throwTypeCheckException(node.getLeft(),
+            	"Invalid operation '==': (mismatched types " + leftExprType
+            		+ " and " + rightExprType + ")");
+
+        // Make sure the underlying operand type is comparable, otherwise throw an error.
+        if (!this.isComparableType(leftExprType.getUnderlyingType()))
+            this.throwTypeCheckException(node,
+            	"Invalid operation '==': undefined for type " + leftExprType);
+
+        this.typeTable.put(node, new BoolType());
+    }
+
+    // '!=' expression.
+    @Override
+    public void outANeqExpr(ANeqExpr node) {
+        // Left and right hand expression types.
+        GoLiteType leftExprType = this.getType(node.getLeft());
+        GoLiteType rightExprType = this.getType(node.getRight());
+
+        // Make sure operands are type compatible, otherwise throw an error.
+        if (!(leftExprType.isCompatible(rightExprType) || rightExprType.isCompatible(leftExprType)))
+            this.throwTypeCheckException(node.getLeft(),
+            	"Invalid operation '!=': (mismatched types " + leftExprType
+            		+ " and " + rightExprType + ")");
+
+        // Make sure the underlying operand type is comparable, otherwise throw an error.
+        if (!isComparableType(leftExprType.getUnderlyingType()))
+            this.throwTypeCheckException(node,
+            	"Invalid operation '!=': undefined for type " + leftExprType);
+
+        this.typeTable.put(node, new BoolType());
+    }
+
+    // "<" expression.
+    @Override
+    public void outALtExpr(ALtExpr node) {
+    	// Left and right hand expression types.
+        GoLiteType leftExprType = this.getType(node.getLeft());
+        GoLiteType rightExprType = this.getType(node.getRight());
+
+       	// Make sure operands are type compatible, otherwise throw an error.
+        if (!(leftExprType.isCompatible(rightExprType) || rightExprType.isCompatible(leftExprType)))
+            this.throwTypeCheckException(node.getLeft(),
+            	"Invalid operation '<': (mismatched types " + leftExprType
+            		+ " and " + rightExprType + ")");
+
+        // Make sure the underlying operand type is ordered, otherwise throw an error.
+        if (!this.isOrderedType(leftExprType.getUnderlyingType()))
+            this.throwTypeCheckException(node,
+            	"Invalid operation '<': undefined for type " + leftExprType);
+ 
+        this.typeTable.put(node, new BoolType());
+    }
+
+    // "<=" expression.
+    @Override
+    public void outALteExpr(ALteExpr node) {
+    	// Left and right hand expression types.
+        GoLiteType leftExprType = this.getType(node.getLeft());
+        GoLiteType rightExprType = this.getType(node.getRight());
+
+       	// Make sure operands are type compatible, otherwise throw an error.
+        if (!(leftExprType.isCompatible(rightExprType) || rightExprType.isCompatible(leftExprType)))
+            this.throwTypeCheckException(node.getLeft(),
+            	"Invalid operation '<=': (mismatched types " + leftExprType
+            		+ " and " + rightExprType + ")");
+
+        // Make sure the underlying operand type is ordered, otherwise throw an error.
+        if (!this.isOrderedType(leftExprType.getUnderlyingType()))
+            this.throwTypeCheckException(node,
+            	"Invalid operation '<=': undefined for type " + leftExprType);
+ 
+        this.typeTable.put(node, new BoolType());
+    }
+
+    // ">" expression.
+    @Override
+    public void outAGtExpr(AGtExpr node) {
+    	// Left and right hand expression types.
+        GoLiteType leftExprType = this.getType(node.getLeft());
+        GoLiteType rightExprType = this.getType(node.getRight());
+
+        // Make sure operands are type compatible, otherwise throw an error.
+        if (!(leftExprType.isCompatible(rightExprType) || rightExprType.isCompatible(leftExprType)))
+            this.throwTypeCheckException(node.getLeft(),
+            	"Invalid operation '>': (mismatched types " + leftExprType
+            		+ " and " + rightExprType + ")");
+
+        // Make sure the underlying operand type is ordered, otherwise throw an error.
+        if (!this.isOrderedType(leftExprType.getUnderlyingType()))
+            this.throwTypeCheckException(node,
+            	"Invalid operation '>': undefined for type " + leftExprType);
+ 
+        this.typeTable.put(node, new BoolType());
+    }
+
+    // ">=" expression.
+    @Override
+    public void outAGteExpr(AGteExpr node) {
+    	// Left and right hand expression types.
+        GoLiteType leftExprType = this.getType(node.getLeft());
+        GoLiteType rightExprType = this.getType(node.getRight());
+
+       	// Make sure operands are type compatible, otherwise throw an error.
+        if (!(leftExprType.isCompatible(rightExprType) || rightExprType.isCompatible(leftExprType)))
+            this.throwTypeCheckException(node.getLeft(),
+            	"Invalid operation '>=': (mismatched types " + leftExprType
+            		+ " and " + rightExprType + ")");
+
+        // Make sure the underlying operand type is ordered, otherwise throw an error.
+        if (!this.isOrderedType(leftExprType.getUnderlyingType()))
+            this.throwTypeCheckException(node,
+            	"Invalid operation '>=': undefined for type " + leftExprType);
+ 
+        this.typeTable.put(node, new BoolType());
+    }
+
+    /* Logical expressions. */
+
+    // And expression.
+    @Override
+    public void outAAndExpr(AAndExpr node) {
+        // Left and right hand expressions their types.
+        PExpr leftExpr = node.getLeft();
+        PExpr rightExpr = node.getRight();
+        GoLiteType leftExprType = this.getType(leftExpr);
+        GoLiteType rightExprType = this.getType(rightExpr);
+
+        // Make sure operands are type compatible, otherwise throw an error.
+	    if (!(leftExprType.isCompatible(rightExprType) || rightExprType.isCompatible(leftExprType)))
+	        this.throwTypeCheckException(node,
+	        	"Invalid operation '&&' mismatched types " + leftExprType + " and "
+	        	+ rightExprType);
+
+	    // Make sure operands are boolean, otherwise throw an error.
+        if (!(leftExprType.getUnderlyingType() instanceof BoolType))
+        	this.throwTypeCheckException(node,
+        		"Invalid operation '&&': undefined for type "+ leftExprType);
+
+        this.typeTable.put(node, new BoolType());
+    }
+
+    // Or expression.
+    @Override
+    public void outAOrExpr(AOrExpr node) {
+        // Left and right hand expressions their types.
+        PExpr leftExpr = node.getLeft();
+        PExpr rightExpr = node.getRight();
+        GoLiteType leftExprType = this.getType(leftExpr);
+        GoLiteType rightExprType = this.getType(rightExpr);
+
+        // Make sure operands are type compatible, otherwise throw an error.
+	    if (!(leftExprType.isCompatible(rightExprType) || rightExprType.isCompatible(leftExprType)))
+	        this.throwTypeCheckException(node,
+	        	"Invalid operation '||' mismatched types " + leftExprType + " and "
+	        	+ rightExprType);
+
+	    // Make sure operands are boolean, otherwise throw an error.
+        if (!(leftExprType.getUnderlyingType() instanceof BoolType))
+        	this.throwTypeCheckException(node,
+        		"Invalid operation '||': undefined for type "+ leftExprType);
+
+        this.typeTable.put(node, new BoolType());
+    }
+
+    /* Function call expressions. */
+
+    // Function call.
+    @Override
+    public void outAFuncCallExpr(AFuncCallExpr node) {
+        TId id = node.getId();
+        String name = id.getText();
+
+        Symbol symbol = this.symbolTable.getSymbol(name);
+
+        // If no corresponding symbol exists, throw an error.
+        if (symbol == null)
+        	this.throwTypeCheckException(id, "Undefined: " + name);
+
+		// Passed argument expressions.
+        LinkedList<PExpr> pExprs = node.getExpr();
+        int numExprs = pExprs.size();        	
+
+        // Symbol is a function.
+        if (symbol instanceof FunctionSymbol) {
+	        FunctionSymbol funcSymbol = (FunctionSymbol) symbol;
+	        // Argument types.
+			ArrayList<GoLiteType> argTypes = funcSymbol.getArgTypes();
+			int numArgTypes = argTypes.size();
+
+	        // Too many arguments are passed, so throw an error.
+	        if (numArgTypes < numExprs)
+	        	this.throwTypeCheckException(node, "Too many arguments in call to " + name);
+
+	        // Too few arguments are passed, so throw an error.
+	        if (numArgTypes > numExprs)
+	        	this.throwTypeCheckException(node, "Not enough arguments in call to " + name);
+
+	        // Check type compatibility of the declared argument types and passed argument types.
+	        for (int i = 0; i < numExprs; i++) {
+	        	GoLiteType argType = argTypes.get(i);
+	        	GoLiteType exprType = this.getType(pExprs.get(i));
+
+	        	if (!(argType.isCompatible(exprType)))
+	        		this.throwTypeCheckException(node, "Cannot use type " + exprType + " as type "
+	        			+ argType + " in argument to " + name);
+	        }
+
+	        this.typeTable.put(node, funcSymbol.getReturnType());
+	    // Symbol is a type alias for casting.
+    	} else if (symbol instanceof TypeAliasSymbol) {
+    		// Must have at least one argument expression, otherwise throw an error.
+    		if (numExprs < 1)
+    			this.throwTypeCheckException(node, "Missing argument to conversion to " + name);
+    		if (numExprs > 1)
+    			this.throwTypeCheckException(node, "Too many arguments to conversion to " + name);
+
+    		TypeAliasSymbol typeAliasSymbol = ((TypeAliasSymbol) symbol);
+
+    		// Underlying type must be primitive (except string, which is already weeded out).
+    		GoLiteType underlyingType = typeAliasSymbol.getUnderlyingType();
+
+    		if (!(underlyingType instanceof PrimitiveGoLiteType))
+    			this.throwTypeCheckException(id,
+    				"Type alias " + name + " must map to a non-string primitive type");
+
+    		// Arguemnt expression must have type that is a non-string primitive, otherwise throw an
+			// error.
+    		GoLiteType argType = this.getType(pExprs.get(0));
+    		if (!(argType instanceof PrimitiveGoLiteType) || argType instanceof StringType)
+    			this.throwTypeCheckException(id, "Arugment to conversion to " + name
+    				+ " must map to a non-string primitive type");
+
+    		this.typeTable.put(node, typeAliasSymbol.getAliasType());
+    	// If the symbol is not a function or a type alias, throw an error.
+    	} else
+    		this.throwTypeCheckException(id,
+        		"Cannot call non-function " + name + " (type " + symbol.getType() + ")");
+    }
+
+    // Append call.
+    @Override
+    public void outAAppendExpr(AAppendExpr node) {
+        // Get the variable symbol corresponding to the Id argument.
+        VariableSymbol variableSymbol = this.getVariableSymbol(node.getId());
+        // Get its type.
+        GoLiteType type = variableSymbol.getType();
+        
+        // Make sure the symbol refers to a slice, otherwise throw an error.
+        if (!(type instanceof SliceType))
+        	this.throwTypeCheckException(node.getId(),
+        		"Cannot use type " + type + " as slice type in argument to append");
+
+    	// Type of each element in the slice.
+    	GoLiteType elemType = ((SliceType) type).getElemType();
+    	// Expression argument and its type.
+    	PExpr pExpr = node.getExpr();
+    	GoLiteType exprType = this.getType(pExpr);
+
+    	// Make sure the element type of the slice and the expression argument are type compatible,
+    	// otherwise throw an error.
+    	if (!(elemType.isCompatible(exprType)))
+        	this.throwTypeCheckException(pExpr,
+        		"Cannot use type " + exprType + " as type " + elemType + "in argument to append");
+
+        this.typeTable.put(node, type);
+    }
+
+    // Type cast.
+    @Override
+    public void outATypeCastExpr(ATypeCastExpr node) {
+    	// Type to cast to, guaranteed to be a non-string primitive by the parser and weeder.
+    	PTypeExpr pTypeExpr = node.getTypeExpr();
+    	GoLiteType type = this.getType(pTypeExpr);
+    	// Argument expression and its type.
+    	PExpr pExpr = node.getExpr();
+    	GoLiteType argType = this.getType(pExpr);
+
+    	// Make sure the type to cast to is a non-string primitive, otherwise throw an error (I'm
+    	// pretty sure this case is unreachable).
+		if (!(type instanceof PrimitiveGoLiteType))
+			this.throwTypeCheckException(pTypeExpr,
+				"Type " + type + " must be a non-string primitive type");
+
+		// Arguemnt expression must have type that is a non-string primitive, otherwise throw an
+		// error.
+		if (!(argType instanceof PrimitiveGoLiteType) || argType instanceof StringType)
+			this.throwTypeCheckException(pExpr, "Arugment to conversion to " + type
+				+ " must map to a non-string primitive type");
+
+		this.typeTable.put(node, type);
+    }
+
+    // Array access.
+    @Override
+    public void outAArrayElemExpr(AArrayElemExpr node) {
+    	// Array expression and type.
+    	PExpr arrayExpr = node.getArray();
+    	GoLiteType arrayExprType = this.getType(arrayExpr);
+    	// Index expression and type.
+    	PExpr indexExpr = node.getIndex();
+		GoLiteType indexExprType = this.getType(indexExpr);
+
+		// Make sure index is of type integer, otherwise throw an error.
+		// TODO: Remove this check from the weeder.
+		if (!(indexExprType instanceof IntType))
+			this.throwTypeCheckException(indexExpr, "Non-integer array bound");
+
+		// Make sure the array expression evaluates to an array or slice, otherwise throw an error.
+		if (arrayExprType instanceof ArrayType)
+        	this.typeTable.put(node, ((ArrayType) arrayExprType).getType().getUnderlyingType());
+        else if (arrayExprType instanceof SliceType)
+        	this.typeTable.put(node, ((SliceType) arrayExprType).getType().getUnderlyingType());
         else
-        {
-            callTypeCheckException(node, "Fields calls can only be used on struct types, not " + type.getClass());
-        }
+        	this.throwTypeCheckException(arrayExpr, "Invalid operation '[]': type " + arrayExprType
+				+ " does not support indexing");
     }
 
-    /* Type check assignment statements */
-
-    private boolean isSameFields(AStructTypeExpr lhs, AStructTypeExpr rhs)
-    {
-        int lhsLen = ((List<PStructSub>) lhs.getStructSub()).size();
-        int rhsLen = ((List<PStructSub>) rhs.getStructSub()).size();
-        if (lhsLen == rhsLen)
-        {
-            List<PStructSub> aRhs = rhs.getStructSub();
-            List<PStructSub> aLhs = lhs.getStructSub();
-            for (int i=0; i<lhsLen; i++)
-            {
-                AStructSubStructSub a1 = (AStructSubStructSub) aRhs.get(i);
-                AStructSubStructSub a2 = (AStructSubStructSub) aLhs.get(i);
-                if(!isSameType(a1.getTypeExpr(), a2.getTypeExpr()))
-                {
-                    return false;
-                }
-            }
-            return true;
-        }
-        return false;
-    }
-
-    private boolean isSameFields(AStructTypeExpr lhs, ACustomTypeExpr custom)
-    {
-        PTypeExpr rhs = getType(custom);
-        if (rhs instanceof AStructTypeExpr)
-        {
-            return isSameFields(lhs, (AStructTypeExpr) rhs);
-        }
-        return false;
-    }
-
+    // Field access.
     @Override
-    public void outAAssignStmt(AAssignStmt node)
-    {
-        List<PExpr> ids = node.getLhs();
-        List<PExpr> exprs = node.getRhs();
-        int length = ids.size();
-        for (int i=0; i < length; i++)
-        {
-            PTypeExpr lhs = getType(ids.get(i));
-            PTypeExpr rhs = getType(exprs.get(i));
-            if (!isSameType(lhs, rhs))
-            {
-                if (lhs instanceof AStructTypeExpr && rhs instanceof ACustomTypeExpr)
-                {
-                    boolean sameFields = isSameFields((AStructTypeExpr) lhs, (ACustomTypeExpr) rhs);
-                    if (!sameFields)
-                    {
-                        callTypeCheckException(node, "Struct on right side must be assignment compatable with field");
-                    }
-                }
-                else
-                {
-                    callTypeCheckException(node, "Types on left and right sides of assignment statements must be assignment compatable");
-                }
-            }
-        }
-    }
+    public void outAFieldExpr(AFieldExpr node) {
+    	// Object expression and its type and underlying type.
+    	PExpr pExpr = node.getExpr();
+    	GoLiteType exprType = this.getType(pExpr);
+    	GoLiteType exprUnderlyingType = exprType.getUnderlyingType();
+    	// Field Id and name.
+    	TId fieldId = node.getId();
+    	String fieldName = fieldId.getText();
 
-    /* Append type checking */
-    private int getDimension(ASliceTypeExpr node)
-    {
-        PTypeExpr elementType = node.getTypeExpr();
-        if (elementType instanceof ASliceTypeExpr)
-        {
-            return 1 + getDimension((ASliceTypeExpr) elementType);
-        }
-        return 0;
-    }
+    	// Make sure the underlying type of the object expression is struct, otherwise throw an
+    	// error.
+		if (!(exprUnderlyingType instanceof StructType))
+			this.throwTypeCheckException(pExpr,
+				"Undefined: type " + exprType + " has no field " + fieldName);
 
-    private int getDimension(AArrayTypeExpr node)
-    {
-        PTypeExpr elementType = node.getTypeExpr();
-        if (elementType instanceof AArrayTypeExpr)
-        {
-            return 1 + getDimension((AArrayTypeExpr) elementType);
-        }
-        return 0;
-    }
+        StructType structType = ((StructType) this.getNonAliasType(exprType));
 
+		// Make sure the struct has a field with the given name, otherwise throw an error.
+		if (!(structType.hasField(fieldName)))
+			this.throwTypeCheckException(fieldId,
+				"Undefined: type " + exprType + " has no field " + fieldName);
+
+		this.typeTable.put(node, structType.getFieldType(fieldName));
+	}
+
+    // Enter a variable expression into the type table.
     @Override
-    public void outAAppendExpr(AAppendExpr node)
-    {
-        PTypeExpr idType = getType(node.getId());
-        if (idType instanceof ASliceTypeExpr)
-        {
-            PTypeExpr sliceElementType = ((ASliceTypeExpr) idType).getTypeExpr();
-            PTypeExpr exprType = getType(node.getExpr());
-            if (sliceElementType.getClass() == exprType.getClass())
-            {
-                if (sliceElementType instanceof ASliceTypeExpr)
-                {
-                    if (!(getDimension((ASliceTypeExpr) sliceElementType) == getDimension((ASliceTypeExpr) exprType)))
-                    {
-                        callTypeCheckException(node, "Tried to append row with wrong dimension to slice");
-                    }
-                }
-                else if (sliceElementType instanceof ACustomTypeExpr)
-                {
-                    if (!isSameCustomType((ACustomTypeExpr) sliceElementType, (ACustomTypeExpr) exprType))
-                    {
-                        callTypeCheckException(node, "Tried to append mismatching structs");
-                    }
-                }
-                typeTable.put(node, idType); // Well typed!
-            }
-            else
-            {
-                callTypeCheckException(node, "Expression and slice types do not match");
-            }
-        }
-        else
-        {
-            callTypeCheckException(node, "Append must be passed a slice variable and an expression");
-        }
+    public void outAVariableExpr(AVariableExpr node) {
+    	VariableSymbol symbol = this.getVariableSymbol(node.getId());
+        this.typeTable.put(node, symbol.getType());
     }
 
-    /* Type check type casts and function calls */
+    /* Type check literals. */
+
+    // Decimal integer.
     @Override
-    public void outATypeCastExpr(ATypeCastExpr node)
-    {
-        PTypeExpr castType = getType(node);
-        PTypeExpr paramType = getType(node.getExpr());
-        if    (castType instanceof AIntTypeExpr
-            || castType instanceof AFloatTypeExpr
-            || castType instanceof ARuneTypeExpr
-            || castType instanceof ABoolTypeExpr)
-        {
-            if    (paramType instanceof AIntTypeExpr
-                || paramType instanceof AFloatTypeExpr
-                || paramType instanceof ARuneTypeExpr
-                || paramType instanceof ABoolTypeExpr)
-            {
-                typeTable.put(node, castType); // Well typed!
-            }
-            else
-            {
-                callTypeCheckException(node, "Invalid type cast. Use int, float64, bool, rune, or a type alias that maps to one of those four.");
-            }
-        }
-        else
-        {
-            callTypeCheckException(node, "Invaid type cast. Use int, float64, bool, rune, or a type alias that maps to one of those four.");
-        }
+    public void outAIntLitExpr(AIntLitExpr node) {
+        this.typeTable.put(node, new IntType());
     }
 
+    // Octal integer.
     @Override
-    public void outAFuncCallExpr(AFuncCallExpr node)
-    {
-        String id = node.getId().getText();
-        Node decl = symbolTable.getSymbol(id, node);
-        if (decl instanceof AFuncTopDec)
-        {
-            List<PArgGroup> argGroups = ((AFuncTopDec) decl).getArgGroup();
-            ArrayList<PTypeExpr> argTypes = new ArrayList<PTypeExpr>();
-            List<PExpr> paramTypes = node.getExpr();
-            for (PArgGroup a: argGroups)
-            {
-                PTypeExpr argType = getType(a);
-                for (TId i: ((AArgArgGroup) a).getId())
-                {
-                    argTypes.add(argType);
-                }
-            }
-            if (paramTypes.size() != argTypes.size())
-            {
-                callTypeCheckException(node, "Wrong number of parameters passed to function call");
-            }
-            for (int i = 0; i<argTypes.size(); i++)
-            {
-                if (argTypes.get(i).getClass() == getType(paramTypes.get(i)).getClass())
-                {
-                    continue;
-                }
-                else
-                {
-                    callTypeCheckException(node, "Function parameter types do not match with function signature");
-                }
-
-            }
-            // Well typed!
-            PTypeExpr type = getType(node);
-            if (type != null)
-            {
-                typeTable.put(node, type);
-            }
-        }
-        else if (decl instanceof ASpecTypeSpec)
-        {
-            PTypeExpr castType = ((ASpecTypeSpec) decl).getTypeExpr();
-            if (node.getExpr().size() != 1) {
-                callTypeCheckException(node, "Alias type casting: too few or too many arguments");
-            }
-            if    (castType instanceof AIntTypeExpr
-            || castType instanceof AFloatTypeExpr
-            || castType instanceof ARuneTypeExpr
-            || castType instanceof ABoolTypeExpr)
-            {
-                symbolTable.addSymbol(id, decl); //Well typed!
-                typeTable.put(decl, castType);
-            }
-        }
+    public void outAOctLitExpr(AOctLitExpr node) {
+        this.typeTable.put(node, new IntType());
     }
 
-    /* Type check Array Elements */
+    // Hexidecimal integer.
     @Override
-    public void outAArrayElemExpr(AArrayElemExpr node)
-    {
-        PTypeExpr arrayType = getType(node.getArray());
-        PTypeExpr idxType = getType(node.getIndex());
-        if (idxType instanceof AIntTypeExpr)
-        {
-            if (arrayType instanceof AArrayTypeExpr)
-            {
-                typeTable.put(node, ((AArrayTypeExpr) arrayType).getTypeExpr()); // Well typed!
-            }
-            else if (arrayType instanceof ASliceTypeExpr)
-            {
-                typeTable.put(node, ((ASliceTypeExpr) arrayType).getTypeExpr()); // Well typed!
-            }
-            else
-            {
-                callTypeCheckException(node, "Indexing can only be used on arrays and slices");
-            }
-        }
-        else
-        {
-            callTypeCheckException(node, "Index should be of type int");
-        }
+    public void outAHexLitExpr(AHexLitExpr node) {
+        this.typeTable.put(node, new IntType());
     }
 
-    /* Type check expressions completely */
+    // Float.
     @Override
-    public void outAExprStmt(AExprStmt node)
-    {
-        PTypeExpr type = getType(node);
-        if (type != null)
-        {
-            typeTable.put(node, type);
-        }
+    public void outAFloatLitExpr(AFloatLitExpr node) {
+        this.typeTable.put(node, new FloatType());
     }
 
-    /* More helper methods */
-
-    private PTypeExpr getType(Node node)
-    {
-        //Takes in a node and returns the type node from the AST/typeTable
-        if (node instanceof AVariableExpr)
-        {
-            return getType(((AVariableExpr) node).getId());
-        }
-        else if (node instanceof TId)
-        {
-            TId id = (TId) node;
-            Node declaration = symbolTable.getSymbol(id.getText(), node);
-            if (declaration instanceof ASpecVarSpec)
-            {
-                ASpecVarSpec dec = (ASpecVarSpec) declaration;
-                int idx = 0;
-                for (TId i: getIds(dec))
-                {
-                    if(i.getText().equals(id.getText())){
-                        break;
-                    }
-                    else
-                    {
-                        idx++;
-                    }
-                }
-                PTypeExpr typeExpr = getType(declaration);
-                if (typeExpr != null)
-                {
-                    return typeExpr;
-                }
-                else
-                {
-                    return typeTable.get(dec.getExpr().get(idx));
-                }
-            }
-            else if (declaration instanceof ASpecTypeSpec)
-            {
-                ASpecTypeSpec dec = (ASpecTypeSpec) declaration;
-                return dec.getTypeExpr();
-            }
-            else if (declaration instanceof AStructTypeExpr)
-            {
-                return (AStructTypeExpr) declaration;
-            }
-            else if (declaration instanceof AShortAssignStmt)
-            {
-                AShortAssignStmt dec = (AShortAssignStmt) declaration;
-                for (TId i: getIds(dec))
-                {
-                    if (i.getText().equals(id.getText()))
-                    {
-                        int idx = getIds(dec).indexOf(i);
-                        return typeTable.get(dec.getExpr().get(idx));
-                    }
-                }
-            }
-            else if (declaration instanceof AStructSubStructSub)
-            {
-                return typeTable.get(declaration);
-            }
-            else if (declaration instanceof AArgArgGroup)
-            {
-                return typeTable.get(declaration);
-            }
-            else if (declaration instanceof ABoolTypeExpr)
-            {
-                typeTable.put(node, ((ABoolTypeExpr) declaration));
-                typeTable.put(declaration, ((ABoolTypeExpr) declaration));
-                return typeTable.get(node);
-            }
-        }
-        else if (node instanceof AIntLitExpr
-                || node instanceof AFloatLitExpr
-                || node instanceof ARuneLitExpr
-                || node instanceof AOctLitExpr
-                || node instanceof AHexLitExpr
-                || node instanceof AInterpretedStringLitExpr
-                || node instanceof ARawStringLitExpr)
-        {
-            return typeTable.get(node);
-        }
-        else if (node instanceof AShortAssignStmt)
-        {
-            return null;
-        }
-        else if (node instanceof ASpecVarSpec)
-        {
-            PTypeExpr type = ((ASpecVarSpec) node).getTypeExpr();
-            if (type != null)
-            {
-                return type;
-            }
-            return null;
-        }
-        else if (node instanceof AStructTypeExpr)
-        {
-            return (AStructTypeExpr) node;
-        }
-        else if (node instanceof AStructSubStructSub)
-        {
-            return ((AStructSubStructSub) node).getTypeExpr();
-        }
-        else if (node instanceof AArgArgGroup)
-        {
-            return ((AArgArgGroup) node).getTypeExpr();
-        }
-        else if (node instanceof AFieldExpr)
-        {
-            return typeTable.get(node);
-        }
-        else if (node instanceof ATypeCastExpr)
-        {
-            return ((ATypeCastExpr) node).getTypeExpr();
-        }
-        else if (node instanceof AArrayElemExpr)
-        {
-            return typeTable.get(node);
-        }
-        else if (node instanceof AExprStmt)
-        {
-            return getType(((AExprStmt) node).getExpr());
-        }
-        else if (node instanceof AFuncCallExpr)
-        {
-            String id = (((AFuncCallExpr) node).getId()).getText();
-            Node decl = symbolTable.getSymbol(id, node);
-            if (decl instanceof AFuncTopDec)
-            {
-                return ((AFuncTopDec) decl).getTypeExpr();
-            }
-            else if (decl instanceof ASpecTypeSpec)
-            {
-                return ((ASpecTypeSpec) decl).getTypeExpr();
-            }
-        }
-        else if (node instanceof ACustomTypeExpr)
-        {
-            return getType(((ACustomTypeExpr) node).getId());
-        }
-        else
-        {   try{
-                return typeTable.get(node);
-            }
-            catch (Exception e)
-            {
-                callTypeCheckException(node, "Did not find type for " + node.getClass());
-            }
-        }
-        callTypeCheckException(node, "Did not find type for " + node.getClass() + " tried to return null");
-        return null;
+    // Rune.
+    @Override
+    public void outARuneLitExpr(ARuneLitExpr node) {
+        this.typeTable.put(node, new RuneType());
     }
-    
+
+    // Interpreted string.
+    @Override
+    public void outAInterpretedStringLitExpr(AInterpretedStringLitExpr node) {
+        typeTable.put(node, new StringType());
+    }
+
+    // Raw string.
+    @Override
+    public void outARawStringLitExpr(ARawStringLitExpr node) {
+        typeTable.put(node, new StringType());
+    }
+
 }

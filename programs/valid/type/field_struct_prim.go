@@ -1,7 +1,5 @@
 package main
 
-var s []this
-
 type this struct {
 	a int
 	b float64
@@ -9,6 +7,8 @@ type this struct {
 	d bool
 	e rune
 }
+
+var s []this
 
 func main() {
 	var z this
