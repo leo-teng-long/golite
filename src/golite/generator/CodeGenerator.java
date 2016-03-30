@@ -39,7 +39,6 @@ public class CodeGenerator extends DepthFirstAdapter {
     @Override
     public void inAProgProg(AProgProg node) {
         generateImport();
-        generateEmptyMethod();
     }
 
     @Override
@@ -65,12 +64,6 @@ public class CodeGenerator extends DepthFirstAdapter {
 
     private void generateImport() {
         buffer.append("from __future__ import print_function\n");
-        addLines(1);
-    }
-
-    private void generateEmptyMethod() {
-        buffer.append("def __empty__():\n");
-        buffer.append("\treturn\n");
         addLines(1);
     }
 
@@ -1425,7 +1418,7 @@ public class CodeGenerator extends DepthFirstAdapter {
          * Add empty function call to prevent unexpected indented block
          */
         addTabs();
-        buffer.append("__empty__()\n");
+        buffer.append("pass\n");
     }
 
     private void exitCodeBlock() {
