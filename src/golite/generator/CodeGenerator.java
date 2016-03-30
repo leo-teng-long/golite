@@ -1,4 +1,4 @@
-    package golite.generator;
+package golite.generator;
 
 import golite.analysis.*;
 import golite.node.*;
