@@ -120,7 +120,8 @@ public class SymbolTableBuilder extends DepthFirstAdapter {
 
                             // Throw an error if a duplicate field is encountered.
                             if (fieldIds.contains(id.getText()))
-                                this.throwSymbolTableException(id, "Duplicate field " + id.getText());
+                                this.throwSymbolTableException(id,
+                                    "Duplicate field " + id.getText());
 
                             structType.addField(id.getText(),
                                 getType(((ASpecFieldSpec) pFieldSpec).getTypeExpr()));
@@ -326,7 +327,7 @@ public class SymbolTableBuilder extends DepthFirstAdapter {
                     ((FunctionSymbol) symbol).setArgTypes(resolvedArgTypes);
                 }
             } catch (SymbolTableException e) {
-                throwSymbolTableException(symbol.getNode(), e.getMessage());
+                this.throwSymbolTableException(symbol.getNode(), e.getMessage());
             }
         }
     }

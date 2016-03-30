@@ -96,11 +96,7 @@ public class <<<INSERT NAME HERE>>> {
         Start ast = parser.parse();
         ast.apply(weeder);
 
-        SymbolTableBuilder symbolTableBuilder = new SymbolTableBuilder();
-        ast.apply(symbolTableBuilder);
-
-        SymbolTable symbolTable = symbolTableBuilder.getTable();
-        TypeChecker typeChecker = new TypeChecker(symbolTable);
+        TypeChecker typeChecker = new TypeChecker();
         ast.apply(typeChecker);
 
         return true;

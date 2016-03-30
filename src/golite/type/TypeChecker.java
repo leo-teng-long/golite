@@ -24,6 +24,11 @@ public class TypeChecker extends DepthFirstAdapter {
 
 	/** Symbol table. */
 	private SymbolTable symbolTable;
+    /** Flag for whether a symbol table is passed (from {@link golite.symbol.SymbolTableBuilder}) or
+      * not (If it's passed, then top declarations can occur in any order, otherwise top
+      * declarations using other declarations must occur before). */
+    private boolean passedSymbolTable;
+
 	/** Type table. */
 	private HashMap<Node, GoLiteType> typeTable;
 	/** Line and position tracker for AST nodes. */
@@ -43,11 +48,31 @@ public class TypeChecker extends DepthFirstAdapter {
 	public TypeChecker(SymbolTable table) {
 		super();
 		this.symbolTable = table;
+        this.passedSymbolTable = true;
 
 		this.typeTable = new HashMap<Node, GoLiteType>();
 		this.lineAndPosTracker = new LineAndPosTracker();
 	}
 	
+    /**
+     * Constructor.
+     */
+    public TypeChecker() {
+        super();
+        this.symbolTable = new SymbolTable();
+        this.passedSymbolTable = false;
+
+        this.typeTable = new HashMap<Node, GoLiteType>();
+        this.lineAndPosTracker = new LineAndPosTracker();
+    }
+
+    /**
+     * Getter.
+     */
+    public SymbolTable getSymbolTable() {
+        return this.symbolTable;
+    }
+
 	/**
      * Returns the GoLite type for the given type expression.
      *
@@ -311,6 +336,18 @@ public class TypeChecker extends DepthFirstAdapter {
     public void inStart(Start node) {
     	// Gather all line and position information.
         node.apply(this.lineAndPosTracker);
+
+        if (!this.passedSymbolTable) {
+             // Enter the 0th scope.
+            this.symbolTable = new SymbolTable();
+            this.symbolTable.scope();
+
+            // Initialize boolean literals.
+            Symbol trueSymbol = new VariableSymbol("true", new BoolType(), node);
+            Symbol falseSymbol = new VariableSymbol("false", new BoolType(), node);
+            this.symbolTable.putSymbol(trueSymbol);
+            this.symbolTable.putSymbol(falseSymbol);
+        }
     }
 
     // Unscope the 0th scope upon exit.
@@ -319,15 +356,23 @@ public class TypeChecker extends DepthFirstAdapter {
         this.symbolTable.unscope();
     }
 
+    @Override
+    public void inAProgProg(AProgProg node) {
+        if (!this.passedSymbolTable) {
+            // Enter the global scope.
+            this.symbolTable.scope();
+        }
+    }
+
     // Unscope the global scope upon program exit.
     @Override
     public void outAProgProg(AProgProg node) {
     	this.symbolTable.unscope();
     }
 
-    // Adds global variables to the symbol table that require type inference and checks other
-    // global variables have declared types that are consistent with their initializing expressions
-    // (if any).
+    // Adds global variables to the symbol table and if the symbol table is passed, then add those
+    // that require type inference and check other global variables have declared types that are
+    // consistent with their initializing expressions (if any).
     @Override
     public void outAVarsTopDec(AVarsTopDec node) {
         // Loop over the variable specifications.
@@ -340,9 +385,11 @@ public class TypeChecker extends DepthFirstAdapter {
 
             // Loop over each Id, tracking the position in the specfication.
             int i = 0;
-            // Symbol table already checks if the name is already taken by another identifier in the
-            // global scope.
             for (TId id : this.getIds(((ASpecVarSpec) pVarSpec))) {
+                // Throw an error if the name is already taken by another identifier in the
+                // global scope.
+                this.checkifDeclaredInCurrentScope(id);
+
                 PTypeExpr pTypeExpr = ((ASpecVarSpec) pVarSpec).getTypeExpr();
                 // Type must be inferred.
                 if (pTypeExpr == null) {
@@ -359,7 +406,7 @@ public class TypeChecker extends DepthFirstAdapter {
                 			funcId.getText() + "() used as a value");
                 	}
                 		
-                	this.symbolTable.putSymbol(new VariableSymbol(id.getText(), type, node));
+                	this.symbolTable.putSymbol(new VariableSymbol(id.getText(), type, pVarSpec));
                 // Type is declared and so check that the type declaration and initializing
                 // expressions (if any) are type compatible.
                 } else {
@@ -379,6 +426,10 @@ public class TypeChecker extends DepthFirstAdapter {
                 				"Cannot use value of type " + exprType + " for "
                 				+ typeExprType);
                 	}
+
+                    if (!this.passedSymbolTable)
+                        this.symbolTable.putSymbol(new VariableSymbol(id.getText(), typeExprType,
+                            pVarSpec));
                 }
 
                 // Increment to next position.
@@ -387,15 +438,69 @@ public class TypeChecker extends DepthFirstAdapter {
         }
     }
 
-    // Enter the body of a function declaration.
+    // Add top-level type variables into the symbol table if it hasn't been passed.
+    @Override
+    public void caseATypesTopDec(ATypesTopDec node) {
+        if (!this.passedSymbolTable) {
+            // Loop over the type specifications.
+            for(PTypeSpec pTypeSpec : node.getTypeSpec()) {
+                // Get the optional Id.
+                POptId pOptId = ((ASpecTypeSpec) pTypeSpec).getOptId();
+
+                // Do not consider a blank Id.
+                if (pOptId instanceof AIdOptId) {
+                    TId id = ((AIdOptId) pOptId).getId();
+
+                    // Throw an error if the name is already taken by another identifier in the
+                    // global scope.
+                    this.checkifDeclaredInCurrentScope(id);
+
+                    PTypeExpr pTypeExpr = ((ASpecTypeSpec) pTypeSpec).getTypeExpr();
+                    // Add a type alias symbol to the symbol table.
+                    this.symbolTable.putSymbol(new TypeAliasSymbol(id.getText(), this.getType(pTypeExpr),
+                        pTypeSpec));
+                }
+            }
+        }
+    }
+
+    // Add top-level function declarations and enter the body (If a symbol table has been passed,
+    // then just enter the body).
     @Override
     public void caseAFuncTopDec(AFuncTopDec node) {
-     	// Function name, which is guaranteed to be unique, otherwise the symbol table would have
-     	// caught the duplicate.
+        // Function Id token and name.
         TId id = node.getId();
-        // Function symbol is already in the symbol table.
-        FunctionSymbol funcSymbol = (FunctionSymbol) this.symbolTable.getSymbol(id.getText());
+        String name =id.getText();
 
+        // Throw an error if the name is already taken by another identifier in the global scope.
+        this.checkifDeclaredInCurrentScope(id);
+
+        FunctionSymbol funcSymbol = null;
+        // Enter a function symbol into the symbol table if it hasn't been passed.
+        if (!this.passedSymbolTable) {
+            // Return type expression.
+            PTypeExpr pTypeExpr = node.getTypeExpr();
+
+            // No return type.
+            if (pTypeExpr == null)
+                funcSymbol = new FunctionSymbol(name, node);
+            // Has return type.
+            else
+                funcSymbol = new FunctionSymbol(name, this.getType(pTypeExpr), node);
+
+            // Add argument types to the function symbol.
+            AArgArgGroup g = null;
+            for (PArgGroup p : node.getArgGroup()) {
+                g = (AArgArgGroup) p;
+                funcSymbol.addArgType(this.getType(g.getTypeExpr()), g.getId().size());
+            }
+
+            // Enter symbol into the table.
+            this.symbolTable.putSymbol(funcSymbol);
+        // Function symbol is already assumed to be in the symbol table.
+        } else
+            funcSymbol = (FunctionSymbol) this.symbolTable.getSymbol(name);
+        
         // Set the current function symbol so descendants can access function information.
         this.currentFunctionSymbol = funcSymbol;
 
