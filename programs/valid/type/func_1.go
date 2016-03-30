@@ -1,7 +1,8 @@
 package main
 
-func main() {
-	foo()
+type cat struct {
+	fur bool
+	stripes int
 }
 
 func foo() [100]cat {
@@ -9,7 +10,6 @@ func foo() [100]cat {
 	return x
 }
 
-type cat struct {
-	fur bool
-	stripes int
+func main() {
+	foo()
 }

@@ -1,4 +1,5 @@
-/* Type check infinite loop */
+/* Infinite loop. */
+
 package main
 
 func main() {

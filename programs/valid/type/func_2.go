@@ -1,13 +1,13 @@
 package main
 
-func main() {
-	bar()
+type cat struct {
+	fur bool
+	stripes int
 }
 
 func bar() {
 }
 
-type cat struct {
-	fur bool
-	stripes int
+func main() {
+	bar()
 }
