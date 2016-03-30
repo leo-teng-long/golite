@@ -670,38 +670,47 @@ public class CodeGenerator extends DepthFirstAdapter {
     public void caseALoopStmt(ALoopStmt node) {
         this.inALoopStmt(node);
 
-        if (node.getInit() == null && node.getEnd() == null) {
-            /**
-             * While Loop
-             */
-            buffer.append("while");
-            addSpace();
+        /**
+         * Only used when generating for Loops
+         */
+        if (node.getInit() != null) {
+            deleteLastCharacter();
+            generateStatement(node.getInit());
+        }
 
-            if (node.getExpr() == null) {
-                buffer.append("True");
-            } else {
-                node.getExpr().apply(this);
-            }
+        /**
+         * Only used when generating for Loops
+         */
+        if (node.getInit() != null && node.getEnd() != null) {
+            addTabs();
+        }
 
-            addSpace();
-            addColon();
+        buffer.append("while");
+        addSpace();
+
+        if (node.getExpr() != null) {
+            node.getExpr().apply(this);
         } else {
-            /**
-             * For Loop
-             */
-            /* TODO */
+            buffer.append("True");
         }
 
-        {
-            enterCodeBlock();
+        addColon();
 
-            List<PStmt> copy = new ArrayList<PStmt>(node.getBlock());
-            for (PStmt e : copy) {
-                generateStatement(e);
-            }
+        enterCodeBlock();
 
-            exitCodeBlock();
+        List<PStmt> copy = new ArrayList<PStmt>(node.getBlock());
+        for (PStmt e : copy) {
+            generateStatement(e);
         }
+
+        /**
+         * Only used when generating for Loops
+         */
+        if (node.getEnd() != null) {
+            generateStatement(node.getEnd());
+        }
+
+        exitCodeBlock();
 
         this.outALoopStmt(node);
     }
