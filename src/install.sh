@@ -7,6 +7,7 @@
 
 SABLECC_NAME=sablecc-3.7
 
+CLI_FNAME=commons-cli-1.3.1.jar
 JUNIT_FNAME=junit-4.12.jar
 HAMCREST_FNAME=hamcrest-core-1.3.jar
 ASSERTJ_FNAME=assertj-core-3.3.0.jar
@@ -34,6 +35,20 @@ then
 	curl -L https://sourceforge.net/projects/sablecc/files/SableCC/3.7/sablecc-3.7.zip/download?use_mirror=iweb > $SABLECC_NAME.zip
 	unzip $SABLECC_NAME.zip
 	rm -f $SABLECC_NAME.zip
+
+	installed_nothing=false
+fi
+
+# Install Apache Commons CLI if not already done so.
+if [ ! -d $CLI_FNAME ]
+then
+	echo -e "${YELLOW}Installing Apache Commons CLI...${RESET}\n\n"
+
+	curl -L http://apache.mirror.vexxhost.com//commons/cli/binaries/commons-cli-1.3.1-bin.zip > commons-cli-1.3.1-bin.zip
+	unzip commons-cli-1.3.1-bin.zip
+	mv commons-cli-1.3.1/commons-cli-1.3.1.jar jars/$CLI_FNAME
+
+	rm -rf commons-cli-1.3.1 commons-cli-1.3.1-bin.zip
 
 	installed_nothing=false
 fi
