@@ -1300,7 +1300,11 @@ public class CodeGenerator extends DepthFirstAdapter {
      */
     @Override
     public void caseABlankExpr(ABlankExpr node) {
-        /* TODO */
+        this.inABlankExpr(node);
+
+        buffer.append('_');
+
+        this.outABlankExpr(node);
     }
 
     @Override
@@ -1331,12 +1335,24 @@ public class CodeGenerator extends DepthFirstAdapter {
 
     @Override
     public void caseAOctLitExpr(AOctLitExpr node) {
-        /* TODO */
+        this.inAOctLitExpr(node);
+
+        if (node.getOctLit() != null) {
+            buffer.append(node.getOctLit().getText());
+        }
+
+        this.outAOctLitExpr(node);
     }
 
     @Override
     public void caseAHexLitExpr(AHexLitExpr node) {
-        /* TODO */
+        this.inAHexLitExpr(node);
+
+        if (node.getHexLit() != null) {
+            buffer.append(node.getHexLit().getText());
+        }
+
+        this.outAHexLitExpr(node);
     }
 
     @Override
@@ -1357,12 +1373,34 @@ public class CodeGenerator extends DepthFirstAdapter {
 
     @Override
     public void caseAInterpretedStringLitExpr(AInterpretedStringLitExpr node) {
-        /* TODO */
+        this.inAInterpretedStringLitExpr(node);
+
+        buffer.append(node.getInterpretedStringLit().getText());
+
+        this.outAInterpretedStringLitExpr(node);
     }
 
     @Override
     public void caseARawStringLitExpr(ARawStringLitExpr node) {
-        /* TODO */
+        this.inARawStringLitExpr(node);
+
+        String rawString = node.getRawStringLit().getText();
+        StringBuffer pythonString = new StringBuffer();
+
+        pythonString.append('"');
+
+        for (int i = 1; i < rawString.length() - 1; i++) {
+            if (rawString.charAt(i) == '\\') {
+                pythonString.append('\\');
+            }
+            pythonString.append(rawString.charAt(i));
+        }
+
+        pythonString.append('"');
+
+        buffer.append(pythonString.toString());
+
+        this.outARawStringLitExpr(node);
     }
 
     /**
@@ -1414,14 +1452,15 @@ public class CodeGenerator extends DepthFirstAdapter {
     private void enterCodeBlock() {
         addLines(1);
         tabDepth++;
+    }
+
+    private void exitCodeBlock() {
         /**
          * Add empty function call to prevent unexpected indented block
          */
         addTabs();
         buffer.append("pass\n");
-    }
 
-    private void exitCodeBlock() {
         tabDepth--;
     }
 
