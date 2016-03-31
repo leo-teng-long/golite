@@ -3,6 +3,8 @@ package golite;
 import golite.exception.SymbolTableException;
 import golite.exception.TypeCheckException;
 import golite.exception.WeederException;
+import golite.symbol.SymbolTable;
+import golite.symbol.SymbolTableBuilder;
 import golite.type.TypeChecker;
 import golite.lexer.*;
 import golite.node.*;
@@ -11,50 +13,97 @@ import golite.parser.*;
 import java.io.*;
 import java.util.*;
 
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.PosixParser;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
+
 
 /**
  * Main.
  */
 class Main {
 
+    // Valid/Invalid messages to print for phase checks on programs.
+    private final static String VALID_MESSAGE = "VALID";
+    private final static String INVALID_MESSAGE = "INVALID";
+
     public static void main(String args[]) {
+        // Create the command-line parser.
+        CommandLineParser parser = new PosixParser();
+
+        // Container for the command-line option specifications.
+        Options options = new Options();
+
+        // Add command-line specifications for the various options.
+        options.addOption("scan", false, "check the program passes scanning");
+        options.addOption("tokens", false, "display the tokens in the program");
+        options.addOption("parse", false, "check the program passes parsing");
+        options.addOption("pretty", false, "pretty print the program to file");
+        options.addOption("type", false, "check the program passes type checking");
+        options.addOption("dumpsymtab", false, "dump the program symbol table to file");
+        options.addOption("pptype", false, "typed pretty print the program to file");
+
+        options.addOption("ut", false, "allow top-level declarations to be unordered");
+
+        CommandLine parsed = null;
         try {
-            if (args.length < 2 || args.length > 2)
-                printUsage();
-            // Scan.
-            else if (args[0].equals("-scan")) {
-                if (scan(args[1]))
-                    System.out.println("VALID");
+            parsed = parser.parse(options, args, false);
+        } catch (ParseException e) {
+            System.err.println("Parsing failed. ERROR: " + e.getMessage());
+        }
+
+        // Throw an error if the number of arguments passed is off.
+        if (args.length < 2 || args.length > 3) {
+            printUsage();
+            System.exit(-1);
+        }
+
+        // Make sure the last argument corresponds to a program that exists, otherwise throw an
+        // error.
+        String programPath = args[args.length - 1];
+        if (!new File(programPath).exists()) {
+            System.err.println("Parsing failed. ERROR: " + programPath + " does not exist ");
+            printUsage();
+            System.exit(-1);
+        }
+
+        // Flag for whether top declarations are allowed in any order or not.
+        boolean ut = parsed.hasOption("ut");
+
+        try {
+            if (parsed.hasOption("scan")) {
+                if (scan(programPath))
+                    System.out.println(VALID_MESSAGE);
                 else
-                    System.out.println("INVALID");
-            // Parse.
-            } else if (args[0].equals("-parse")) {
-                if (parse(args[1]))
-                    System.out.println("VALID");
+                    System.out.println(INVALID_MESSAGE);
+            } else if (parsed.hasOption("tokens"))
+                displayTokens(programPath);
+            else if (parsed.hasOption("parse")) {
+                if (parse(programPath))
+                    System.out.println(VALID_MESSAGE);
                 else
-                    System.out.println("INVALID");
-            // Pretty print.
-            } else if (args[0].equals("-pretty")) {
-                prettyPrint(args[1]);
-            // Type check.
-            } else if (args[0].equals("-type")) {
-                if (typeCheck(args[1]))
-                    System.out.println("VALID");
+                    System.out.println(INVALID_MESSAGE);
+            } else if (parsed.hasOption("pretty"))
+                prettyPrint(programPath);
+            else if (parsed.hasOption("type")) {
+                if (typeCheck(programPath, ut))
+                    System.out.println(VALID_MESSAGE);
                 else
-                    System.out.println("INVALID");
-            // Typed pretty print.
-            } else if (args[0].equals("-pptype"))
+                    System.out.println(INVALID_MESSAGE);
+            } else if (parsed.hasOption("dumpsymtab"))
+                dumpSymbolTable(programPath, ut);
+            else if (parsed.hasOption("pptype"))
                 throw new UnsupportedOperationException();
-            // Print tokens.
-            else if (args[0].equals("-printTokens"))
-                displayTokens(args[1]);
-            // Dump symbol table.
-            else if (args[0].equals("-dumpsymtab"))
-                dumpSymbolTable(args[1]);
-            else
+            else {
+                System.err.println("Parsing failed. ERROR: " + programPath + " does not exist ");
                 printUsage();
-        } catch (Exception e) {
-            e.printStackTrace(System.out);
+                System.exit(-1);
+            }
+        } catch (IOException e) {
+            System.err.println("IO ERROR: " + e.getMessage());
+            System.exit(-1);
         }
     }
 
@@ -62,9 +111,8 @@ class Main {
      * Prints the command-line usage to stderr.
      */
     private static void printUsage() {
-        System.err.println("Usage: Main -[scan | parse | pretty | pptype | printTokens | "
-            + "dumpsymtab | weed | weedv | type | typev ] filename");
-        System.exit(-1);
+        System.err.println("Usage: java golite.Main <scan | tokens | parse | pretty | type | "
+            + "dumpsymtab | pptype> FILENAME");
     }
 
     /**
@@ -73,6 +121,7 @@ class Main {
      * @param inPath - Filepath to GoLite program to scan
      * @return True if the program passed scanning, false otherwise (If false, prints the error to
      *  stderr as well)
+     * @throws IOException
      */
     private static boolean scan(String inPath) throws IOException {
         Token token = null;
@@ -92,11 +141,40 @@ class Main {
     }
 
     /**
+     * Prints the scanned tokens in a GoLite program, one per line. The scanner token is printed
+     * along with the underlying scanned text in brackets (except for TEol token).
+     *
+     * @param inPath - Filepath to GoLite program to scan
+     * @throws IOException
+     *
+     * Consulted <a href="http://www.sable.mcgill.ca/~hendren/520/2016/tiny/sablecc-3/tiny/Main.java">
+     * Main.java</a> of the Tiny language example on the course website.
+     */
+    public static void displayTokens(String inPath) throws IOException {
+        try {
+            Lexer lexer = new GoLiteLexer(new PushbackReader(new FileReader(inPath), 1024));
+
+            while (!(lexer.peek() instanceof EOF)) {
+                Token token = lexer.next();
+
+                if (token instanceof TEol)
+                    System.out.println(token.getClass().getSimpleName());
+                else
+                    System.out.println(token.getClass().getSimpleName() + " (" + token.getText()
+                        + ")");
+            }
+        } catch (LexerException e) {
+            System.err.println("ERROR: " + e);
+        }
+    }
+
+    /**
      * Parses a GoLite program.
      *
      * @param inPath - Filepath to GoLite program to parse
      * @return True if the program passed parsing, false otherwise (If false, prints the error to
      *  stderr as well)
+     * @throws IOException
      */
     public static boolean parse(String inPath) throws IOException {
         try {
@@ -118,6 +196,7 @@ class Main {
      * Pretty print a GoLite program.
      *
      * @param inPath - Filepath to GoLite program
+     * @throws IOException
      */
     public static void prettyPrint(String inPath) throws IOException {
         try {
@@ -143,8 +222,12 @@ class Main {
      * Type check a GoLite program.
      *
      * @param inPath - Filepath to GoLite program
+     * @param ut - Flag indicating whether top-declarations are allowed to be unordered
+     * @return True if the program passes type checking, false otherwise (If false, prints the error to
+     *  stderr as well)
+     * @throws IOException
      */
-    public static boolean typeCheck(String inPath) throws IOException {
+    public static boolean typeCheck(String inPath, boolean ut) throws IOException {
         try {
             Lexer lexer = new GoLiteLexer(new PushbackReader(new FileReader(inPath), 1024));
             Parser parser = new Parser(lexer);
@@ -153,7 +236,15 @@ class Main {
             Start ast = parser.parse();
             ast.apply(weeder);
 
-            TypeChecker typeChecker = new TypeChecker();
+            TypeChecker typeChecker = null;
+            if (ut) {
+                SymbolTableBuilder symbolTableBuilder = new SymbolTableBuilder();
+                ast.apply(symbolTableBuilder);
+
+                typeChecker = new TypeChecker(symbolTableBuilder.getTable());
+            } else
+                typeChecker = new TypeChecker();
+
             ast.apply(typeChecker);
         } catch (LexerException|ParserException|SymbolTableException|WeederException|TypeCheckException e) {
             System.err.println("ERROR: " + e);               
@@ -164,35 +255,13 @@ class Main {
     }
 
     /**
-     * Prints the scanned tokens in a GoLite program, one per line. The scanner token is printed
-     * along with the underlying scanned text in brackets (except for TEol token).
-     *
-     * @param inPath - Filepath to GoLite program to scan
-     *
-     * Consulted <a href="http://www.sable.mcgill.ca/~hendren/520/2016/tiny/sablecc-3/tiny/Main.java">
-     * Main.java</a> of the Tiny language example on the course website.
-     */
-    public static void displayTokens(String inPath) throws LexerException, IOException {
-
-        Lexer lexer = new GoLiteLexer(new PushbackReader(new FileReader(inPath), 1024));
-
-        while (!(lexer.peek() instanceof EOF)) {
-            Token token = lexer.next();
-
-            if (token instanceof TEol)
-                System.out.println(token.getClass().getSimpleName());
-            else
-                System.out.println(token.getClass().getSimpleName() + " (" + token.getText() + ")");
-        }
-    }
-
-    /**
      * Dumps the symbol table for a GoLite program. Given an input file of the form 'foo.go', the
      * method writes these results to 'foo.symtab'.
      *
      * @param inPath - Filepath to GoLite program
+     * @param ut - Flag indicating whether top-declarations are allowed to be unordered.
      */
-    public static void dumpSymbolTable(String inPath) throws IOException {
+    public static void dumpSymbolTable(String inPath, boolean ut) throws IOException {
         try {
             Lexer lexer = new GoLiteLexer(new PushbackReader(new FileReader(inPath), 1024));
             Parser parser = new Parser(lexer);
@@ -201,7 +270,15 @@ class Main {
             Start ast = parser.parse();
             ast.apply(weeder);
 
-            TypeChecker typeChecker = new TypeChecker();
+            TypeChecker typeChecker = null;
+            if (ut) {
+                SymbolTableBuilder symbolTableBuilder = new SymbolTableBuilder();
+                ast.apply(symbolTableBuilder);
+
+                typeChecker = new TypeChecker(symbolTableBuilder.getTable());
+            } else
+                typeChecker = new TypeChecker();
+
             ast.apply(typeChecker);
 
             dump(typeChecker.getSymbolTable().getLog(), inPath, ".symtab");
