@@ -73,6 +73,13 @@ public class TypeChecker extends DepthFirstAdapter {
         return this.symbolTable;
     }
 
+    /**
+     * Getter.
+     */
+    public HashMap<Node, GoLiteType> getTypeTable() {
+        return this.typeTable;
+    }
+
 	/**
      * Returns the GoLite type for the given type expression.
      *

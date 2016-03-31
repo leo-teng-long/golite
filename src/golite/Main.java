@@ -101,7 +101,7 @@ class Main {
             } else if (parsed.hasOption("dumpsymtab"))
                 dumpSymbolTable(programPath, ut);
             else if (parsed.hasOption("pptype"))
-                throw new UnsupportedOperationException();
+                typedPrettyPrint(programPath, ut);
             else if (parsed.hasOption("help"))
                 new HelpFormatter().printHelp("GoLite Compiler", options);
             else {
@@ -201,7 +201,8 @@ class Main {
     }
 
     /**
-     * Pretty print a GoLite program.
+     * Pretty print a GoLite program to file. Given an input file of the form 'foo.go', the method
+     * writes these results to 'foo.pretty.go'.
      *
      * @param inPath - Filepath to GoLite program
      * @throws IOException
@@ -217,10 +218,8 @@ class Main {
 
             PrettyPrinter pp = new PrettyPrinter();
             tree.apply(pp);
-
-            String prettyPrint = pp.getPrettyPrint();
             
-            dump(prettyPrint, inPath, ".pretty.go");
+            dump(pp.getPrettyPrint(), inPath, ".pretty.go");
         } catch (Exception e) {
             System.err.println("ERROR: " + e);
         }
@@ -268,6 +267,7 @@ class Main {
      *
      * @param inPath - Filepath to GoLite program
      * @param ut - Flag indicating whether top-declarations are allowed to be unordered.
+     * @throws IOException
      */
     private static void dumpSymbolTable(String inPath, boolean ut) throws IOException {
         try {
@@ -294,6 +294,72 @@ class Main {
             System.err.println("ERROR: " + e);
             System.exit(-1);
         }
+    }
+
+   /**
+     * Typed pretty print a GoLite program to file. Given an input file of the form 'foo.go', the
+     * method writes these results to 'foo.pptype.go'.
+     *
+     * @param inPath - Filepath to GoLite program
+     * @param ut - Flag indicating whether top-declarations are allowed to be unordered
+     * @throws IOException
+     */
+    public static void typedPrettyPrint(String inPath, boolean ut) throws IOException {
+        try {
+            Lexer lexer = new GoLiteLexer(new PushbackReader(new FileReader(inPath), 1024));
+            Parser parser = new Parser(lexer);
+            Weeder weeder = new Weeder();
+
+            Start ast = parser.parse();
+            ast.apply(weeder);
+
+            TypeChecker typeChecker = null;
+            if (ut) {
+                SymbolTableBuilder symbolTableBuilder = new SymbolTableBuilder();
+                ast.apply(symbolTableBuilder);
+
+                typeChecker = new TypeChecker(symbolTableBuilder.getTable());
+            } else
+                typeChecker = new TypeChecker();
+
+            ast.apply(typeChecker);
+
+            TypedPrettyPrinter tpp = new TypedPrettyPrinter(typeChecker.getTypeTable());
+            ast.apply(tpp);
+
+            dump(tpp.getPrettyPrint(), inPath, ".pptype.go");
+        } catch (LexerException|ParserException|WeederException|SymbolTableException|TypeCheckException e) {
+            System.err.println("ERROR: " + e);
+            System.exit(-1);
+        }
+
+
+        // try {
+        //     Lexer lexer = new GoLiteLexer(new PushbackReader(new FileReader(inPath), 1024));
+        //     Parser parser = new Parser(lexer);
+        //     Weeder weed = new Weeder();
+        //     Start start = parser.parse();
+        //     start.apply(weed);
+        //     SymbolTableBuilder symbolBuilder = new SymbolTableBuilder();
+        //     start.apply(symbolBuilder);
+        //     SymbolTable symbolTable = symbolBuilder.getSymbolTable();
+        //     HashMap<Node, PTypeExpr> typeTable = symbolBuilder.getTypeTable();
+        //     TypeChecker typeChecker = new TypeChecker(symbolTable, typeTable);
+        //     start.apply(typeChecker);
+
+        //     TypedPrettyPrinter typePrinter = new TypedPrettyPrinter(typeChecker.getTypeTable());
+        //     start.apply(typePrinter);
+
+        //     String prettyPrint = typePrinter.getPrettyPrint();
+        //     String filename = new File(inPath).getName();
+        //     String name = filename.substring(0, filename.indexOf('.'));
+        //     PrintWriter out = new PrintWriter(new FileWriter(name + ".pptype.go"));
+        //     out.print(prettyPrint);
+        //     out.close();
+        // } catch (Exception e) {
+        //     System.err.println("ERROR: " + e);
+        //     e.printStackTrace();
+        // }
     }
 
     /**
