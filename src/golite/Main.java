@@ -150,7 +150,7 @@ class Main {
      * Consulted <a href="http://www.sable.mcgill.ca/~hendren/520/2016/tiny/sablecc-3/tiny/Main.java">
      * Main.java</a> of the Tiny language example on the course website.
      */
-    public static void displayTokens(String inPath) throws IOException {
+    private static void displayTokens(String inPath) throws IOException {
         try {
             Lexer lexer = new GoLiteLexer(new PushbackReader(new FileReader(inPath), 1024));
 
@@ -176,7 +176,7 @@ class Main {
      *  stderr as well)
      * @throws IOException
      */
-    public static boolean parse(String inPath) throws IOException {
+    private static boolean parse(String inPath) throws IOException {
         try {
             Lexer lexer = new GoLiteLexer(new PushbackReader(new FileReader(inPath), 1024));
             Parser p = new Parser(lexer);
@@ -198,7 +198,7 @@ class Main {
      * @param inPath - Filepath to GoLite program
      * @throws IOException
      */
-    public static void prettyPrint(String inPath) throws IOException {
+    private static void prettyPrint(String inPath) throws IOException {
         try {
             Lexer lexer = new GoLiteLexer(new PushbackReader(new FileReader(inPath), 1024));
             Parser parser = new Parser(lexer);
@@ -227,7 +227,7 @@ class Main {
      *  stderr as well)
      * @throws IOException
      */
-    public static boolean typeCheck(String inPath, boolean ut) throws IOException {
+    private static boolean typeCheck(String inPath, boolean ut) throws IOException {
         try {
             Lexer lexer = new GoLiteLexer(new PushbackReader(new FileReader(inPath), 1024));
             Parser parser = new Parser(lexer);
@@ -261,7 +261,7 @@ class Main {
      * @param inPath - Filepath to GoLite program
      * @param ut - Flag indicating whether top-declarations are allowed to be unordered.
      */
-    public static void dumpSymbolTable(String inPath, boolean ut) throws IOException {
+    private static void dumpSymbolTable(String inPath, boolean ut) throws IOException {
         try {
             Lexer lexer = new GoLiteLexer(new PushbackReader(new FileReader(inPath), 1024));
             Parser parser = new Parser(lexer);
