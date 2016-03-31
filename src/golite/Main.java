@@ -15,6 +15,7 @@ import java.util.*;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.PosixParser;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
@@ -46,6 +47,7 @@ class Main {
         options.addOption("pptype", false, "typed pretty print the program to file");
 
         options.addOption("ut", false, "allow top-level declarations to be unordered");
+        options.addOption("help", false, "display help");
 
         CommandLine parsed = null;
         try {
@@ -55,7 +57,7 @@ class Main {
         }
 
         // Throw an error if the number of arguments passed is off.
-        if (args.length < 2 || args.length > 3) {
+        if (args.length < 1 || args.length > 3) {
             printUsage();
             System.exit(-1);
         }
@@ -63,7 +65,7 @@ class Main {
         // Make sure the last argument corresponds to a program that exists, otherwise throw an
         // error.
         String programPath = args[args.length - 1];
-        if (!new File(programPath).exists()) {
+        if (!programPath.equals("-help") && !new File(programPath).exists()) {
             System.err.println("Parsing failed. ERROR: " + programPath + " does not exist ");
             printUsage();
             System.exit(-1);
@@ -96,6 +98,8 @@ class Main {
                 dumpSymbolTable(programPath, ut);
             else if (parsed.hasOption("pptype"))
                 throw new UnsupportedOperationException();
+            else if (parsed.hasOption("help"))
+                new HelpFormatter().printHelp("GoLite Compiler", options);
             else {
                 System.err.println("Parsing failed. ERROR: " + programPath + " does not exist ");
                 printUsage();
@@ -112,7 +116,7 @@ class Main {
      */
     private static void printUsage() {
         System.err.println("Usage: java golite.Main <scan | tokens | parse | pretty | type | "
-            + "dumpsymtab | pptype> FILENAME");
+            + "dumpsymtab | pptype | help> FILENAME");
     }
 
     /**
