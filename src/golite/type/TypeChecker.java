@@ -388,7 +388,8 @@ public class TypeChecker extends DepthFirstAdapter {
             for (TId id : this.getIds(((ASpecVarSpec) pVarSpec))) {
                 // Throw an error if the name is already taken by another identifier in the
                 // global scope.
-                this.checkifDeclaredInCurrentScope(id);
+                if (!this.passedSymbolTable)
+                    this.checkifDeclaredInCurrentScope(id);
 
                 PTypeExpr pTypeExpr = ((ASpecVarSpec) pVarSpec).getTypeExpr();
                 // Type must be inferred.
@@ -453,7 +454,8 @@ public class TypeChecker extends DepthFirstAdapter {
 
                     // Throw an error if the name is already taken by another identifier in the
                     // global scope.
-                    this.checkifDeclaredInCurrentScope(id);
+                    if (!this.passedSymbolTable)
+                        this.checkifDeclaredInCurrentScope(id);
 
                     PTypeExpr pTypeExpr = ((ASpecTypeSpec) pTypeSpec).getTypeExpr();
                     // Add a type alias symbol to the symbol table.
@@ -473,7 +475,8 @@ public class TypeChecker extends DepthFirstAdapter {
         String name =id.getText();
 
         // Throw an error if the name is already taken by another identifier in the global scope.
-        this.checkifDeclaredInCurrentScope(id);
+        if (!this.passedSymbolTable)
+            this.checkifDeclaredInCurrentScope(id);
 
         FunctionSymbol funcSymbol = null;
         // Enter a function symbol into the symbol table if it hasn't been passed.
