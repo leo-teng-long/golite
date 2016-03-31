@@ -1387,15 +1387,9 @@ public class CodeGenerator extends DepthFirstAdapter {
         String rawString = node.getRawStringLit().getText();
         StringBuffer pythonString = new StringBuffer();
 
+        pythonString.append('r');
         pythonString.append('"');
-
-        for (int i = 1; i < rawString.length() - 1; i++) {
-            if (rawString.charAt(i) == '\\') {
-                pythonString.append('\\');
-            }
-            pythonString.append(rawString.charAt(i));
-        }
-
+        pythonString.append(rawString.substring(1, rawString.length() - 1));
         pythonString.append('"');
 
         buffer.append(pythonString.toString());
@@ -1460,7 +1454,7 @@ public class CodeGenerator extends DepthFirstAdapter {
          */
         addTabs();
         buffer.append("pass\n");
-
+        
         tabDepth--;
     }
 
