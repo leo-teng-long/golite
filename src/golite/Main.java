@@ -50,6 +50,7 @@ class Main {
         options.addOption("type", false, "check the program passes type checking");
         options.addOption("dumpsymtab", false, "dump the program symbol table to file");
         options.addOption("pptype", false, "typed pretty print the program to file");
+        options.addOption("gen", false, "compile and generate Python code");
 
         options.addOption("ut", false, "allow top-level declarations to be unordered");
         options.addOption("help", false, "display help");
@@ -103,6 +104,8 @@ class Main {
                 dumpSymbolTable(programPath, ut);
             else if (parsed.hasOption("pptype"))
                 typedPrettyPrint(programPath, ut);
+            else if (parsed.hasOption("gen"))
+                generateCode(programPath, ut);
             else if (parsed.hasOption("help"))
                 new HelpFormatter().printHelp("GoLite Compiler", options);
             else {
@@ -336,6 +339,44 @@ class Main {
     }
 
     /**
+     * Compile a GoLite program and generate the corresponding Python code to file. Given an input
+     * file of the form 'foo.go', the method writes these results to 'foo.golite.py'.
+     *
+     * @param inPath - Filepath to GoLite program
+     * @param ut - Flag indicating whether top-declarations are allowed to be unordered
+     * @throws IOException
+     */
+    private static void generateCode(String inPath, boolean ut) throws IOException {
+        try {
+            Lexer lexer = new GoLiteLexer(new PushbackReader(new FileReader(inPath), 1024));
+            Parser parser = new Parser(lexer);
+            Weeder weeder = new Weeder();
+
+            Start ast = parser.parse();
+            ast.apply(weeder);
+
+            TypeChecker typeChecker = null;
+            if (ut) {
+                SymbolTableBuilder symbolTableBuilder = new SymbolTableBuilder();
+                ast.apply(symbolTableBuilder);
+
+                typeChecker = new TypeChecker(symbolTableBuilder.getTable());
+            } else
+                typeChecker = new TypeChecker();
+
+            ast.apply(typeChecker);
+
+            CodeGenerator codeGenerator = new CodeGenerator();
+            ast.apply(codeGenerator);
+
+            dump(codeGenerator.getGeneratedCode(), inPath, ".golite.py");
+        } catch (LexerException|ParserException|WeederException|SymbolTableException|TypeCheckException e) {
+            System.err.println("ERROR: " + e);
+            System.exit(-1);
+        }
+    }
+
+    /**
      * Dumps the data dervied from the given input file of the form 'foo.go', to a file in the
      * current folder with the same name but specified extension.
      *
@@ -349,27 +390,6 @@ class Main {
         PrintWriter out = new PrintWriter(new FileWriter(name + ext));
         out.print(data);
         out.close();
-    }
-
-    private static void generateCode(String inPath) throws IOException {
-        try {
-            Lexer lexer = new GoLiteLexer(new PushbackReader(new FileReader(inPath), 1024));
-            Parser parser = new Parser(lexer);
-            Start start = parser.parse();
-
-            CodeGenerator generator = new CodeGenerator();
-            start.apply(generator);
-
-            String pythonCode = generator.getGeneratedCode();
-            String filename = new File(inPath).getName();
-            String name = filename.substring(0, filename.indexOf('.'));
-            PrintWriter out = new PrintWriter(new FileWriter(name + ".golite.py"));
-            out.print(pythonCode);
-            out.close();
-        } catch (Exception e) {
-            System.err.println("ERROR: " + e);
-            e.printStackTrace();
-        }
     }
 
 }
