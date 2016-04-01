@@ -10,7 +10,7 @@
 
 * Java 8 or higher
 
-## Installation
+## How to Install, Build, and Run
 
 `cd` to the `src` directory and then run the install script:
 
@@ -18,12 +18,19 @@
 ./install.sh
 ```
 
-## Milestone #2
+Then run the following to build the source:
 
-### How to Build/Run
+```
+make build
+```
 
-* `cd src` and then `make build`
-* `./golitec.sh <scan | tokens | parse | pretty | type | dumpsymtab | pptype | help> filename`
+Finally, to run the compiler, execute the runner script with the appropriate arguments like so:
+
+```
+./golitec.sh <scan | tokens | parse | pretty | type | dumpsymtab | pptype | help> filename
+```
+
+(Run `./golitec.sh -help` for more info.)
 
 ### Sources
 
