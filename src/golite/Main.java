@@ -3,6 +3,7 @@ package golite;
 import golite.exception.SymbolTableException;
 import golite.exception.TypeCheckException;
 import golite.exception.WeederException;
+import golite.generator.CodeGenerator;
 import golite.symbol.SymbolTable;
 import golite.symbol.SymbolTableBuilder;
 import golite.type.TypeChecker;
@@ -332,34 +333,6 @@ class Main {
             System.err.println("ERROR: " + e);
             System.exit(-1);
         }
-
-
-        // try {
-        //     Lexer lexer = new GoLiteLexer(new PushbackReader(new FileReader(inPath), 1024));
-        //     Parser parser = new Parser(lexer);
-        //     Weeder weed = new Weeder();
-        //     Start start = parser.parse();
-        //     start.apply(weed);
-        //     SymbolTableBuilder symbolBuilder = new SymbolTableBuilder();
-        //     start.apply(symbolBuilder);
-        //     SymbolTable symbolTable = symbolBuilder.getSymbolTable();
-        //     HashMap<Node, PTypeExpr> typeTable = symbolBuilder.getTypeTable();
-        //     TypeChecker typeChecker = new TypeChecker(symbolTable, typeTable);
-        //     start.apply(typeChecker);
-
-        //     TypedPrettyPrinter typePrinter = new TypedPrettyPrinter(typeChecker.getTypeTable());
-        //     start.apply(typePrinter);
-
-        //     String prettyPrint = typePrinter.getPrettyPrint();
-        //     String filename = new File(inPath).getName();
-        //     String name = filename.substring(0, filename.indexOf('.'));
-        //     PrintWriter out = new PrintWriter(new FileWriter(name + ".pptype.go"));
-        //     out.print(prettyPrint);
-        //     out.close();
-        // } catch (Exception e) {
-        //     System.err.println("ERROR: " + e);
-        //     e.printStackTrace();
-        // }
     }
 
     /**
@@ -376,6 +349,27 @@ class Main {
         PrintWriter out = new PrintWriter(new FileWriter(name + ext));
         out.print(data);
         out.close();
+    }
+
+    private static void generateCode(String inPath) throws IOException {
+        try {
+            Lexer lexer = new GoLiteLexer(new PushbackReader(new FileReader(inPath), 1024));
+            Parser parser = new Parser(lexer);
+            Start start = parser.parse();
+
+            CodeGenerator generator = new CodeGenerator();
+            start.apply(generator);
+
+            String pythonCode = generator.getGeneratedCode();
+            String filename = new File(inPath).getName();
+            String name = filename.substring(0, filename.indexOf('.'));
+            PrintWriter out = new PrintWriter(new FileWriter(name + ".golite.py"));
+            out.print(pythonCode);
+            out.close();
+        } catch (Exception e) {
+            System.err.println("ERROR: " + e);
+            e.printStackTrace();
+        }
     }
 
 }

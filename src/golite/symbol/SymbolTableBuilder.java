@@ -30,7 +30,7 @@ public class SymbolTableBuilder extends DepthFirstAdapter {
 
 	/** Symbol table. */
 	private SymbolTable table;
-
+    
     /** Line and position tracker for AST nodes. */
     private LineAndPosTracker lineAndPosTracker = new LineAndPosTracker();
 
