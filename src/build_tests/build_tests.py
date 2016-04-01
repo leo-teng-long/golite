@@ -2,6 +2,7 @@
 Automatic test generator for the GoLite compiler.
 """
 
+import argparse
 import logging
 import os
 import re
@@ -11,6 +12,10 @@ import sys
 # Configure logging.
 logging.basicConfig(format="%(levelname)s: [%(asctime)s] %(message)s",
 	level=logging.INFO)
+
+
+# Path to Vince's reference compiler on the McGill teaching servers.
+REF_COMPILER_PATH = "/home/course/cs520/golitec"
 
 
 # Path to programs directory.
@@ -138,7 +143,7 @@ def is_other_groups_test(prog_fpath):
 	return OTHER_GROUPS_PROGS_DIRNAME in os.path.split(prog_fpath)[0]
 
 
-def create_test_method_str(prog_fname, prog_fpath, tpe):
+def create_test_method_str(prog_fname, prog_fpath, tpe, ref):
 	"""
 	Creates the source string for a test method from a corresponding test
 	program.
@@ -150,6 +155,8 @@ def create_test_method_str(prog_fname, prog_fpath, tpe):
 		'pretty' for testing the pretty printer on the program, 'valid_type'
 		for testing the correct type check of the program, or 'invalid_type' for
 		testing type check flags the program
+	@param ref - If True, then the test method is built for the reference
+		compiler, otherwise it's build for the GoLite compiler
 	@return Corresponding test method source
 	"""
 
@@ -193,8 +200,14 @@ def create_test_method_str(prog_fname, prog_fpath, tpe):
 		test_name = "Group" + os.path.basename(os.path.dirname(prog_fpath)) + \
 			capitalize(test_name)
 
-	if tpe == 'valid_parse':
+	if tpe == 'valid_parse' and ref:
+		method_body = "assertEquals(runReferenceCompiler(%s, %s, %s), \"OK\")" \
+			% (REF_COMPILER_PATH, prog_fpath, "parse")
+	elif tpe == 'valid_parse':
 		method_body = create_assert_true_method_body("parse", prog_fpath, 2)
+	elif tpe == 'invalid_parse' and ref:
+		method_body = "assertNotEquals(runReferenceCompiler(%s, %s, %s), \"OK\")" \
+			% (REF_COMPILER_PATH, prog_fpath, "parse")
 	elif tpe == 'invalid_parse':
 		method_body = create_assert_exception_method_body("parse",
 			["LexerException", "ParserException", "WeederException"],
@@ -202,8 +215,14 @@ def create_test_method_str(prog_fname, prog_fpath, tpe):
 	elif tpe == 'pretty':
 		method_body = create_assert_true_method_body("checkPrettyInvariant",
 			prog_fpath, 2)
+	elif tpe == 'valid_type' and ref:
+		method_body = "assertEquals(runReferenceCompiler(%s, %s, %s), \"OK\")" \
+			% (REF_COMPILER_PATH, prog_fpath, "typecheck")
 	elif tpe == 'valid_type':
 		method_body = create_assert_true_method_body("typeCheck", prog_fpath, 2)
+	elif tpe == 'invalid_type' and ref:
+		method_body = "assertNotEquals(runReferenceCompiler(%s, %s, %s), \"OK\")" \
+			% (REF_COMPILER_PATH, prog_fpath, "typecheck")
 	elif tpe == 'invalid_type':
 		method_body = create_assert_exception_method_body("typeCheck",
 			["SymbolTableException", "TypeCheckException"], prog_fpath, 2)
@@ -231,7 +250,7 @@ def to_template_marker(in_str):
 	return "<<<" + in_str + ">>>"
 
 
-def create_test(test_name, progs_dirpaths, tpe, out_path):
+def create_test(test_name, progs_dirpaths, tpe, ref, out_path):
 	"""
 	Creates the source string for a test and saves it to file.
 
@@ -242,6 +261,8 @@ def create_test(test_name, progs_dirpaths, tpe, out_path):
 		'pretty' for testing the pretty printer on the program, 'valid_type'
 		for testing the correct type check of the program, or 'invalid_type' for
 		testing type check flags the program
+	@param ref - If True, then the test is built for the reference compiler,
+		otherwise it's build for the GoLite compiler
 	@param out_path - Output file to test source file
 	"""
 
@@ -269,7 +290,7 @@ def create_test(test_name, progs_dirpaths, tpe, out_path):
 
 				if not test_prog_path in tests_to_ignore:
 					test_method_strs.append(create_test_method_str(fname,
-						test_prog_path, tpe))
+						test_prog_path, tpe, ref))
 
 	# Read the test template source.
 	with open(TEST_CLASS_TEMPALTE_FPATH) as fin:
@@ -292,6 +313,23 @@ def create_test(test_name, progs_dirpaths, tpe, out_path):
 
 
 def main():
+	parser_description = ("Generates test automatically for the GoLite "
+		"compiler or Vince's reference compiler.")
+	parser = argparse.ArgumentParser(description=parser_description)
+
+	parser.add_argument('-r', '--ref', dest='ref', action='store_true',
+		help="Generate tests for Vince's reference compiler")
+
+	args = parser.parse_args()
+
+	# Check that tests are being built on one of the McGill teaching servers,
+	# where the reference compiler exists.
+	if args.ref and not os.path.exists(REF_COMPILER_PATH):
+		sys.stderr.write("ERROR: Reference compiler doesn't exist at %s (Make "
+			"sure tests are being built on one of McGill's teaching servers "
+			"(e.g. Mimi))" % REF_COMPILER_PATH)
+		sys.exit(-1)
+
 	# List of test method strings.
 	test_method_strs = []
 
@@ -304,30 +342,32 @@ def main():
 	# Create the parser test for syntactically valid programs.
 	logging.info("Creating parser test for syntactically valid programs...")
 	create_test(OUT_VALID_PARSE_TNAME, valid_syntax_progs_dirpaths,
-		'valid_parse', os.path.join(OUT_TEST_DIRPATH,
+		'valid_parse', args.ref, os.path.join(OUT_TEST_DIRPATH,
 			'%s.java' % OUT_VALID_PARSE_TNAME))
 
 	# Create the parser test for syntactically invalid programs.
 	logging.info("Creating parser test for syntactically invalid programs...")
 	create_test(OUT_INVALID_PARSE_TNAME, [INVALID_SYNTAX_PROGS_DIRPATH],
-		'invalid_parse', os.path.join(OUT_TEST_DIRPATH,
+		'invalid_parse', args.ref, os.path.join(OUT_TEST_DIRPATH,
 			'%s.java' % OUT_INVALID_PARSE_TNAME))
 
-	# Create the pretty printer test.
-	logging.info("Creating pretty printer tests...")
-	create_test(OUT_PRETTY_TNAME, valid_syntax_progs_dirpaths, 'pretty',
-		os.path.join(OUT_TEST_DIRPATH, '%s.java' % OUT_PRETTY_TNAME))
+	# Create the pretty printer test (except for the reference compiler).
+	if not args.ref:
+		logging.info("Creating pretty printer tests...")
+		create_test(OUT_PRETTY_TNAME, valid_syntax_progs_dirpaths, 'pretty',
+			False, os.path.join(OUT_TEST_DIRPATH, '%s.java' % OUT_PRETTY_TNAME))
 
 	# Create the type checker test for correctly-typed programs.
 	logging.info("Creating type checker test for correctly-typed programs....")
 	create_test(OUT_VALID_TYPE_TNAME, valid_type_progs_dirpaths, 'valid_type',
-		os.path.join(OUT_TEST_DIRPATH, '%s.java' % OUT_VALID_TYPE_TNAME))
+		args.ref, os.path.join(OUT_TEST_DIRPATH,
+			'%s.java' % OUT_VALID_TYPE_TNAME))
 
 	# Create the type checker test for incorrectly-typed programs.
 	logging.info("Creating type checker test for incorrectly-typed "
 		"programs....")
 	create_test(OUT_INVALID_TYPE_TNAME, [INVALID_TYPE_PROGS_DIRPATH],
-		'invalid_type', os.path.join(OUT_TEST_DIRPATH,
+		'invalid_type', args.ref, os.path.join(OUT_TEST_DIRPATH,
 			'%s.java' % OUT_INVALID_TYPE_TNAME))
 
 	# Read in the test suite template.
@@ -335,11 +375,19 @@ def main():
 		suite_str = fin.read()
 
 	# Insert the test names into the test suite runner class.
-	suite_str = suite_str.replace(
-		to_template_marker("INSERT TEST CLASSES HERE"),
-		"%s.class,\n\t%s.class,\n\t%s.class,\n\t%s.class,\n\t%s.class" %
-			(OUT_VALID_PARSE_TNAME, OUT_INVALID_PARSE_TNAME, OUT_PRETTY_TNAME,
-				OUT_VALID_TYPE_TNAME, OUT_INVALID_TYPE_TNAME))
+	if args.ref:
+		suite_str = suite_str.replace(
+			to_template_marker("INSERT TEST CLASSES HERE"),
+			"%s.class,\n\t%s.class,\n\t%s.class,\n\t%s.class" %
+				(OUT_VALID_PARSE_TNAME, OUT_INVALID_PARSE_TNAME,
+					OUT_VALID_TYPE_TNAME, OUT_INVALID_TYPE_TNAME))
+	else:
+		suite_str = suite_str.replace(
+			to_template_marker("INSERT TEST CLASSES HERE"),
+			"%s.class,\n\t%s.class,\n\t%s.class,\n\t%s.class,\n\t%s.class" %
+				(OUT_VALID_PARSE_TNAME, OUT_INVALID_PARSE_TNAME,
+					OUT_PRETTY_TNAME, OUT_VALID_TYPE_TNAME,
+					OUT_INVALID_TYPE_TNAME))
 
 	# Save the test suite source to file.
 	with open(OUT_SUITE_FPATH, 'w') as fout:

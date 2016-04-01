@@ -13,10 +13,17 @@ import golite.lexer.*;
 import golite.parser.*;
 import golite.node.*;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.InputStreamReader;
+import java.io.IOException;
+import java.io.PushbackReader;
+import java.io.StringReader;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
 import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -32,7 +39,9 @@ public class <<<INSERT NAME HERE>>> {
      * @throws IOException if something goes wrong with the reading of the program
      * @throws Compiler-specific exceptions if a failure is encountered during compilation
      */
-    private static boolean parse(String inPath) throws IOException, LexerException, ParserException {
+    private static boolean parse(String inPath)
+        throws IOException, LexerException, ParserException {
+
         Lexer lexer = new GoLiteLexer(new PushbackReader(new FileReader(inPath), 1024));
         Parser p = new Parser(lexer);
         Weeder weeder = new Weeder();
@@ -55,7 +64,9 @@ public class <<<INSERT NAME HERE>>> {
      * @throws IOException if something goes wrong with the reading of the program
      * @throws Compiler-specific exceptions if a failure is encountered during compilation
      */
-    private static boolean checkPrettyInvariant(String inPath) throws IOException, LexerException, ParserException {
+    private static boolean checkPrettyInvariant(String inPath)
+        throws IOException, LexerException, ParserException {
+
         Lexer lexer = new GoLiteLexer(new PushbackReader(new FileReader(inPath), 1024));
         Parser parser = new Parser(lexer);
         Weeder weeder = new Weeder();
@@ -88,7 +99,9 @@ public class <<<INSERT NAME HERE>>> {
      * @throws IOException if something goes wrong with the reading of the program
      * @throws Compiler-specific exceptions if a failure is encountered during compilation
      */
-    public static boolean typeCheck(String inPath) throws IOException, LexerException, ParserException {
+    private static boolean typeCheck(String inPath)
+        throws IOException, LexerException, ParserException {
+
         Lexer lexer = new GoLiteLexer(new PushbackReader(new FileReader(inPath), 1024));
         Parser parser = new Parser(lexer);
         Weeder weeder = new Weeder();
@@ -102,6 +115,36 @@ public class <<<INSERT NAME HERE>>> {
         return true;
     }
 
+    /**
+     * Run a phase of Vince's reference GoLite compiler on a GoLite program.
+     *
+     * @param path - Path to reference compiler
+     * @param progPath - Path to the input GoLite program
+     * @param option - Option string corresponding to the phase to run ('scan', 'parse', or
+     *  'typecheck')
+     * @return The output from stdout of the compiler if it's non-empty, otherwise the output from
+     *  stderr
+     * @throws IOException if something goes wrong with the reading of the program
+     * @throws InterruptedException if something goes wrong in the running of reference compiler
+     */
+    private static String runReferenceCompiler(String path, String progPath, String option)
+        throws IOException, InterruptedException {
+
+        ProcessBuilder pb = new ProcessBuilder(path, option, progPath);
+        Process p = pb.start();
+        p.waitFor();
+
+        BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
+        String out = reader.readLine();
+
+        if (out == null) {
+            reader = new BufferedReader(new InputStreamReader(p.getErrorStream()));
+            out = reader.readLine();
+        }
+
+        return out;
+    } 
+                              
 <<<INSERT TESTS HERE>>>
 	
 }
