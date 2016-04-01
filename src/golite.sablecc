@@ -453,14 +453,14 @@ Productions
     type_expr {-> type_expr} =
           {prim_type} prim_type
             {-> prim_type.type_expr}
-        | {custom_type} id
-            {-> New type_expr.custom(id)}
+        | {alias_type} id
+            {-> New type_expr.alias(id)}
         | {array} lsquare expr rsquare type_expr
             {-> New type_expr.array(expr.expr, type_expr.type_expr)}
         | {slice} lsquare rsquare type_expr
             {-> New type_expr.slice(type_expr.type_expr)}
-        | {struct} struct lbrace struct_sub_stmt* rbrace
-            {-> New type_expr.struct([struct_sub_stmt.struct_sub])}
+        | {struct} struct lbrace field_dec* rbrace
+            {-> New type_expr.struct([field_dec.field_spec])}
         | {paren} lparen type_expr rparen
             {-> type_expr};
 
@@ -476,8 +476,8 @@ Productions
         | {string} string
             {-> New type_expr.string(string)} ;
 
-    struct_sub_stmt {-> struct_sub} = opt_id_list type_expr semi
-        {-> New struct_sub.struct_sub([opt_id_list.opt_id], type_expr)} ;
+    field_dec {-> field_spec} = opt_id_list type_expr semi
+        {-> New field_spec.spec([opt_id_list.opt_id], type_expr)} ;
 
     //* Expressions. *//
 
@@ -677,16 +677,17 @@ Abstract Syntax Tree
         | {float} float64
         | {rune} rune
         | {string} string
-        | {custom} id
+        | {alias} id
         | {array} expr type_expr
         | {slice} type_expr
-        | {struct} struct_sub* ;
+        | {struct} field_spec* ;
 
-    struct_sub = {struct_sub} opt_id+ type_expr ;
+    field_spec = {spec} opt_id+ type_expr ;
 
     //* Expression. *//
 
     expr =
+        // TODO: Remove {empty} or {blank}
           {empty}
         | {add} [left]:expr [right]:expr
         | {subtract} [left]:expr [right]:expr

@@ -21,10 +21,12 @@ VALID_PROGS_DIRPATH = os.path.join(PROGS_DIRPATH, "valid")
 VALID_ACTUAL_PROGS_DIRPATH = os.path.join(VALID_PROGS_DIRPATH, "actual")
 VALID_GENERAL_PROGS_DIRPATH = os.path.join(VALID_PROGS_DIRPATH, "general")
 VALID_SYNTAX_PROGS_DIRPATH = os.path.join(VALID_PROGS_DIRPATH, "syntax")
+VALID_TYPE_PROGS_DIRPATH = os.path.join(VALID_PROGS_DIRPATH, "type")
 
-# Path to invalid programs directory (Only syntax for now).
-INVALID_PROGS_DIRPATH = os.path.join(PROGS_DIRPATH, os.path.join("invalid",
-	"syntax"))
+# Path to invalid programs directories.
+INVALID_PROGS_DIRPATH = os.path.join(PROGS_DIRPATH, "invalid")
+INVALID_SYNTAX_PROGS_DIRPATH = os.path.join(INVALID_PROGS_DIRPATH, "syntax")
+INVALID_TYPE_PROGS_DIRPATH = os.path.join(INVALID_PROGS_DIRPATH, "type")
 
 # Directory name for tests from other groups.
 OTHER_GROUPS_PROGS_DIRNAME = "other_groups"
@@ -43,11 +45,6 @@ SUITE_TEMPALTE_FPATH = os.path.join("build_tests",
 TEST_IGNORE_PATH = os.path.join("build_tests", "test_ignore.txt")
 
 
-# Assert method names.
-ASSERT_TRUE = "assertTrue"
-ASSERT_FALSE = "assertFalse"
-
-
 # Test directory path.
 OUT_TEST_DIRPATH = "test"
 # Output test suite source filepath.
@@ -59,6 +56,10 @@ OUT_VALID_PARSE_TNAME = "GoLiteValidSyntaxTest"
 OUT_INVALID_PARSE_TNAME = "GoLiteInvalidSyntaxTest"
 # Output name for test checking pretty printing.
 OUT_PRETTY_TNAME = "GoLitePrettyPrintTest"
+# Output name for test checking valid typing is correctly verified.
+OUT_VALID_TYPE_TNAME = "GoLiteValidTypingTest"
+# Output name for test checking invalid typing is correctly caught.
+OUT_INVALID_TYPE_TNAME = "GoLiteInvalidTypingTest"
 
 
 def capitalize(in_str):
@@ -144,11 +145,47 @@ def create_test_method_str(prog_fname, prog_fpath, tpe):
 
 	@param prog_fname - Input program filename
 	@param prog_fpath - Filepath to program
-	@param tpe - 'valid_parse' for testing the correcting parsing of the
-		program, 'invalid_parse' for testing no parse is produced for the
-		program, or 'pretty' for testing the pretty printer on the program
+	@param tpe - 'valid_parse' for testing the correct parsing of the program,
+		'invalid_parse' for testing no parse is produced for the program,
+		'pretty' for testing the pretty printer on the program, 'valid_type'
+		for testing the correct type check of the program, or 'invalid_type' for
+		testing type check flags the program
 	@return Corresponding test method source
 	"""
+
+	# Assert method names.
+	ASSERT_TRUE = "assertTrue"
+	ASSERT_FALSE = "assertFalse"
+
+	# Create the method body for a test asserting the truth of a boolean method
+	# acting on the given filepath to a program. 
+	def create_assert_true_method_body(check_method_name, prog_fpath, tabs):
+		return ('\t' * tabs) + "assertTrue(%s(\"%s\"));" % \
+			(check_method_name, prog_fpath)
+
+	# Create the method body for a test asserting the throwing of a list of
+	# exceptions from a given method acting on the given filepath to a program.
+	def create_assert_exception_method_body(check_method_name, exceptions,
+		prog_fpath, tabs):
+
+		if len(exceptions) == 1:
+			body = ('\t' * tabs)
+			body += "assertThatThrownBy(() -> { %s(\"%s\"); }).isInstanceOf(%s.class);" \
+				% (check_method_name, prog_fpath, exceptions[0])
+		else:
+			body = ('\t' * tabs) + "try {\n"
+			
+			body += ('\t' * (tabs + 1))
+			body += "assertThatThrownBy(() -> { %s(\"%s\"); }).isInstanceOf(%s.class);\n" \
+				% (check_method_name, prog_fpath, exceptions[0])
+
+			body += ('\t' * tabs) + "} catch (AssertionError e%d) {\n" \
+				% (len(exceptions) - 1)
+			body += create_assert_exception_method_body(check_method_name,
+				exceptions[1:], prog_fpath, tabs + 1) + "\n"
+			body += ('\t' * tabs) + "}"
+
+		return body
 
 	test_name = to_test_name(prog_fname)
 
@@ -157,22 +194,27 @@ def create_test_method_str(prog_fname, prog_fpath, tpe):
 			capitalize(test_name)
 
 	if tpe == 'valid_parse':
-		assert_method_name = ASSERT_TRUE
-		check_method_name = 'parse'
+		method_body = create_assert_true_method_body("parse", prog_fpath, 2)
 	elif tpe == 'invalid_parse':
-		assert_method_name = ASSERT_FALSE
-		check_method_name = 'parse'
+		method_body = create_assert_exception_method_body("parse",
+			["LexerException", "ParserException", "WeederException"],
+			prog_fpath, 2)
 	elif tpe == 'pretty':
-		assert_method_name = ASSERT_TRUE
-		check_method_name = 'checkPrettyInvariant'
+		method_body = create_assert_true_method_body("checkPrettyInvariant",
+			prog_fpath, 2)
+	elif tpe == 'valid_type':
+		method_body = create_assert_true_method_body("typeCheck", prog_fpath, 2)
+	elif tpe == 'invalid_type':
+		method_body = create_assert_exception_method_body("typeCheck",
+			["SymbolTableException", "TypeCheckException"], prog_fpath, 2)
 	else:
 		raise ValueError("'tpe' argument must be 'valid_parse', "
-			"'invalid_parse', or 'pretty'.")
+			"'invalid_parse', 'pretty', 'valid_type', or 'invalid_type'.")
 
 	test_method_str = "\t@Test\n"
-	test_method_str += "\tpublic void %s() throws IOException {\n" % test_name
-	test_method_str += "\t\t%s(%s(\"%s\"));\n" % \
-		(assert_method_name, check_method_name, prog_fpath)
+	test_method_str += "\tpublic void %s() " % test_name
+	test_method_str += "throws IOException, LexerException, ParserException {\n"
+	test_method_str += "%s\n" % method_body
 	test_method_str += "\t}"
 
 	return test_method_str
@@ -195,9 +237,11 @@ def create_test(test_name, progs_dirpaths, tpe, out_path):
 
 	@param test_name - Test name (Becomes the class name of the test)
 	@param progs_dirpaths - Directory paths to input test programs folders
-	@param tpe - 'valid_parse' for testing the correcting parsing of the
-		program, 'invalid_parse' for testing no parse is produced for the
-		program, or 'pretty' for testing the pretty printer on the program
+	@param tpe - 'valid_parse' for testing the correct parsing of the program,
+		'invalid_parse' for testing no parse is produced for the program,
+		'pretty' for testing the pretty printer on the program, 'valid_type'
+		for testing the correct type check of the program, or 'invalid_type' for
+		testing type check flags the program
 	@param out_path - Output file to test source file
 	"""
 
@@ -251,23 +295,40 @@ def main():
 	# List of test method strings.
 	test_method_strs = []
 
-	valid_progs_dirpaths = [VALID_ACTUAL_PROGS_DIRPATH,
+	valid_syntax_progs_dirpaths = [VALID_ACTUAL_PROGS_DIRPATH,
 		VALID_GENERAL_PROGS_DIRPATH, VALID_SYNTAX_PROGS_DIRPATH]
+
+	valid_type_progs_dirpaths = [VALID_ACTUAL_PROGS_DIRPATH,
+		VALID_GENERAL_PROGS_DIRPATH, VALID_TYPE_PROGS_DIRPATH]
 
 	# Create the parser test for syntactically valid programs.
 	logging.info("Creating parser test for syntactically valid programs...")
-	create_test(OUT_VALID_PARSE_TNAME, valid_progs_dirpaths, 'valid_parse',
-		os.path.join(OUT_TEST_DIRPATH, '%s.java' % OUT_VALID_PARSE_TNAME))
+	create_test(OUT_VALID_PARSE_TNAME, valid_syntax_progs_dirpaths,
+		'valid_parse', os.path.join(OUT_TEST_DIRPATH,
+			'%s.java' % OUT_VALID_PARSE_TNAME))
 
 	# Create the parser test for syntactically invalid programs.
 	logging.info("Creating parser test for syntactically invalid programs...")
-	create_test(OUT_INVALID_PARSE_TNAME, [INVALID_PROGS_DIRPATH], 'invalid_parse',
-		os.path.join(OUT_TEST_DIRPATH, '%s.java' % OUT_INVALID_PARSE_TNAME))
+	create_test(OUT_INVALID_PARSE_TNAME, [INVALID_SYNTAX_PROGS_DIRPATH],
+		'invalid_parse', os.path.join(OUT_TEST_DIRPATH,
+			'%s.java' % OUT_INVALID_PARSE_TNAME))
 
 	# Create the pretty printer test.
 	logging.info("Creating pretty printer tests...")
-	create_test(OUT_PRETTY_TNAME, valid_progs_dirpaths, 'pretty',
+	create_test(OUT_PRETTY_TNAME, valid_syntax_progs_dirpaths, 'pretty',
 		os.path.join(OUT_TEST_DIRPATH, '%s.java' % OUT_PRETTY_TNAME))
+
+	# Create the type checker test for correctly-typed programs.
+	logging.info("Creating type checker test for correctly-typed programs....")
+	create_test(OUT_VALID_TYPE_TNAME, valid_type_progs_dirpaths, 'valid_type',
+		os.path.join(OUT_TEST_DIRPATH, '%s.java' % OUT_VALID_TYPE_TNAME))
+
+	# Create the type checker test for incorrectly-typed programs.
+	logging.info("Creating type checker test for incorrectly-typed "
+		"programs....")
+	create_test(OUT_INVALID_TYPE_TNAME, [INVALID_TYPE_PROGS_DIRPATH],
+		'invalid_type', os.path.join(OUT_TEST_DIRPATH,
+			'%s.java' % OUT_INVALID_TYPE_TNAME))
 
 	# Read in the test suite template.
 	with open(SUITE_TEMPALTE_FPATH) as fin:
@@ -276,8 +337,9 @@ def main():
 	# Insert the test names into the test suite runner class.
 	suite_str = suite_str.replace(
 		to_template_marker("INSERT TEST CLASSES HERE"),
-		"%s.class,\n\t%s.class,\n\t%s.class" % (OUT_VALID_PARSE_TNAME,
-			OUT_INVALID_PARSE_TNAME, OUT_PRETTY_TNAME))
+		"%s.class,\n\t%s.class,\n\t%s.class,\n\t%s.class,\n\t%s.class" %
+			(OUT_VALID_PARSE_TNAME, OUT_INVALID_PARSE_TNAME, OUT_PRETTY_TNAME,
+				OUT_VALID_TYPE_TNAME, OUT_INVALID_TYPE_TNAME))
 
 	# Save the test suite source to file.
 	with open(OUT_SUITE_FPATH, 'w') as fout:

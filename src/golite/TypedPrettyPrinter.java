@@ -1,50 +1,54 @@
 package golite;
 
-import golite.symbol.SymbolTable;
-import golite.symbol.SymbolTableBuilder;
-import golite.type.TypeChecker;
+import golite.type.GoLiteType;
 import golite.analysis.*;
 import golite.node.*;
 
-import java.io.*;
-import java.util.*;
+import java.util.HashMap;
 
 
 /**
- * GoLite Typed PrettyPrinter
+ * GoLite typed pretty printer.
  */
 public class TypedPrettyPrinter extends PrettyPrinter {
 
-  /** Stores the type table. */
-  private HashMap<Node, PTypeExpr> typeTable;
+    /** Type table. */
+    private HashMap<Node, GoLiteType> typeTable;
 
-  /**
-   * Constructor.
-   */
-  public TypedPrettyPrinter(HashMap<Node, PTypeExpr> typeTable) {
-      this.typeTable = typeTable;
-  }
+    /**
+     * Constructor.
+     */
+    public TypedPrettyPrinter(HashMap<Node, GoLiteType> typeTable) {
+        this.typeTable = typeTable;
+    }
 
-  /*
-   * Prints the type table to stdout (for debugging).
-   */
-  private void printTypeTable() {
-    for (Node n: this.typeTable.keySet())
-      System.out.println(n + " -> " + this.typeTable.get(n));
-  }
+    /*
+     * Prints the type table to stdout (for debugging).
+     */
+    private void printTypeTable() {
+        for (Node n : this.typeTable.keySet())
+            System.out.println(n + " -> " + this.typeTable.get(n));
+    }
 
-  @Override
-  public void defaultOut(Node node) {
-    super.defaultOut(node);
-    if (node instanceof PExpr)
-      this.annotateType(node);
-  }
+    @Override
+    public void defaultOut(Node node) {
+        super.defaultOut(node);
+        if (node instanceof PExpr)
+            this.annotateType(node);
+    }
 
-  private void annotateType(Node node) {
-    this.buffer.append(" /* ");
-    PTypeExpr typeExpr = this.typeTable.get(node);
-    this.buffer.append(typeExpr == null ? "(None)" : typeExpr.toString());
-    this.buffer.append(" */ ");
-  }
+    /**
+     * Annotates the output of a given AST node with its type in pretty printing.
+     *
+     * @param node - AST node
+     */
+    private void annotateType(Node node) {
+        this.buffer.append(" /* ");
+
+        GoLiteType type = this.typeTable.get(node);
+        this.buffer.append(type == null ? "(None)" : type.toString());
+
+        this.buffer.append(" */ ");
+    }
 
 }

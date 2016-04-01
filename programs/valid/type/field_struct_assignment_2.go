@@ -1,7 +1,5 @@
 package main
 
-var s []this
-
 type another struct {
 	a, b struct {
 		a, b float64

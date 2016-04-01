@@ -8,7 +8,7 @@
 
 ## Requirements
 
-* Java SE 7 or higher
+* Java 8 or higher
 
 ## Installation
 
@@ -22,9 +22,8 @@
 
 ### How to Build/Run
 
-* Unzip SableCC 3.7 in `./src` directory
 * `cd src` and then `make build`
-* `java golite.Main -[scan | parse | pretty | pptype| printTokens | dumpsymtab] [filename]`
+* `./golitec.sh <scan | tokens | parse | pretty | type | dumpsymtab | pptype | help> filename`
 
 ### Sources
 

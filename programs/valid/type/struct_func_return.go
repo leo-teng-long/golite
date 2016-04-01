@@ -9,11 +9,11 @@ type a struct {
 	}
 }
 
-func main() {
-	var x a = foo()
-}
-
 func foo() a {
 	var y a
 	return y
+}
+
+func main() {
+	var x a = foo()
 }
