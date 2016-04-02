@@ -276,13 +276,13 @@ def create_test(test_name, progs_dirpaths, tpe, ref, test_ignore_path,
 	"""
 
 	# Load filepaths to tests to ignore, if the test ignore file exists.
-	if os.path.exists(test_ignore_path):
+	if test_ignore_path and os.path.exists(test_ignore_path):
 		logging.info("Reading test ignore file from %s..." % test_ignore_path)
 		with open(test_ignore_path) as fin:
 			tests_to_ignore = set([l.strip() for l in fin
 				if not l.startswith('#')])
 	else:
-		if test_ignore_path is None:
+		if not test_ignore_path:
 			logging.info("No test ignore file.")
 		else:
 			logging.info("No test ignore file at %s." % test_ignore_path)
