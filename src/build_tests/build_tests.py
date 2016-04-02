@@ -46,10 +46,6 @@ SUITE_TEMPALTE_FPATH = os.path.join("build_tests",
 	"GoLiteTestSuiteTemplate.java")
 
 
-# Filepath to test ignore file, listing filepaths to tests to ignore.
-TEST_IGNORE_PATH = os.path.join("build_tests", "test_ignore.txt")
-
-
 # Test directory path.
 OUT_TEST_DIRPATH = "test"
 # Output test suite source filepath.
@@ -260,7 +256,8 @@ def to_template_marker(in_str):
 	return "<<<" + in_str + ">>>"
 
 
-def create_test(test_name, progs_dirpaths, tpe, ref, out_path):
+def create_test(test_name, progs_dirpaths, tpe, ref, test_ignore_path,
+	out_path):
 	"""
 	Creates the source string for a test and saves it to file.
 
@@ -273,17 +270,22 @@ def create_test(test_name, progs_dirpaths, tpe, ref, out_path):
 		testing type check flags the program
 	@param ref - If True, then the test is built for the reference compiler,
 		otherwise it's build for the GoLite compiler
+	@param test_ignore_path - Filepath to test ignore file, listing filepaths to
+		tests to ignore.
 	@param out_path - Output file to test source file
 	"""
 
 	# Load filepaths to tests to ignore, if the test ignore file exists.
-	if os.path.exists(TEST_IGNORE_PATH):
-		logging.info("Reading test ignore file from %s..." % TEST_IGNORE_PATH)
-		with open(TEST_IGNORE_PATH) as fin:
+	if os.path.exists(test_ignore_path):
+		logging.info("Reading test ignore file from %s..." % test_ignore_path)
+		with open(test_ignore_path) as fin:
 			tests_to_ignore = set([l.strip() for l in fin
 				if not l.startswith('#')])
 	else:
-		logging.info("No test ignore file at %s." % TEST_IGNORE_PATH)
+		if test_ignore_path is None:
+			logging.info("No test ignore file.")
+		else:
+			logging.info("No test ignore file at %s." % test_ignore_path)
 		tests_to_ignore = set()
 
 	# List of test method strings.
@@ -327,6 +329,9 @@ def main():
 		"compiler or Vince's reference compiler.")
 	parser = argparse.ArgumentParser(description=parser_description)
 
+	parser.add_argument('-i', '--ignore', dest='ignore_path',
+		help="Path to test ignore file")
+	
 	parser.add_argument('-r', '--ref', dest='ref', action='store_true',
 		help="Generate tests for Vince's reference compiler")
 
@@ -352,33 +357,34 @@ def main():
 	# Create the parser test for syntactically valid programs.
 	logging.info("Creating parser test for syntactically valid programs...")
 	create_test(OUT_VALID_PARSE_TNAME, valid_syntax_progs_dirpaths,
-		'valid_parse', args.ref, os.path.join(OUT_TEST_DIRPATH,
-			'%s.java' % OUT_VALID_PARSE_TNAME))
+		'valid_parse', args.ref, args.ignore_path,
+		os.path.join(OUT_TEST_DIRPATH, '%s.java' % OUT_VALID_PARSE_TNAME))
 
 	# Create the parser test for syntactically invalid programs.
 	logging.info("Creating parser test for syntactically invalid programs...")
 	create_test(OUT_INVALID_PARSE_TNAME, [INVALID_SYNTAX_PROGS_DIRPATH],
-		'invalid_parse', args.ref, os.path.join(OUT_TEST_DIRPATH,
-			'%s.java' % OUT_INVALID_PARSE_TNAME))
+		'invalid_parse', args.ref, args.ignore_path,
+			os.path.join(OUT_TEST_DIRPATH, '%s.java' % OUT_INVALID_PARSE_TNAME))
 
 	# Create the pretty printer test (except for the reference compiler).
 	if not args.ref:
 		logging.info("Creating pretty printer tests...")
 		create_test(OUT_PRETTY_TNAME, valid_syntax_progs_dirpaths, 'pretty',
-			False, os.path.join(OUT_TEST_DIRPATH, '%s.java' % OUT_PRETTY_TNAME))
+			False, args.ignore_path, os.path.join(OUT_TEST_DIRPATH,
+				'%s.java' % OUT_PRETTY_TNAME))
 
 	# Create the type checker test for correctly-typed programs.
 	logging.info("Creating type checker test for correctly-typed programs....")
 	create_test(OUT_VALID_TYPE_TNAME, valid_type_progs_dirpaths, 'valid_type',
-		args.ref, os.path.join(OUT_TEST_DIRPATH,
+		args.ref, args.ignore_path, os.path.join(OUT_TEST_DIRPATH,
 			'%s.java' % OUT_VALID_TYPE_TNAME))
 
 	# Create the type checker test for incorrectly-typed programs.
 	logging.info("Creating type checker test for incorrectly-typed "
 		"programs....")
 	create_test(OUT_INVALID_TYPE_TNAME, [INVALID_TYPE_PROGS_DIRPATH],
-		'invalid_type', args.ref, os.path.join(OUT_TEST_DIRPATH,
-			'%s.java' % OUT_INVALID_TYPE_TNAME))
+		'invalid_type', args.ref, args.ignore_path,
+			os.path.join(OUT_TEST_DIRPATH, '%s.java' % OUT_INVALID_TYPE_TNAME))
 
 	# Read in the test suite template.
 	with open(SUITE_TEMPALTE_FPATH) as fin:

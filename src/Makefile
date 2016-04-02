@@ -10,8 +10,13 @@ compile_tests: build_tests
 
 # Build the tests for the GoLite compiler (if the BUILD_TESTS_OPT is set to '-r', then the generated tests are for Vince's reference GoLite compiler).
 build_tests: build
-	python build_tests/build_tests.py $(BUILD_TESTS_OPT)
-
+	if [[ "$(BUILD_TESTS_OPT)" == "" ]]; \
+	then \
+		python build_tests/build_tests.py -i build_tests/test_ignore.txt; \
+	else \
+		python build_tests/build_tests.py $(BUILD_TESTS_OPT); \
+	fi
+	
 # Build the source.
 build: compile_grammar
 	javac -cp jars/commons-cli-1.3.1.jar: golite/*.java golite/lexer/*.java golite/parser/*.java golite/node/*.java golite/analysis/*.java golite/*/*.java
