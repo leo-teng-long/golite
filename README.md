@@ -27,7 +27,7 @@ make build
 Finally, to run the compiler, execute the runner script with the appropriate arguments like so:
 
 ```
-./golitec.sh <scan | tokens | parse | pretty | type | dumpsymtab | pptype | help> filename
+./golitec.sh <scan | tokens | parse | pretty | type | dumpsymtab | pptype | gen | help> filename
 ```
 
 (Run `./golitec.sh -help` for more info.)
