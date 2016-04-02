@@ -4,27 +4,13 @@ run_tests: compile_tests
 	less run_tests.log
 	rm -f run_tests.log
 
-# Run the generated tests for Vince's reference GoLite compiler (must be run on a McGill teaching server, e.g. Mimi).
-run_ref_tests: compile_ref_tests
-	-java -cp jars/hamcrest-core-1.3.jar:jars/junit-4.12.jar:jars/assertj-core-3.3.0.jar: org.junit.runner.JUnitCore test.GoLiteTestSuite > run_tests.log
-	less run_tests.log
-	rm -f run_tests.log
-
 # Compile the generated tests for the GoLite compiler.
 compile_tests: build_tests
 	javac -cp jars/junit-4.12.jar:jars/assertj-core-3.3.0.jar: test/*.java
 
-# Compile the generated tests for Vince's reference GoLite compiler (must be run on a McGill teaching server, e.g. Mimi).
-compile_ref_tests: build_ref_tests
-	javac -cp jars/junit-4.12.jar:jars/assertj-core-3.3.0.jar: test/*.java
-
-# Build the tests for the GoLite compiler.
+# Build the tests for the GoLite compiler (if the BUILD_TESTS_OPT is set to '-r', then the generated tests are for Vince's reference GoLite compiler).
 build_tests: build
-	python build_tests/build_tests.py
-
-# Build the tests for Vince's reference GoLite compiler (must be run on a McGill teaching server, e.g. Mimi).
-build_ref_tests: build
-	python build_tests/build_tests.py -r
+	python build_tests/build_tests.py $(BUILD_TESTS_OPT)
 
 # Build the source.
 build: compile_grammar
