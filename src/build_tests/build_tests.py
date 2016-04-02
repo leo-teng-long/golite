@@ -194,6 +194,17 @@ def create_test_method_str(prog_fname, prog_fpath, tpe, ref):
 
 		return body
 
+	# Create the method body for a reference compiler test asserting either the
+	# equality or inequality of the compiler's response to the success response
+	# for the given option (phase), for the program with given filepath.
+	def create_ref_method_body(option, prog_fpath, equals, tabs):
+		body = ('\t' * tabs)
+		body += "assertEquals" if equals else "assertNotEquals"
+		body += "(\"OK\", runReferenceCompiler(\"%s\", \"%s\", \"%s\"));" \
+			% (REF_COMPILER_PATH, prog_fpath, option)
+
+		return body
+
 	test_name = to_test_name(prog_fname)
 
 	if is_other_groups_test(prog_fpath):
@@ -201,13 +212,11 @@ def create_test_method_str(prog_fname, prog_fpath, tpe, ref):
 			capitalize(test_name)
 
 	if tpe == 'valid_parse' and ref:
-		method_body = "\t\tassertEquals(\"OK\", runReferenceCompiler(\"%s\", \"%s\", \"%s\"));" \
-			% (REF_COMPILER_PATH, prog_fpath, "parse")
+		method_body = ("parse", prog_fpath, True, 2)
 	elif tpe == 'valid_parse':
 		method_body = create_assert_true_method_body("parse", prog_fpath, 2)
 	elif tpe == 'invalid_parse' and ref:
-		method_body = "\t\tassertNotEquals(\"OK\", runReferenceCompiler(\"%s\", \"%s\", \"%s\"));" \
-			% (REF_COMPILER_PATH, prog_fpath, "parse")
+		method_body = ("parse", prog_fpath, False, 2)
 	elif tpe == 'invalid_parse':
 		method_body = create_assert_exception_method_body("parse",
 			["LexerException", "ParserException", "WeederException"],
@@ -216,13 +225,11 @@ def create_test_method_str(prog_fname, prog_fpath, tpe, ref):
 		method_body = create_assert_true_method_body("checkPrettyInvariant",
 			prog_fpath, 2)
 	elif tpe == 'valid_type' and ref:
-		method_body = "\t\tassertEquals(\"OK\", runReferenceCompiler(\"%s\", \"%s\", \"%s\"));" \
-			% (REF_COMPILER_PATH, prog_fpath, "typecheck")
+		method_body = ("typecheck", prog_fpath, True, 2)
 	elif tpe == 'valid_type':
 		method_body = create_assert_true_method_body("typeCheck", prog_fpath, 2)
 	elif tpe == 'invalid_type' and ref:
-		method_body = "\t\tassertNotEquals(\"OK\", runReferenceCompiler(\"%s\", \"%s\", \"%s\"));" \
-			% (REF_COMPILER_PATH, prog_fpath, "typecheck")
+		method_body = ("typecheck", prog_fpath, False, 2)
 	elif tpe == 'invalid_type':
 		method_body = create_assert_exception_method_body("typeCheck",
 			["SymbolTableException", "TypeCheckException"], prog_fpath, 2)
