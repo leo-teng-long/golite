@@ -8,14 +8,14 @@ run_tests: compile_tests
 compile_tests: build_tests
 	javac -cp jars/junit-4.12.jar:jars/assertj-core-3.3.0.jar: test/*.java
 
-# Build the tests for the GoLite compiler (if the BUILD_TESTS_OPT is set to '-r', then the generated tests are for Vince's reference GoLite compiler).
+# Build the tests for the GoLite compiler (if the BUILD_TESTS_OPTS includes '-r', then the generated tests are for Vince's reference GoLite compiler).
 build_tests: build
-	if [[ "$(BUILD_TESTS_OPT)" == "" ]]; \
+	bash -c "if [[ '$(BUILD_TESTS_OPTS)' == '' ]]; \
 	then \
 		python build_tests/build_tests.py -i build_tests/test_ignore.txt; \
 	else \
-		python build_tests/build_tests.py $(BUILD_TESTS_OPT); \
-	fi
+		python build_tests/build_tests.py $(BUILD_TESTS_OPTS); \
+	fi"
 	
 # Build the source.
 build: compile_grammar
