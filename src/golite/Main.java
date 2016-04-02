@@ -124,7 +124,7 @@ class Main {
      */
     private static void printUsage() {
         System.err.println("Usage: java golite.Main <scan | tokens | parse | pretty | type | "
-            + "dumpsymtab | pptype | help> FILENAME");
+            + "dumpsymtab | pptype | gen | help> FILENAME");
     }
 
     /**
@@ -222,7 +222,7 @@ class Main {
 
             PrettyPrinter pp = new PrettyPrinter();
             tree.apply(pp);
-            
+
             dump(pp.getPrettyPrint(), inPath, ".pretty.go");
         } catch (Exception e) {
             System.err.println("ERROR: " + e);
@@ -258,7 +258,7 @@ class Main {
 
             ast.apply(typeChecker);
         } catch (LexerException|ParserException|SymbolTableException|WeederException|TypeCheckException e) {
-            System.err.println("ERROR: " + e);               
+            System.err.println("ERROR: " + e);
             return false;
         }
 
