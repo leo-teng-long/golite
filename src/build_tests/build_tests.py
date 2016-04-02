@@ -201,12 +201,12 @@ def create_test_method_str(prog_fname, prog_fpath, tpe, ref):
 			capitalize(test_name)
 
 	if tpe == 'valid_parse' and ref:
-		method_body = "assertEquals(runReferenceCompiler(%s, %s, %s), \"OK\")" \
+		method_body = "\t\tassertEquals(\"OK\", runReferenceCompiler(\"%s\", \"%s\", \"%s\"));" \
 			% (REF_COMPILER_PATH, prog_fpath, "parse")
 	elif tpe == 'valid_parse':
 		method_body = create_assert_true_method_body("parse", prog_fpath, 2)
 	elif tpe == 'invalid_parse' and ref:
-		method_body = "assertNotEquals(runReferenceCompiler(%s, %s, %s), \"OK\")" \
+		method_body = "\t\tassertNotEquals(\"OK\", runReferenceCompiler(\"%s\", \"%s\", \"%s\"));" \
 			% (REF_COMPILER_PATH, prog_fpath, "parse")
 	elif tpe == 'invalid_parse':
 		method_body = create_assert_exception_method_body("parse",
@@ -216,12 +216,12 @@ def create_test_method_str(prog_fname, prog_fpath, tpe, ref):
 		method_body = create_assert_true_method_body("checkPrettyInvariant",
 			prog_fpath, 2)
 	elif tpe == 'valid_type' and ref:
-		method_body = "assertEquals(runReferenceCompiler(%s, %s, %s), \"OK\")" \
+		method_body = "\t\tassertEquals(\"OK\", runReferenceCompiler(\"%s\", \"%s\", \"%s\"));" \
 			% (REF_COMPILER_PATH, prog_fpath, "typecheck")
 	elif tpe == 'valid_type':
 		method_body = create_assert_true_method_body("typeCheck", prog_fpath, 2)
 	elif tpe == 'invalid_type' and ref:
-		method_body = "assertNotEquals(runReferenceCompiler(%s, %s, %s), \"OK\")" \
+		method_body = "\t\tassertNotEquals(\"OK\", runReferenceCompiler(\"%s\", \"%s\", \"%s\"));" \
 			% (REF_COMPILER_PATH, prog_fpath, "typecheck")
 	elif tpe == 'invalid_type':
 		method_body = create_assert_exception_method_body("typeCheck",
@@ -232,7 +232,10 @@ def create_test_method_str(prog_fname, prog_fpath, tpe, ref):
 
 	test_method_str = "\t@Test\n"
 	test_method_str += "\tpublic void %s() " % test_name
-	test_method_str += "throws IOException, LexerException, ParserException {\n"
+	if ref:
+		test_method_str += "throws IOException, InterruptedException, LexerException, ParserException {\n"
+	else:
+		test_method_str += "throws IOException, LexerException, ParserException {\n"
 	test_method_str += "%s\n" % method_body
 	test_method_str += "\t}"
 
@@ -327,7 +330,7 @@ def main():
 	if args.ref and not os.path.exists(REF_COMPILER_PATH):
 		sys.stderr.write("ERROR: Reference compiler doesn't exist at %s (Make "
 			"sure tests are being built on one of McGill's teaching servers "
-			"(e.g. Mimi))" % REF_COMPILER_PATH)
+			"(e.g. Mimi))\n" % REF_COMPILER_PATH)
 		sys.exit(-1)
 
 	# List of test method strings.
