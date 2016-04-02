@@ -674,17 +674,11 @@ public class CodeGenerator extends DepthFirstAdapter {
          * Only used when generating for Loops
          */
         if (node.getInit() != null) {
-            deleteLastCharacter();
-            generateStatement(node.getInit());
-        }
-
-        /**
-         * Only used when generating for Loops
-         */
-        if (node.getInit() != null && node.getEnd() != null) {
+            node.getInit().apply(this);
+            addLines(1);
             addTabs();
         }
-
+        
         buffer.append("while");
         addSpace();
 
@@ -1454,7 +1448,6 @@ public class CodeGenerator extends DepthFirstAdapter {
          */
         addTabs();
         buffer.append("pass\n");
-        
         tabDepth--;
     }
 
