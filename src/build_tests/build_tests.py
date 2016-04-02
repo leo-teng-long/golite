@@ -198,7 +198,7 @@ def create_test_method_str(prog_fname, prog_fpath, tpe, ref):
 	# equality or inequality of the compiler's response to the success response
 	# for the given option (phase), for the program with given filepath.
 	def create_ref_method_body(option, prog_fpath, equals, tabs):
-		body = ('\t' * tabs)
+		body = '\t' * tabs
 		body += "assertEquals" if equals else "assertNotEquals"
 		body += "(\"OK\", runReferenceCompiler(\"%s\", \"%s\", \"%s\"));" \
 			% (REF_COMPILER_PATH, prog_fpath, option)
@@ -212,11 +212,11 @@ def create_test_method_str(prog_fname, prog_fpath, tpe, ref):
 			capitalize(test_name)
 
 	if tpe == 'valid_parse' and ref:
-		method_body = ("parse", prog_fpath, True, 2)
+		method_body = create_ref_method_body("parse", prog_fpath, True, 2)
 	elif tpe == 'valid_parse':
 		method_body = create_assert_true_method_body("parse", prog_fpath, 2)
 	elif tpe == 'invalid_parse' and ref:
-		method_body = ("parse", prog_fpath, False, 2)
+		method_body = create_ref_method_body("parse", prog_fpath, False, 2)
 	elif tpe == 'invalid_parse':
 		method_body = create_assert_exception_method_body("parse",
 			["LexerException", "ParserException", "WeederException"],
@@ -225,11 +225,11 @@ def create_test_method_str(prog_fname, prog_fpath, tpe, ref):
 		method_body = create_assert_true_method_body("checkPrettyInvariant",
 			prog_fpath, 2)
 	elif tpe == 'valid_type' and ref:
-		method_body = ("typecheck", prog_fpath, True, 2)
+		method_body = create_ref_method_body("typecheck", prog_fpath, True, 2)
 	elif tpe == 'valid_type':
 		method_body = create_assert_true_method_body("typeCheck", prog_fpath, 2)
 	elif tpe == 'invalid_type' and ref:
-		method_body = ("typecheck", prog_fpath, False, 2)
+		method_body = create_ref_method_body("typecheck", prog_fpath, False, 2)
 	elif tpe == 'invalid_type':
 		method_body = create_assert_exception_method_body("typeCheck",
 			["SymbolTableException", "TypeCheckException"], prog_fpath, 2)
