@@ -6,6 +6,7 @@ import golite.Weeder;
 import golite.exception.SymbolTableException;
 import golite.exception.TypeCheckException;
 import golite.exception.WeederException;
+import golite.generator.CodeGenerator;
 import golite.symbol.SymbolTable;
 import golite.symbol.SymbolTableBuilder;
 import golite.type.TypeChecker;
@@ -14,9 +15,12 @@ import golite.parser.*;
 import golite.node.*;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.InputStreamReader;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.io.PushbackReader;
 import java.io.StringReader;
 
@@ -113,6 +117,35 @@ public class <<<INSERT NAME HERE>>> {
         ast.apply(typeChecker);
 
         return true;
+    }
+
+    /**
+     * Compile a GoLite program and generate the corresponding Python code to file.
+     *
+     * @param inPath - Filepath to GoLite program
+     * @param outPath - Filepath to output Python program
+     * @throws IOException
+     * @throws Compiler-specific exceptions if a failure is encountered during compilation
+     */
+    private static void generateCode(String inPath, String outPath)
+        throws IOException, LexerException, ParserException {
+
+        Lexer lexer = new GoLiteLexer(new PushbackReader(new FileReader(inPath), 1024));
+        Parser parser = new Parser(lexer);
+        Weeder weeder = new Weeder();
+
+        Start ast = parser.parse();
+        ast.apply(weeder);
+
+        TypeChecker typeChecker = new TypeChecker();
+        ast.apply(typeChecker);
+
+        CodeGenerator codeGenerator = new CodeGenerator();
+        ast.apply(codeGenerator);
+
+        try (PrintWriter out = new PrintWriter(new FileWriter(outPath))) {
+            out.print(codeGenerator.getGeneratedCode());
+        }
     }
 
     /**
