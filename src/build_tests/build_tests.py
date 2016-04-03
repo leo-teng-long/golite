@@ -27,6 +27,7 @@ VALID_ACTUAL_PROGS_DIRPATH = os.path.join(VALID_PROGS_DIRPATH, "actual")
 VALID_GENERAL_PROGS_DIRPATH = os.path.join(VALID_PROGS_DIRPATH, "general")
 VALID_SYNTAX_PROGS_DIRPATH = os.path.join(VALID_PROGS_DIRPATH, "syntax")
 VALID_TYPE_PROGS_DIRPATH = os.path.join(VALID_PROGS_DIRPATH, "type")
+VALID_GEN_PROGS_DIRPATH = os.path.join(VALID_PROGS_DIRPATH, "gen")
 
 # Path to invalid programs directories.
 INVALID_PROGS_DIRPATH = os.path.join(PROGS_DIRPATH, "invalid")
@@ -61,6 +62,8 @@ OUT_PRETTY_TNAME = "GoLitePrettyPrintTest"
 OUT_VALID_TYPE_TNAME = "GoLiteValidTypingTest"
 # Output name for test checking invalid typing is correctly caught.
 OUT_INVALID_TYPE_TNAME = "GoLiteInvalidTypingTest"
+# Output name for test checking code generation.
+OUT_GEN_TNAME = "GoLiteCodeGenerationTest"
 
 
 def capitalize(in_str):
@@ -149,16 +152,13 @@ def create_test_method_str(prog_fname, prog_fpath, tpe, ref):
 	@param tpe - 'valid_parse' for testing the correct parsing of the program,
 		'invalid_parse' for testing no parse is produced for the program,
 		'pretty' for testing the pretty printer on the program, 'valid_type'
-		for testing the correct type check of the program, or 'invalid_type' for
-		testing type check flags the program
+		for testing the correct type check of the program, 'invalid_type' for
+		testing type check flags the program, or 'gen' for testing the correct
+		output of generated Python code after compilation
 	@param ref - If True, then the test method is built for the reference
 		compiler, otherwise it's build for the GoLite compiler
 	@return Corresponding test method source
 	"""
-
-	# Assert method names.
-	ASSERT_TRUE = "assertTrue"
-	ASSERT_FALSE = "assertFalse"
 
 	# Create the method body for a test asserting the truth of a boolean method
 	# acting on the given filepath to a program. 
@@ -188,6 +188,80 @@ def create_test_method_str(prog_fname, prog_fpath, tpe, ref):
 				exceptions[1:], prog_fpath, tabs + 1) + "\n"
 			body += ('\t' * tabs) + "}"
 
+		return body
+
+	# Create the method body for a code generator test, asserting the generated
+	# code produces output that's equal to the expected output for a program
+	# with given filepath.
+	def create_gen_method_body(prog_fpath, tabs):
+		# Path to the program's corresponding .out file with the expected
+		# output.
+		prog_out_fpath = os.path.splitext(prog_fpath)[0] + ".out"
+
+		# Temporary file for generated Python code.
+		gen_prog_fname = ".tmp.golite.py"
+		gen_prog_path = os.path.join(OUT_TEST_DIRPATH, gen_prog_fname)
+
+		body = '\t' * tabs
+		body += "File genProgF = new File(\"%s\");\n" % gen_prog_path
+		body += '\t' * tabs
+		body += "BufferedReader r = null;\n"
+
+		body += ('\t' * tabs) + "try {\n"
+		
+		body += '\t' * (tabs + 1)
+		body += "generateCode(\"%s\", \"%s\");\n\n" % (prog_fpath,
+			gen_prog_path)
+
+		body += '\t' * (tabs + 1)
+		body += "ProcessBuilder pb "
+		body += "= new ProcessBuilder(\"python\", \"%s\");\n" % (gen_prog_path)
+		body += '\t' * (tabs + 1)
+		body += "Process p = pb.start();\n"
+		body += '\t' * (tabs + 1)
+		body += "p.waitFor();\n\n"
+
+		body += '\t' * (tabs + 1)
+		body += "String gen = \"\";\n\n"
+
+		body += '\t' * (tabs + 1)
+		body += "r = new "
+		body += "BufferedReader(new InputStreamReader(p.getInputStream()));\n"
+		body += '\t' * (tabs + 1)
+		body += "String s;\n"
+		body += '\t' * (tabs + 1)
+		body += "while ((s = r.readLine()) != null) gen += s + \"\\n\";\n"
+		body += '\t' * (tabs + 1)
+		body += "r.close();\n\n"
+
+		body += '\t' * (tabs + 1)
+		body += "r = new "
+		body += "BufferedReader(new InputStreamReader(p.getErrorStream()));\n"
+		body += '\t' * (tabs + 1)
+		body += "while ((s = r.readLine()) != null) gen += s + \"\\n\";\n"
+		body += '\t' * (tabs + 1)
+		body += "r.close();\n\n"
+
+		body += '\t' * (tabs + 1)
+		body += "File exOutF = new File(\"%s\");\n\n" % prog_out_fpath
+
+		body += '\t' * (tabs + 1)
+		body += "r = new BufferedReader(new FileReader(exOutF));\n"
+		body += '\t' * (tabs + 1)
+		body += "String ex = \"\";\n"
+		body += '\t' * (tabs + 1)
+		body += "while ((s = r.readLine()) != null) ex += s + \"\\n\";\n\n"
+
+		body += '\t' * (tabs + 1)
+		body += "assertEquals(ex, gen);\n"
+
+		body += ('\t' * tabs) + "} finally {\n"
+		body += '\t' * (tabs + 1)
+		body += "if (r != null) r.close();\n"
+		body += '\t' * (tabs + 1)
+		body += "genProgF.delete();\n"
+		body += ('\t' * tabs) + "}"
+		
 		return body
 
 	# Create the method body for a reference compiler test asserting either the
@@ -229,16 +303,20 @@ def create_test_method_str(prog_fname, prog_fpath, tpe, ref):
 	elif tpe == 'invalid_type':
 		method_body = create_assert_exception_method_body("typeCheck",
 			["SymbolTableException", "TypeCheckException"], prog_fpath, 2)
+	elif tpe == 'gen':
+		method_body = create_gen_method_body(prog_fpath, 2)
 	else:
 		raise ValueError("'tpe' argument must be 'valid_parse', "
 			"'invalid_parse', 'pretty', 'valid_type', or 'invalid_type'.")
 
 	test_method_str = "\t@Test\n"
 	test_method_str += "\tpublic void %s() " % test_name
-	if ref:
-		test_method_str += "throws IOException, InterruptedException, LexerException, ParserException {\n"
+	if ref or tpe == 'gen':
+		test_method_str += "throws IOException, InterruptedException, "
+		test_method_str += "LexerException, ParserException {\n"
 	else:
-		test_method_str += "throws IOException, LexerException, ParserException {\n"
+		test_method_str += "throws IOException, LexerException, "
+		test_method_str += "ParserException {\n"
 	test_method_str += "%s\n" % method_body
 	test_method_str += "\t}"
 
@@ -266,8 +344,9 @@ def create_test(test_name, progs_dirpaths, tpe, ref, test_ignore_path,
 	@param tpe - 'valid_parse' for testing the correct parsing of the program,
 		'invalid_parse' for testing no parse is produced for the program,
 		'pretty' for testing the pretty printer on the program, 'valid_type'
-		for testing the correct type check of the program, or 'invalid_type' for
-		testing type check flags the program
+		for testing the correct type check of the program, 'invalid_type' for
+		testing type check flags the program, or 'gen' for testing the correct
+		output of generated Python code after compilation
 	@param ref - If True, then the test is built for the reference compiler,
 		otherwise it's build for the GoLite compiler
 	@param test_ignore_path - Filepath to test ignore file, listing filepaths to
@@ -366,7 +445,7 @@ def main():
 		'invalid_parse', args.ref, args.ignore_path,
 			os.path.join(OUT_TEST_DIRPATH, '%s.java' % OUT_INVALID_PARSE_TNAME))
 
-	# Create the pretty printer test (except for the reference compiler).
+	# Create the pretty printer test (but not for the reference compiler).
 	if not args.ref:
 		logging.info("Creating pretty printer tests...")
 		create_test(OUT_PRETTY_TNAME, valid_syntax_progs_dirpaths, 'pretty',
@@ -386,6 +465,13 @@ def main():
 		'invalid_type', args.ref, args.ignore_path,
 			os.path.join(OUT_TEST_DIRPATH, '%s.java' % OUT_INVALID_TYPE_TNAME))
 
+	# Create the code generator test (but not for the reference compiler).
+	if not args.ref:
+		logging.info("Creating code generator tests...")
+		create_test(OUT_GEN_TNAME, [VALID_GEN_PROGS_DIRPATH], 'gen', False,
+			args.ignore_path, os.path.join(OUT_TEST_DIRPATH,
+				'%s.java' % OUT_GEN_TNAME))
+
 	# Read in the test suite template.
 	with open(SUITE_TEMPALTE_FPATH) as fin:
 		suite_str = fin.read()
@@ -400,10 +486,10 @@ def main():
 	else:
 		suite_str = suite_str.replace(
 			to_template_marker("INSERT TEST CLASSES HERE"),
-			"%s.class,\n\t%s.class,\n\t%s.class,\n\t%s.class,\n\t%s.class" %
+			"%s.class,\n\t%s.class,\n\t%s.class,\n\t%s.class,\n\t%s.class,\n\t%s.class" %
 				(OUT_VALID_PARSE_TNAME, OUT_INVALID_PARSE_TNAME,
 					OUT_PRETTY_TNAME, OUT_VALID_TYPE_TNAME,
-					OUT_INVALID_TYPE_TNAME))
+					OUT_INVALID_TYPE_TNAME, OUT_GEN_TNAME))
 
 	# Save the test suite source to file.
 	with open(OUT_SUITE_FPATH, 'w') as fout:
