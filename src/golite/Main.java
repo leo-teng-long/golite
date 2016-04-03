@@ -77,6 +77,12 @@ class Main {
             System.exit(-1);
         }
 
+        // Make sure the passed filepath points to a file and not a directory.
+        if (new File(programPath).isDirectory()) {
+            System.err.println("Parsing failed. ERROR: Expecting a file, not a directory");
+            System.exit(-1);
+        }
+
         // Flag for whether top declarations are allowed in any order or not.
         boolean ut = parsed.hasOption("ut");
 
@@ -109,7 +115,6 @@ class Main {
             else if (parsed.hasOption("help"))
                 new HelpFormatter().printHelp("GoLite Compiler", options);
             else {
-                System.err.println("Parsing failed. ERROR: " + programPath + " does not exist ");
                 printUsage();
                 System.exit(-1);
             }
@@ -124,7 +129,7 @@ class Main {
      */
     private static void printUsage() {
         System.err.println("Usage: java golite.Main <scan | tokens | parse | pretty | type | "
-            + "dumpsymtab | pptype | gen | help> FILENAME");
+            + "dumpsymtab | pptype | gen | help> filepath");
     }
 
     /**
