@@ -644,22 +644,111 @@ public class CodeGenerator extends DepthFirstAdapter {
      */
     @Override
     public void caseASwitchStmt(ASwitchStmt node) {
-        /* TODO */
+        this.inASwitchStmt(node);
+
+        if (node.getStmt() != null) {
+            node.getStmt().apply(this);
+            addLines(1);
+            addTabs();
+        }
+
+        PExpr switchExpr = node.getExpr();
+
+        List<PCaseBlock> caseBlocks = new ArrayList<PCaseBlock>(node.getCaseBlock());
+
+        PCaseBlock defaultBlock = null;
+        for (PCaseBlock block : caseBlocks) {
+            PCaseCondition condition = ((ABlockCaseBlock) block).getCaseCondition();
+            if (condition instanceof ADefaultCaseCondition) {
+                defaultBlock = block;
+                break;
+            }
+        }
+
+        for (int i = 0; i < caseBlocks.size(); i++) {
+            PCaseCondition condition = ((ABlockCaseBlock) caseBlocks.get(i)).getCaseCondition();
+            if (condition instanceof ADefaultCaseCondition) {
+                continue;
+            }
+
+            if (i == 0) {
+                buffer.append("if");
+            } else {
+                addTabs();
+                buffer.append("elif");
+            }
+            addSpace();
+
+            List<PExpr> caseExprs = new ArrayList<PExpr>(((AExprsCaseCondition) condition).getExpr());
+            for (int j = 0; j < caseExprs.size(); j++) {
+                if (j > 0) {
+                    buffer.append(" or ");
+                }
+
+                if (switchExpr != null) {
+                    addLeftParen();
+                    switchExpr.apply(this);
+                    buffer.append(" == ");
+                    caseExprs.get(j).apply(this);
+                    addRightParen();
+                } else {
+                    caseExprs.get(j).apply(this);
+                }
+            }
+
+            addColon();
+
+            caseBlocks.get(i).apply(this);
+        }
+
+        if (defaultBlock != null) {
+            if (caseBlocks.size() == 1) {
+                buffer.append("if");
+                addSpace();
+                buffer.append("True");
+            } else {
+                addTabs();
+                buffer.append("else");
+            }
+
+            addColon();
+
+            defaultBlock.apply(this);
+        }
+
+        this.outASwitchStmt(node);
     }
 
     @Override
     public void caseABlockCaseBlock(ABlockCaseBlock node) {
-        /* TODO */
+        this.inABlockCaseBlock(node);
+
+        if (node.getCaseCondition() != null) {
+            // do nothing;
+        }
+
+        {
+            enterCodeBlock();
+
+            List<PStmt> copy = new ArrayList<PStmt>(node.getStmt());
+            for (PStmt e : copy) {
+                generateStatement(e);
+            }
+
+            exitCodeBlock();
+        }
+
+        this.outABlockCaseBlock(node);
     }
 
     @Override
     public void caseAExprsCaseCondition(AExprsCaseCondition node) {
-        /* TODO */
+        // do nothing;
     }
 
     @Override
     public void caseADefaultCaseCondition(ADefaultCaseCondition node) {
-        /* TODO */
+        // do nothing;
     }
 
     /**
@@ -678,7 +767,7 @@ public class CodeGenerator extends DepthFirstAdapter {
             addLines(1);
             addTabs();
         }
-        
+
         buffer.append("while");
         addSpace();
 
