@@ -173,13 +173,15 @@ def create_test_method_str(prog_fname, prog_fpath, tpe, ref):
 
 		if len(exceptions) == 1:
 			body = ('\t' * tabs)
-			body += "assertThatThrownBy(() -> { %s(\"%s\"); }).isInstanceOf(%s.class);" \
+			body += "assertThatThrownBy(() -> "
+			body += "{ %s(\"%s\"); }).isInstanceOf(%s.class);" \
 				% (check_method_name, prog_fpath, exceptions[0])
 		else:
 			body = ('\t' * tabs) + "try {\n"
 			
 			body += ('\t' * (tabs + 1))
-			body += "assertThatThrownBy(() -> { %s(\"%s\"); }).isInstanceOf(%s.class);\n" \
+			body += "assertThatThrownBy(() -> "
+			body += "{ %s(\"%s\"); }).isInstanceOf(%s.class);\n" \
 				% (check_method_name, prog_fpath, exceptions[0])
 
 			body += ('\t' * tabs) + "} catch (AssertionError e%d) {\n" \
