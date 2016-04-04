@@ -14,7 +14,7 @@ func h() bool {
 }
 
 func main() {
-	var x [5] int
+	var x [5]int
 	y := 10
 	i := 2
 	a := 4
