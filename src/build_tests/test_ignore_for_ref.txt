@@ -4,3 +4,15 @@
 ../programs/valid/syntax/other_groups/09/set2square.go
 # TODO: Not sure why the reference compiler fails to parse this one, gotta check with Vince.
 ../programs/valid/general/array.go
+# TODO: Reference compiler doesn't allow typed top-level variable declarations with no initialization, gotta check this with Vince.
+../programs/valid/general/top_var_bool_single_no_init_type.go
+# TODO: Same as previous.
+../programs/valid/general/top_var_float_single_no_init_type.go
+# TODO: Same as previous.
+../programs/valid/general/top_var_int_single_no_init_type.go
+# TODO: Same as previous.
+../programs/valid/general/top_var_rune_single_no_init_type.go
+# TODO: Same as previous.
+../programs/valid/general/top_var_string_single_no_init_type.go
+# Blank type alias not permitted in type declaration.
+../programs/valid/syntax/other_groups/08/blankType.go
