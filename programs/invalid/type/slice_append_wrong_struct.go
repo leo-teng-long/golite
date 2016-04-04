@@ -12,5 +12,5 @@ type that struct {
 
 func main () {
 	var e that
-	append(s, e)
+	s = append(s, e)
 }

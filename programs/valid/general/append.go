@@ -4,5 +4,5 @@ package main
 
 func main() {
 	var slice [] int
-	append(slice, 5)
+	slice = append(slice, 5)
 }

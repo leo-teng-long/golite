@@ -5,10 +5,10 @@ var ds [][]int
 var ts [][][]int
 
 func main () {
-	append(s, 0)
-	append(s, 1)
-	append(s, 2)
-	append(s, 3)
-	append(ds, s)
-	append(ts, ds)
+	s = append(s, 0)
+	s = append(s, 1)
+	s = append(s, 2)
+	s = append(s, 3)
+	ds = append(ds, s)
+	ts = append(ts, ds)
 }

@@ -4,9 +4,9 @@ var s []int
 var ts [][][]int
 
 func main () {
-	append(s, 0)
-	append(s, 1)
-	append(s, 2)
-	append(s, 3)
-	append(ts, s)
+	s = append(s, 0)
+	s = append(s, 1)
+	s = append(s, 2)
+	s = append(s, 3)
+	ts = append(ts, s)
 }

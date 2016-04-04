@@ -169,10 +169,11 @@ public class Weeder extends DepthFirstAdapter {
             || node instanceof ALoopStmt);
     }
 
+    // Throw an error if an expression statement does not comprise solely of a function call.
     @Override
     public void inAExprStmt(AExprStmt node) {
         PExpr pExpr = node.getExpr();
-        if (!(pExpr instanceof AFuncCallExpr || pExpr instanceof AAppendExpr))
+        if (!(pExpr instanceof AFuncCallExpr))
             // TODO: Add string of error-causing code.
             this.throwWeederException(node, "Evaluated but not used");
     }
