@@ -361,7 +361,7 @@ def create_test(test_name, progs_dirpaths, tpe, ref, test_ignore_path,
 		logging.info("Reading test ignore file from %s..." % test_ignore_path)
 		with open(test_ignore_path) as fin:
 			tests_to_ignore = set([l.strip() for l in fin
-				if not l.startswith('#')])
+				if not l.strip() == "" and not l.startswith('#')])
 	else:
 		if not test_ignore_path:
 			logging.info("No test ignore file.")
