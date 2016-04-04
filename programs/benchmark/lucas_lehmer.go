@@ -24,8 +24,8 @@ func LucasLehmer(p int) bool {
 	return s == 0
 }
 
-// Test whether 2^2018796950 is prime or not. Runs in approximately 14 sec.
-// using Go.
+// Test whether 2^2018796950 is prime or not (Runs in approximately 14 sec.
+// using Go on Mimi).
 func main() {
 	if LucasLehmer(2018796950) {
 		println("Is prime!")
