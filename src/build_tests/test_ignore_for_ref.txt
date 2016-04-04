@@ -1,0 +1,3 @@
+### Tests to ignore for Vince's GoLite reference compiler ###
+# Parenthesized assignables in an op-assignment are not supported.
+../programs/valid/syntax/other_groups/09/funccall.go
