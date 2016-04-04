@@ -8,7 +8,7 @@ type basicOperand int
 type point3D struct {x, y, z  float64; a  int; a, str  string; }
 type int_list [19348] int
 type string_slice [] somefloat
-type _ int
+// type _ int Error: Blank type alias is not permitted.
 type first int
 type second float64
 
