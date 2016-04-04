@@ -6,6 +6,6 @@ func notMain() int {
 	return y
 }
 
-func main () {
+func main() {
 	notMain()
 }
