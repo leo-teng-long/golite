@@ -52,7 +52,8 @@ func AckermannPeter(m, n int) int {
 	return n
 }
 
-// Compute the Ackermann-Peter function at m = 4 and n = 2 and print the result.
+// Compute the Ackermann-Peter function at m = 3 and n = 8 and print the
+// result (Runs fo approx. 40 sec. on Mimi).
 func main() {
-	println("A(4, 2) = ", AckermannPeter(4, 2))
+	println("Ackermann-Peter(3, 8) = ", AckermannPeter(3, 8))
 }
