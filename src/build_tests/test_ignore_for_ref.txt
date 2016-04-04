@@ -3,4 +3,4 @@
 # Parenthesized assignables in an op-assignment are not supported.
 ../programs/valid/syntax/other_groups/09/set2square.go
 # TODO: Not sure why the reference compiler fails to parse this one, gotta check with Vince.
-../programs/valid/syntax/general/array.go
+../programs/valid/general/array.go
