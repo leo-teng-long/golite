@@ -14,3 +14,5 @@
 ../programs/valid/general/top_var_rune_single_no_init_type.go
 # TODO: Same as previous.
 ../programs/valid/general/top_var_string_single_no_init_type.go
+# Blank type alias not permitted in type declaration.
+../programs/valid/syntax/other_groups/08/blankType.go
