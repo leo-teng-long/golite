@@ -14,3 +14,4 @@
 * Blank argument to print and println
 * Blank conversion
 * Expression statements containing a function call combined with other expression elements
+* Parenthesized assignables in an op-assignment
