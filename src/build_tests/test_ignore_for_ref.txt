@@ -30,3 +30,25 @@
 ../programs/invalid/syntax/other_groups/14/0350_array_type_parens.go
 # TODO: Reference compiler allows "non-returnables" to follow return statements, gotta check this with Vince.
 ../programs/invalid/syntax/weeding/func_wt_return_as_second_last_stmt_followed_by_non-return.go
+# Weeding is done for type checking (Manually checked this doesn't pass).
+../programs/invalid/syntax/weeding/constant_like_array_in_array_access.go
+# Same as previous.
+../programs/invalid/syntax/weeding/missing_return_in_func_wt_empty_block.go
+# Same as previous.
+../programs/invalid/syntax/weeding/func_ending_wt_three-part_exprless_loop_wt_break.go
+# Same as previous.
+../programs/invalid/syntax/weeding/func_ending_wt_three-part_loop.go
+# Same as previous.
+../programs/invalid/syntax/weeding/func_ending_wt_inf_loop_wt_nested_break.go
+# Same as previous.
+../programs/invalid/syntax/weeding/missing_default_case_in_switch_inside_func.go
+# Same as previous.
+../programs/invalid/syntax/weeding/missing_return_in_case_block_in_func.go
+# Same as previous.
+../programs/invalid/syntax/other_groups/03/invalid_funcdecl.go
+# Same as previous.
+../programs/invalid/syntax/weeding/constant_like_obj_in_field_access.go
+# Same as previous.
+../programs/invalid/syntax/weeding/func_ending_wt_inf_loop_wt_break.go
+# Same as previous.
+../programs/invalid/syntax/other_groups/07/typecast_string.go
