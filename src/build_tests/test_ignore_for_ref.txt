@@ -52,3 +52,10 @@
 ../programs/invalid/syntax/weeding/func_ending_wt_inf_loop_wt_break.go
 # Same as previous.
 ../programs/invalid/syntax/other_groups/07/typecast_string.go
+# Same as previous.
+../programs/invalid/syntax/other_groups/03/invalid_funccall1.go
+# Same as previous.
+../programs/invalid/syntax/weeding/return_void.go
+# Same as previous.
+../programs/invalid/syntax/other_groups/03/invalid_vardecl_6.go
+
