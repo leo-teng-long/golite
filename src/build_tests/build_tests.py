@@ -284,11 +284,11 @@ def create_test_method_str(prog_fname, prog_fpath, tpe, ref):
 			capitalize(test_name)
 
 	if tpe == 'valid_parse' and ref:
-		method_body = create_ref_method_body("parse", prog_fpath, True, 2)
+		method_body = create_ref_method_body("typecheck", prog_fpath, True, 2)
 	elif tpe == 'valid_parse':
 		method_body = create_assert_true_method_body("parse", prog_fpath, 2)
 	elif tpe == 'invalid_parse' and ref:
-		method_body = create_ref_method_body("parse", prog_fpath, False, 2)
+		method_body = create_ref_method_body("typecheck", prog_fpath, False, 2)
 	elif tpe == 'invalid_parse':
 		method_body = create_assert_exception_method_body("parse",
 			["LexerException", "ParserException", "WeederException"],
