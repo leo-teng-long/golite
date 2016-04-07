@@ -1,6 +1,6 @@
- /* Increment on  element. */
+ /* Increment on field. */
 
-package main;
+package main
 
 type t struct {
 	f int

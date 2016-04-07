@@ -1,6 +1,6 @@
 /* Function with a bunch of if-statments, all with a return statement. */
 
-package main;
+package main
 
 func foo(x int) int {
 	if (x % 2 == 0) {

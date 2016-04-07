@@ -1,6 +1,6 @@
  /* Increment on parenthesized array element. */
 
-package main;
+package main
 
 func main() {
 	var a [10]int

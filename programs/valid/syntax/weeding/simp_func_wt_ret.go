@@ -1,4 +1,6 @@
-package main;
+/* Simple function with a terminating return statement. */
+
+package main
 
 func notMain() int {
 	x := 5
