@@ -16,3 +16,5 @@
 ../programs/valid/general/top_var_string_single_no_init_type.go
 # Blank type alias not permitted in type declaration.
 ../programs/valid/syntax/other_groups/08/blankType.go
+# Blank field not permitted in struct declaration.
+../programs/valid/syntax/other_groups/08/blankFieldsStruct.go
