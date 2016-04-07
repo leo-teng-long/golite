@@ -1,4 +1,4 @@
-/* Blank assignment. */
+/* Assigning a blank. */
 
 package main
 

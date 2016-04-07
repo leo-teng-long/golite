@@ -22,3 +22,11 @@
 ../programs/valid/syntax/other_groups/08/blankFieldsStruct.go
 # Same as previous.
 ../programs/valid/syntax/struct_wt_blank_fields.go
+# Weeding is done for type checking (Manually checked this doesn't pass).
+../programs/invalid/syntax/weeding/missing_return_in_case_block_in_func.go
+# TODO: Assigning a blank shouldn't be allowed...gotta check this with Vince.
+../programs/invalid/syntax/assigning_blank.go
+# TODO: Parenthesization of arugment types in type aliasing is valid.
+../programs/invalid/syntax/other_groups/14/0350_array_type_parens.go
+# TODO: Reference compiler allows "non-returnables" to follow return statements, gotta check this with Vince.
+../programs/invalid/syntax/weeding/func_wt_return_as_second_last_stmt_followed_by_non-return.go
