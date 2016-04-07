@@ -1,0 +1,44 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+
+\title{Comp 520: Milestone \#3}
+\author{The Heapsters}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+
+We decided to generate Python. At this point, we feel we have completed most of the code generator, despite deciding to re-implement our type checking system. 
+
+\section{Implementation Complete}
+\begin{itemize}
+\item All literals except rune
+\begin{itemize}
+\item We haven't decided how to handle the discrepancy between char and int representations of runes in python
+\end{itemize}
+\item Operators including increment/decrement, unary, and binary
+\item Print and println
+\item Loops including while, for
+\item Switch statements
+\item Op assign
+\item Function declarations
+\item Function call expressions
+\item Continue and break
+\item Return
+\item Assignment statements
+\item Short declarations
+\end{itemize}
+
+\section{Implementation in Progress:}
+\begin{itemize}
+\item Array, field, append, typecasting
+\item Struct, distributed var dec, if else
+\item Scoping rules have some problems (e.g. variable naming conventions since python has different scoping rules)
+\item We still have a lot of "pass" keywords in our generated code to handle empty blocks
+\item In python, ints aren't 32 bit so when translating go into python we need to add a bit wrap around to force the overflow
+\end{itemize}
+
+\end{document}
