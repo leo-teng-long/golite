@@ -6,5 +6,5 @@ func f1(a, b, c int) {
 
 func main() {
 	a, b, c := 3, 4, 5
-	f1(a,b,c)
+	f1(a, b, c)
 }

@@ -7,6 +7,6 @@ func main() {
 
 	/* Regular braces, no statement */
 	if x {
-		//Do nothing
+		// Do nothing
 	}
 }

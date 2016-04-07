@@ -22,6 +22,6 @@ func add(x, y int) int {
 
 func main() {
 	x := 10 // You can do short variable declarations
-	z := add(5,4) // You can use functions to declare
+	z := add(5, 4) // You can use functions to declare
 	y = x + z
 }
