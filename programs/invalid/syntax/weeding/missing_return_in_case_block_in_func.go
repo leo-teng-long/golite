@@ -13,7 +13,8 @@ func foo(x int) int {
 			case 5:
 				return x;
 			case 7:
-				// Default case.
+				// Error: Missing return statement for this case block.
+			// Default case.
 			default:
 				return x;
 		}
