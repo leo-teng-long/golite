@@ -40,12 +40,12 @@ public class CodeGenerator extends DepthFirstAdapter {
         if (typeTable.get(n) instanceof IntType || typeTable.get(n) instanceof RuneType)
         {
             buffer.append("bit_mask(");
-        }                    
+        }
         n.apply(this);
         if (typeTable.get(n) instanceof IntType || typeTable.get(n) instanceof RuneType)
         {
             buffer.append(")");
-        }   
+        }
     }
 
     /**
@@ -146,7 +146,7 @@ public class CodeGenerator extends DepthFirstAdapter {
             } else if (type instanceof AFloatTypeExpr) {
                 defaultValue = "0.";
             } else if (type instanceof ARuneTypeExpr) {
-                /* TODO */
+                defaultValue = "0";
             } else if (type instanceof AStringTypeExpr) {
                 defaultValue = "";
             }
@@ -168,7 +168,7 @@ public class CodeGenerator extends DepthFirstAdapter {
                     addComma();
                     addSpace();
                 }
-                copy.get(i).apply(this);
+                bitMask(copy.get(i));
             }
         }
 
@@ -316,7 +316,7 @@ public class CodeGenerator extends DepthFirstAdapter {
                     addComma();
                     addSpace();
                 }
-                                    
+
                 bitMask(copy.get(i));
             }
         }
