@@ -371,7 +371,7 @@ class Main {
 
             ast.apply(typeChecker);
 
-            CodeGenerator codeGenerator = new CodeGenerator();
+            CodeGenerator codeGenerator = new CodeGenerator(typeChecker.getTypeTable());
             ast.apply(codeGenerator);
 
             dump(codeGenerator.getGeneratedCode(), inPath, ".golite.py");

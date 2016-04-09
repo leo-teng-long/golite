@@ -2,6 +2,8 @@ package golite.generator;
 
 import golite.analysis.*;
 import golite.node.*;
+import golite.symbol.*;
+import golite.type.*;
 import java.util.*;
 import java.io.*;
 
@@ -16,12 +18,16 @@ public class CodeGenerator extends DepthFirstAdapter {
     /** Keep track of how many tabs need to be added */
     private int tabDepth;
 
+    /** Contain information about expressions */
+    private HashMap<Node, GoLiteType> typeTable;
+
     /**
      * CodeGenerator Constructor
      */
-    public CodeGenerator() {
+    public CodeGenerator(HashMap<Node, GoLiteType> typeTable) {
         this.buffer = new StringBuffer();
         this.tabDepth = 0;
+        this.typeTable = typeTable;
     }
 
     /**
@@ -48,6 +54,8 @@ public class CodeGenerator extends DepthFirstAdapter {
 
     private void generateImport() {
         buffer.append("from __future__ import print_function\n");
+        addLines(1);
+        buffer.append("bit_mask = lambda x : (x + 2**31) % 2**32 - 2**31\n");
         addLines(1);
     }
 
@@ -1522,7 +1530,7 @@ public class CodeGenerator extends DepthFirstAdapter {
 
         String rawString = node.getRawStringLit().getText();
         StringBuffer pythonString = new StringBuffer();
-
+        
         pythonString.append('r');
         pythonString.append('"');
         pythonString.append(rawString.substring(1, rawString.length() - 1));
@@ -1597,7 +1605,7 @@ public class CodeGenerator extends DepthFirstAdapter {
             buffer.append("pass");
             addLines(1);
         }
-        
+
         deleteLastCharacter();
         tabDepth--;
     }
