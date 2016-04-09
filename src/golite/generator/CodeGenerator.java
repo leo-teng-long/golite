@@ -1633,7 +1633,7 @@ public class CodeGenerator extends DepthFirstAdapter {
             if (s.equals("'\\t'"))
             {
                 buffer.append(9);
-            } 
+            }
             else if (s.equals("'\\b'"))
             {
                 buffer.append(8);
@@ -1668,7 +1668,7 @@ public class CodeGenerator extends DepthFirstAdapter {
             }
             else
             {
-                buffer.append((int) s.substring(1, s.length()-1).charAt(0));
+                buffer.append((int) s.substring(1, s.length() - 1).charAt(0));
             }
         }
 
