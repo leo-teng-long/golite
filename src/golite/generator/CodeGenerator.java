@@ -13,6 +13,7 @@ public class CodeGenerator extends DepthFirstAdapter {
 
     /** Buffer storing generated python code */
     private StringBuffer buffer;
+    
     /** Keep track of how many tabs need to be added */
     private int tabDepth;
 
@@ -33,6 +34,105 @@ public class CodeGenerator extends DepthFirstAdapter {
     }
 
     /**
+     * Code generation - built-in types:
+     *      bool, int, float64, rune, string
+     *
+     */
+    @Override
+    public void caseABoolTypeExpr(ABoolTypeExpr node) {
+        this.inABoolTypeExpr(node);
+
+        this.buffer.append("bool");
+
+        this.outABoolTypeExpr(node);
+    }
+
+    @Override
+    public void caseAIntTypeExpr(AIntTypeExpr node) {
+        this.inAIntTypeExpr(node);
+
+        this.buffer.append("int");
+
+        this.outAIntTypeExpr(node);
+
+        /** TODO: use int or long? */
+    }
+
+    @Override
+    public void caseAFloatTypeExpr(AFloatTypeExpr node) {
+        this.inAFloatTypeExpr(node);
+
+        this.buffer.append("float");
+
+        this.outAFloatTypeExpr(node);
+
+        /** TODO: use float or double? */
+    }
+
+    @Override
+    public void caseARuneTypeExpr(ARuneTypeExpr node) {
+        this.inARuneTypeExpr(node);
+
+        /** TODO: handle as int or char? */
+
+        this.outARuneTypeExpr(node);
+    }
+
+    @Override
+    public void caseAStringTypeExpr(AStringTypeExpr node) {
+        this.inAStringTypeExpr(node);
+
+        /** TODO: not handled */
+
+        this.outAStringTypeExpr(node);
+    }
+
+    /**
+     * Code generation - array / slice
+     *
+     */
+    @Override
+    public void caseAArrayTypeExpr(AArrayTypeExpr node) {
+        this.inAArrayTypeExpr(node);
+
+        /** TODO: not handled */
+
+        this.outAArrayTypeExpr(node);
+    }
+
+    @Override
+    public void caseASliceTypeExpr(ASliceTypeExpr node) {
+        this.inASliceTypeExpr(node);
+
+        /** TODO: not handled */
+
+        this.outASliceTypeExpr(node);
+    }
+
+    /**
+     * Code generation - custom types:
+     *      alias, struct
+     *
+     */
+    @Override
+    public void caseAAliasTypeExpr(AAliasTypeExpr node) {
+        this.inAAliasTypeExpr(node);
+
+        /** TODO: not handled */
+
+        this.outAAliasTypeExpr(node);
+    }
+
+    @Override
+    public void caseAStructTypeExpr(AStructTypeExpr node) {
+        this.inAStructTypeExpr(node);
+
+        /** TODO: not handled */
+
+        this.outAStructTypeExpr(node);
+    }
+
+    /**
      * Code generation - empty expressions
      *
      */
@@ -46,7 +146,7 @@ public class CodeGenerator extends DepthFirstAdapter {
     }
 
     /**
-     * Code generation - binary operators
+     * Code generation - binary operators:
      *      '+', '-', '*', '/', '%'
      *
      */
@@ -158,7 +258,7 @@ public class CodeGenerator extends DepthFirstAdapter {
     }
 
     /**
-     * Code generation - bit operators
+     * Code generation - bit operators:
      *      '&', '|', '^', '&^', '<<', '>>'
      *
      */
@@ -277,7 +377,7 @@ public class CodeGenerator extends DepthFirstAdapter {
     }
 
     /**
-     * Code generation - unary operators
+     * Code generation - unary operators:
      *      '+', '-', '^', '!'
      *
      */
@@ -354,7 +454,8 @@ public class CodeGenerator extends DepthFirstAdapter {
     }
 
     /**
-     * Code generation - relational operators
+     * Code generation - relational operators:
+     *      '==', '!=', '<', '<=', '>', '>='
      *
      */
     @Override
@@ -496,7 +597,7 @@ public class CodeGenerator extends DepthFirstAdapter {
     }
 
     /**
-     * Code generation - conditional operators
+     * Code generation - conditional operators:
      *      '&&', '||'
      *
      */
