@@ -17,6 +17,8 @@ public class CodeGenerator extends DepthFirstAdapter {
     private StringBuffer buffer;
     /** Keep track of how many tabs need to be added */
     private int tabDepth;
+    /** Keep track of the end statement of for loop */
+    private PStmt lastForEnd;
 
     /** Contain information about expressions */
     private HashMap<Node, GoLiteType> typeTable;
@@ -89,11 +91,7 @@ public class CodeGenerator extends DepthFirstAdapter {
 
             for (PTopDec e : copy) {
                 e.apply(this);
-                if (e instanceof AFuncTopDec) {
-                    addLines(2);
-                } else {
-                    addLines(1);
-                }
+                addLines(1);
             }
         }
 
@@ -106,12 +104,54 @@ public class CodeGenerator extends DepthFirstAdapter {
      */
     @Override
     public void caseAVarsTopDec(AVarsTopDec node) {
-        /* TODO */
+        this.inAVarsTopDec(node);
+
+        {
+            List<PVarSpec> copy = new ArrayList<PVarSpec>(node.getVarSpec());
+            for (PVarSpec e : copy) {
+                e.apply(this);
+                addLines(1);
+            }
+        }
+
+        this.outAVarsTopDec(node);
     }
 
     @Override
     public void caseASpecVarSpec(ASpecVarSpec node) {
-        /* TODO */
+        this.inASpecVarSpec(node);
+
+        {
+            List<POptId> copy = new ArrayList<POptId>(node.getOptId());
+
+            for (int i = 0; i < copy.size(); i++) {
+                if (i > 0) {
+                    addComma();
+                    addSpace();
+                }
+                copy.get(i).apply(this);
+            }
+        }
+
+        buffer.append(" = ");
+
+        if (node.getTypeExpr() != null) {
+            /* TODO */
+        }
+
+        {
+            List<PExpr> copy = new ArrayList<PExpr>(node.getExpr());
+
+            for (int i = 0; i < copy.size(); i++) {
+                if (i > 0) {
+                    addComma();
+                    addSpace();
+                }
+                copy.get(i).apply(this);
+            }
+        }
+
+        this.outASpecVarSpec(node);
     }
 
     /**
@@ -212,7 +252,21 @@ public class CodeGenerator extends DepthFirstAdapter {
      */
     @Override
     public void caseAVarDecStmt(AVarDecStmt node) {
-        /* TODO */
+        this.inAVarDecStmt(node);
+
+        {
+            List<PVarSpec> copy = new ArrayList<PVarSpec>(node.getVarSpec());
+
+            for (int i = 0; i < copy.size(); i++) {
+                if (i > 0) {
+                    addLines(1);
+                    addTabs();
+                }
+                copy.get(i).apply(this);
+            }
+        }
+
+        this.outAVarDecStmt(node);
     }
 
     @Override
@@ -641,6 +695,11 @@ public class CodeGenerator extends DepthFirstAdapter {
     public void caseAContinueStmt(AContinueStmt node) {
         this.inAContinueStmt(node);
 
+        if (lastForEnd != null) {
+            lastForEnd.apply(this);
+            addLines(1);
+            addTabs();
+        }
         buffer.append("continue");
 
         this.outAContinueStmt(node);
@@ -879,6 +938,7 @@ public class CodeGenerator extends DepthFirstAdapter {
         /**
          * Only used when generating for Loops
          */
+        lastForEnd = node.getEnd();
         if (node.getEnd() != null) {
             copy.add(node.getEnd());
         }
@@ -1563,7 +1623,7 @@ public class CodeGenerator extends DepthFirstAdapter {
 
         String rawString = node.getRawStringLit().getText();
         StringBuffer pythonString = new StringBuffer();
-        
+
         pythonString.append('r');
         pythonString.append('"');
         pythonString.append(rawString.substring(1, rawString.length() - 1));
@@ -1638,8 +1698,6 @@ public class CodeGenerator extends DepthFirstAdapter {
             buffer.append("pass");
             addLines(1);
         }
-
-        deleteLastCharacter();
         tabDepth--;
     }
 
