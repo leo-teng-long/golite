@@ -46,6 +46,16 @@ public class CodeGenerator extends DepthFirstAdapter {
         generateMain();
     }
 
+    private void generateImport() {
+        buffer.append("from __future__ import print_function\n");
+        addLines(1);
+    }
+
+    private void generateMain() {
+        buffer.append("if __name__ == '__main__':\n");
+        buffer.append("\tmain()\n");
+    }
+
     @Override
     public void caseAProgProg(AProgProg node) {
         this.inAProgProg(node);
@@ -55,21 +65,15 @@ public class CodeGenerator extends DepthFirstAdapter {
 
             for (PTopDec e : copy) {
                 e.apply(this);
-                addLines(1);
+                if (e instanceof AFuncTopDec) {
+                    addLines(2);
+                } else {
+                    addLines(1);
+                }
             }
         }
 
         this.outAProgProg(node);
-    }
-
-    private void generateImport() {
-        buffer.append("from __future__ import print_function\n");
-        addLines(1);
-    }
-
-    private void generateMain() {
-        buffer.append("if __name__ == '__main__':\n");
-        buffer.append("\tmain()\n");
     }
 
     /**
@@ -142,7 +146,7 @@ public class CodeGenerator extends DepthFirstAdapter {
                 generateStatement(e);
             }
 
-            exitCodeBlock();
+            exitCodeBlock(isBlockEmpty(copy));
         }
 
         this.outAFuncTopDec(node);
@@ -630,12 +634,61 @@ public class CodeGenerator extends DepthFirstAdapter {
      */
     @Override
     public void caseAIfElseStmt(AIfElseStmt node) {
-        /* TODO */
+        this.inAIfElseStmt(node);
+
+        if (node.getCondition() != null) {
+            node.getCondition().apply(this);
+        }
+
+        {
+            enterCodeBlock();
+
+            List<PStmt> copy = new ArrayList<PStmt>(node.getIfBlock());
+            for (PStmt e : copy) {
+                generateStatement(e);
+            }
+
+            exitCodeBlock(isBlockEmpty(copy));
+        }
+
+        addTabs();
+        buffer.append("else");
+        addColon();
+
+        {
+            enterCodeBlock();
+
+            List<PStmt> copy = new ArrayList<PStmt>(node.getElseBlock());
+            for (PStmt e : copy) {
+                generateStatement(e);
+            }
+
+            exitCodeBlock(isBlockEmpty(copy));
+        }
+
+        this.outAIfElseStmt(node);
     }
 
     @Override
     public void caseAConditionCondition(AConditionCondition node) {
-        /* TODO */
+        this.inAConditionCondition(node);
+
+        if (node.getStmt() != null) {
+            node.getStmt().apply(this);
+            addLines(1);
+            addTabs();
+        }
+
+        buffer.append("if");
+        addSpace();
+
+        if (node.getExpr() != null) {
+            node.getExpr().apply(this);
+        }
+
+        addColon();
+
+        this.outAConditionCondition(node);
     }
 
     /**
@@ -735,7 +788,7 @@ public class CodeGenerator extends DepthFirstAdapter {
                 generateStatement(e);
             }
 
-            exitCodeBlock();
+            exitCodeBlock(isBlockEmpty(copy));
         }
 
         this.outABlockCaseBlock(node);
@@ -782,18 +835,18 @@ public class CodeGenerator extends DepthFirstAdapter {
         enterCodeBlock();
 
         List<PStmt> copy = new ArrayList<PStmt>(node.getBlock());
-        for (PStmt e : copy) {
-            generateStatement(e);
-        }
-
         /**
          * Only used when generating for Loops
          */
         if (node.getEnd() != null) {
-            generateStatement(node.getEnd());
+            copy.add(node.getEnd());
         }
 
-        exitCodeBlock();
+        for (PStmt e : copy) {
+            generateStatement(e);
+        }
+
+        exitCodeBlock(isBlockEmpty(copy));
 
         this.outALoopStmt(node);
     }
@@ -1488,6 +1541,18 @@ public class CodeGenerator extends DepthFirstAdapter {
         buffer.append(' ');
     }
 
+    private void addTabs() {
+        for (int i = 0; i < tabDepth; i++) {
+            buffer.append('\t');
+        }
+    }
+
+    private void addLines(int n) {
+        for (int i = 0; i < n; i++) {
+            buffer.append('\n');
+        }
+    }
+
     private void addComma() {
         buffer.append(',');
     }
@@ -1508,19 +1573,11 @@ public class CodeGenerator extends DepthFirstAdapter {
         buffer.deleteCharAt(buffer.length() - 1);
     }
 
-    private void addTabs() {
-        for (int i = 0; i < tabDepth; i++) {
-            buffer.append('\t');
-        }
-    }
-
-    private void addLines(int n) {
-        for (int i = 0; i < n; i++) {
-            buffer.append('\n');
-        }
-    }
-
     private void generateStatement(PStmt e) {
+        if (e instanceof AEmptyStmt) {
+            return;
+        }
+
         addTabs();
         e.apply(this);
         addLines(1);
@@ -1531,13 +1588,31 @@ public class CodeGenerator extends DepthFirstAdapter {
         tabDepth++;
     }
 
-    private void exitCodeBlock() {
+    private void exitCodeBlock(boolean addPass) {
         /**
          * Add empty function call to prevent unexpected indented block
          */
-        addTabs();
-        buffer.append("pass\n");
+        if (addPass) {
+            addTabs();
+            buffer.append("pass");
+            addLines(1);
+        }
+        
+        deleteLastCharacter();
         tabDepth--;
+    }
+
+    private boolean isBlockEmpty(List<PStmt> copy) {
+        boolean flag = true;
+
+        for (PStmt e : copy) {
+            if (!(e instanceof AEmptyStmt)) {
+                flag = false;
+                break;
+            }
+        }
+
+        return flag;
     }
 
 }
