@@ -146,7 +146,7 @@ public class CodeGenerator extends DepthFirstAdapter {
             } else if (type instanceof AFloatTypeExpr) {
                 defaultValue = "0.";
             } else if (type instanceof ARuneTypeExpr) {
-                /* TODO */
+                defaultValue = "0";
             } else if (type instanceof AStringTypeExpr) {
                 defaultValue = "";
             }
