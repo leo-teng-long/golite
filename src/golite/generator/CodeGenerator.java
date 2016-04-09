@@ -37,12 +37,12 @@ public class CodeGenerator extends DepthFirstAdapter {
      */
     public void bitMask(Node n)
     {
-        if (typeTable.get(n) instanceof IntType)
+        if (typeTable.get(n) instanceof IntType || typeTable.get(n) instanceof RuneType)
         {
             buffer.append("bit_mask(");
         }                    
         n.apply(this);
-        if (typeTable.get(n) instanceof IntType)
+        if (typeTable.get(n) instanceof IntType || typeTable.get(n) instanceof RuneType)
         {
             buffer.append(")");
         }   
@@ -1626,7 +1626,53 @@ public class CodeGenerator extends DepthFirstAdapter {
 
     @Override
     public void caseARuneLitExpr(ARuneLitExpr node) {
-        /* TODO */
+        this.inARuneLitExpr(node);
+
+        if (node.getRuneLit() != null) {
+            String s = node.getRuneLit().getText();
+            if (s.equals("'\\t'"))
+            {
+                buffer.append(9);
+            } 
+            else if (s.equals("'\\b'"))
+            {
+                buffer.append(8);
+            }
+            else if (s.equals("'\\f'"))
+            {
+                buffer.append(12);
+            }
+            else if (s.equals("'\\a'"))
+            {
+                buffer.append(7);
+            }
+            else if (s.equals("'\\n'"))
+            {
+                buffer.append(10);
+            }
+            else if (s.equals("'\\r'"))
+            {
+                buffer.append(13);
+            }
+            else if (s.equals("'\\v'"))
+            {
+                buffer.append(11);
+            }
+            else if (s.equals("'\\\\'"))
+            {
+                buffer.append(92);
+            }
+            else if (s.equals("'\\''"))
+            {
+                buffer.append(39);
+            }
+            else
+            {
+                buffer.append((int) s.substring(1, s.length()-1).charAt(0));
+            }
+        }
+
+        this.outARuneLitExpr(node);
     }
 
     @Override
