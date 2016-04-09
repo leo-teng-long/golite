@@ -119,8 +119,29 @@ public class CodeGenerator extends DepthFirstAdapter {
 
         buffer.append(" = ");
 
-        if (node.getTypeExpr() != null) {
-            /* TODO */
+        if (node.getTypeExpr() != null && node.getExpr().size() == 0) {
+            PTypeExpr type = node.getTypeExpr();
+            String defaultValue = null;
+
+            if (type instanceof ABoolTypeExpr) {
+                defaultValue = "False";
+            } else if (type instanceof AIntTypeExpr) {
+                defaultValue = "0";
+            } else if (type instanceof AFloatTypeExpr) {
+                defaultValue = "0.";
+            } else if (type instanceof ARuneTypeExpr) {
+                /* TODO */
+            } else if (type instanceof AStringTypeExpr) {
+                defaultValue = "";
+            }
+
+            for (int i = 0; i < node.getOptId().size(); i++) {
+                if (i > 0) {
+                    addComma();
+                    addSpace();
+                }
+                buffer.append(defaultValue);
+            }
         }
 
         {
