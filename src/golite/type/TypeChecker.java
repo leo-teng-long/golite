@@ -122,8 +122,7 @@ public class TypeChecker extends DepthFirstAdapter {
             else 
                 this.throwTypeCheckException(pExpr, "Non-integer array bound");
 
-            return new ArrayType(getType(((AArrayTypeExpr) node).getTypeExpr()),
-                bound);
+            return new ArrayType(getType(((AArrayTypeExpr) node).getTypeExpr()), bound);
         } else if (node instanceof ASliceTypeExpr)
             return new SliceType(getType(((ASliceTypeExpr) node).getTypeExpr()));
         else if (node instanceof AStructTypeExpr) {
@@ -350,10 +349,8 @@ public class TypeChecker extends DepthFirstAdapter {
             this.symbolTable.scope();
 
             // Initialize boolean literals.
-            Symbol trueSymbol = new VariableSymbol("true", new BoolType(), node);
-            Symbol falseSymbol = new VariableSymbol("false", new BoolType(), node);
-            this.symbolTable.putSymbol(trueSymbol);
-            this.symbolTable.putSymbol(falseSymbol);
+            this.symbolTable.putSymbol(new VariableSymbol("true", new BoolType(), node));
+            this.symbolTable.putSymbol(new VariableSymbol("false", new BoolType(), node));
         }
     }
 
