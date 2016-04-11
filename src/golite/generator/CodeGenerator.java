@@ -62,22 +62,23 @@ public class CodeGenerator extends DepthFirstAdapter {
      */
     @Override
     public void inAProgProg(AProgProg node) {
-        generateImport();
+        generateOverheadIn();
     }
 
     @Override
     public void outAProgProg(AProgProg node) {
-        generateMain();
+        generateOverheadOut();
     }
 
-    private void generateImport() {
+    private void generateOverheadIn() {
         buffer.append("from __future__ import print_function\n");
         addLines(1);
+
         buffer.append("bit_mask = lambda x : (x + 2**31) % 2**32 - 2**31\n");
         addLines(1);
     }
 
-    private void generateMain() {
+    private void generateOverheadOut() {
         buffer.append("if __name__ == '__main__':\n");
         buffer.append("\tmain()\n");
     }
@@ -163,6 +164,10 @@ public class CodeGenerator extends DepthFirstAdapter {
             defaultValue += "";
         } else if (type instanceof AStructTypeExpr) {
             defaultValue += getStructString((AStructTypeExpr) type);
+        } else if (type instanceof AArrayTypeExpr) {
+            /* TODO */
+        } else if (type instanceof ASliceTypeExpr) {
+            defaultValue = "[]";
         }
         return defaultValue;
     }
@@ -1569,7 +1574,27 @@ public class CodeGenerator extends DepthFirstAdapter {
 
     @Override
     public void caseAAppendExpr(AAppendExpr node) {
-        /* TODO */
+        this.inAAppendExpr(node);
+
+        addLeftParen();
+
+        if (node.getId() != null) {
+            buffer.append(node.getId().getText());
+        }
+
+        buffer.append(" + ");
+
+        addLeftBracket();
+
+        if (node.getExpr() != null) {
+            node.getExpr().apply(this);
+        }
+
+        addRightBracket();
+
+        addRightParen();
+
+        this.outAAppendExpr(node);
     }
 
     @Override
@@ -1587,7 +1612,21 @@ public class CodeGenerator extends DepthFirstAdapter {
      */
     @Override
     public void caseAArrayElemExpr(AArrayElemExpr node) {
-        /* TODO */
+        this.inAArrayElemExpr(node);
+
+        if (node.getArray() != null) {
+            node.getArray().apply(this);
+        }
+
+        addLeftBracket();
+
+        if (node.getIndex() != null) {
+            node.getIndex().apply(this);
+        }
+
+        addRightBracket();
+
+        this.outAArrayElemExpr(node);
     }
 
     @Override
@@ -1780,6 +1819,14 @@ public class CodeGenerator extends DepthFirstAdapter {
         buffer.append(')');
     }
 
+    private void addLeftBracket() {
+        buffer.append('[');
+    }
+
+    private void addRightBracket() {
+        buffer.append(']');
+    }
+
     private void deleteLastCharacter() {
         buffer.deleteCharAt(buffer.length() - 1);
     }
@@ -1791,7 +1838,9 @@ public class CodeGenerator extends DepthFirstAdapter {
 
         addTabs();
         e.apply(this);
-        addLines(1);
+        if (!(e instanceof AIfElseStmt) && !(e instanceof ASwitchStmt) && !(e instanceof ALoopStmt) && !(e instanceof ABlockStmt)) {
+            addLines(1);
+        }
     }
 
     private void enterCodeBlock() {
@@ -1808,6 +1857,7 @@ public class CodeGenerator extends DepthFirstAdapter {
             buffer.append("pass");
             addLines(1);
         }
+
         tabDepth--;
     }
 
