@@ -1599,8 +1599,22 @@ public class CodeGenerator extends DepthFirstAdapter {
 
     @Override
     public void caseATypeCastExpr(ATypeCastExpr node) {
-        buffer.append(node.getTypeExpr());
-        buffer.setLength(buffer.length() - 1);
+        String type = "";
+        PTypeExpr expr = node.getTypeExpr();
+        if (expr instanceof AFloatTypeExpr)
+        {
+            type = "float";
+        }
+        else if (expr instanceof ARuneTypeExpr)
+        {
+            type = "int";
+        }
+        else if (expr instanceof ABoolTypeExpr || expr instanceof AIntTypeExpr)
+        {
+            buffer.append(expr.toString());
+            buffer.setLength(buffer.length() - 1);
+        }
+        buffer.append(type);
         buffer.append("(");
         node.getExpr().apply(this);
         buffer.append(")");
