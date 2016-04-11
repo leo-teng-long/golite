@@ -140,7 +140,7 @@ public class <<<INSERT NAME HERE>>> {
         TypeChecker typeChecker = new TypeChecker();
         ast.apply(typeChecker);
 
-        CodeGenerator codeGenerator = new CodeGenerator();
+        CodeGenerator codeGenerator = new CodeGenerator(typeChecker.getTypeTable());
         ast.apply(codeGenerator);
 
         try (PrintWriter out = new PrintWriter(new FileWriter(outPath))) {
