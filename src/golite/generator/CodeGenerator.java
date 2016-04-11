@@ -117,6 +117,57 @@ public class CodeGenerator extends DepthFirstAdapter {
         this.outAVarsTopDec(node);
     }
 
+    private String getStructString(AStructTypeExpr node)
+    {
+        String defaultValue = "{ ";
+        ArrayList<PFieldSpec> fields = new ArrayList<PFieldSpec>(((AStructTypeExpr) node).getFieldSpec());
+        Boolean first = true;
+        for (PFieldSpec f: fields)
+        {
+            if (!(first))
+            {
+                defaultValue += ", ";
+            }
+            ArrayList<POptId> opts = new ArrayList<POptId>(((ASpecFieldSpec) f).getOptId());
+            first = true;
+            for (POptId o: opts)
+            {
+                if (!(first))
+                {
+                    defaultValue += ", ";
+                }
+                defaultValue += ((AIdOptId) o).toString();
+                defaultValue += ": ";
+                defaultValue += getTypeString(((ASpecFieldSpec) f).getTypeExpr());
+                first = false;
+            }
+            first = false;
+        }
+        defaultValue += " }";
+        return defaultValue;
+    }
+
+    private String getTypeString(PTypeExpr type)
+    {
+        System.out.println(type.getClass());
+        String defaultValue = "";
+        if (type instanceof ABoolTypeExpr) {
+            defaultValue += "False";
+        } else if (type instanceof AIntTypeExpr) {
+            defaultValue += "0";
+        } else if (type instanceof AFloatTypeExpr) {
+            defaultValue += "0.";
+        } else if (type instanceof ARuneTypeExpr) {
+            defaultValue += "0";
+        } else if (type instanceof AStringTypeExpr) {
+            defaultValue += "";
+        } else if (type instanceof AStructTypeExpr) {
+            defaultValue += getStructString((AStructTypeExpr) type);
+        }
+        return defaultValue;
+    }
+
+
     @Override
     public void caseASpecVarSpec(ASpecVarSpec node) {
         this.inASpecVarSpec(node);
@@ -137,20 +188,8 @@ public class CodeGenerator extends DepthFirstAdapter {
 
         if (node.getTypeExpr() != null && node.getExpr().size() == 0) {
             PTypeExpr type = node.getTypeExpr();
-            String defaultValue = null;
-
-            if (type instanceof ABoolTypeExpr) {
-                defaultValue = "False";
-            } else if (type instanceof AIntTypeExpr) {
-                defaultValue = "0";
-            } else if (type instanceof AFloatTypeExpr) {
-                defaultValue = "0.";
-            } else if (type instanceof ARuneTypeExpr) {
-                defaultValue = "0";
-            } else if (type instanceof AStringTypeExpr) {
-                defaultValue = "";
-            }
-
+            String defaultValue = getTypeString(type);
+            System.out.println(defaultValue);
             for (int i = 0; i < node.getOptId().size(); i++) {
                 if (i > 0) {
                     addComma();
@@ -1535,7 +1574,11 @@ public class CodeGenerator extends DepthFirstAdapter {
 
     @Override
     public void caseATypeCastExpr(ATypeCastExpr node) {
-        /* TODO */
+        buffer.append(node.getTypeExpr());
+        buffer.setLength(buffer.length() - 1);
+        buffer.append("(");
+        node.getExpr().apply(this);
+        buffer.append(")");
     }
 
     /**
