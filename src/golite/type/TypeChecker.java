@@ -571,16 +571,16 @@ public class TypeChecker extends DepthFirstAdapter {
             	// Error.
             	PExpr pExpr = node.getExpr().get(i);
 
-            	GoLiteType type = this.getType(pExpr);
+            	GoLiteType exprType = this.getType(pExpr);
 
             	// Expression is a void function call 
-            	if (type instanceof VoidType) {
+            	if (exprType instanceof VoidType) {
             		TId funcId = ((AFuncCallExpr) pExpr).getId();
             		this.throwTypeCheckException(pExpr,
             			funcId.getText() + "() used as a value");
             	}
             		
-            	this.symbolTable.putSymbol(new VariableSymbol(id.getText(), type, node));
+            	this.symbolTable.putSymbol(new VariableSymbol(id.getText(), exprType, node));
             } else {
             	// GoLite type of the type expression.
             	GoLiteType typeExprType = this.getType(pTypeExpr);
