@@ -710,9 +710,7 @@ public class CodeGenerator extends DepthFirstAdapter {
         this.inAIdOptId(node);
 
         if (node.getId() != null) {
-            if (this.inStructTypeExpr)
-                buffer.append(node.getId().getText());
-            else
+            if (!this.inStructTypeExpr)
                 buffer.append(this.rename(node.getId().getText()));
         }
 
