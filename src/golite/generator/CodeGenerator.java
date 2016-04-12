@@ -148,6 +148,22 @@ public class CodeGenerator extends DepthFirstAdapter {
         return defaultValue;
     }
 
+    private String getArrayString(AArrayTypeExpr node)
+    {
+        String defaultValue = "[";
+        defaultValue += getTypeString(node.getTypeExpr());
+        defaultValue += "]*";
+        defaultValue += node.getExpr().toString();
+        defaultValue = defaultValue.substring(0,defaultValue.length() - 1);
+        return defaultValue;
+    }
+
+    private String getAliasString(AAliasTypeExpr node)
+    {
+        //TODO
+        return "";
+    }
+
     private String getTypeString(PTypeExpr type)
     {
         System.out.println(type.getClass());
@@ -165,9 +181,12 @@ public class CodeGenerator extends DepthFirstAdapter {
         } else if (type instanceof AStructTypeExpr) {
             defaultValue += getStructString((AStructTypeExpr) type);
         } else if (type instanceof AArrayTypeExpr) {
-            /* TODO */
+            defaultValue += getArrayString((AArrayTypeExpr) type);
         } else if (type instanceof ASliceTypeExpr) {
             defaultValue = "[]";
+        } else if (type instanceof AAliasTypeExpr) {
+            //TODO:
+            //defaultValue = getAliasString((AAliasTypeExpr) type);
         }
         return defaultValue;
     }
