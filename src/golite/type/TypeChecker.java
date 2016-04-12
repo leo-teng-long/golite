@@ -1069,7 +1069,7 @@ public class TypeChecker extends DepthFirstAdapter {
     // Switch statement.
     @Override
     public void caseASwitchStmt(ASwitchStmt node) {
-         // Create a new scope for the switch initializer and blocks.
+        // Create a new scope for the switch initializer and blocks.
         this.symbolTable.scope();
         
         // Type check the initial statement, if it exists.

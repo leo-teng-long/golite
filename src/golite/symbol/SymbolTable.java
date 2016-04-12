@@ -1,5 +1,6 @@
 package golite.symbol;
 
+import golite.exception.SymbolTableException;
 import golite.type.GoLiteType;
 
 import java.lang.StringBuilder;
@@ -63,6 +64,25 @@ public class SymbolTable {
 	 */
 	public boolean inGlobalScope() {
 		return this.scopes.size() == 2;
+	}
+
+	/**
+	 * Return the scope depth of the symbol with the given name.
+	 *
+	 * @param name - Name
+	 * @return Scope depth of symbol
+	 * @throws SymbolTableException if no symbol with the given name exists.
+	 */
+	public int getScopeDepth(String name) {
+		int i = 0;
+		for (LinkedHashMap<String, Symbol> scope : this.scopes) {
+			if (scope.get(name) != null)
+				return i;
+
+			i++;
+		}
+
+		throw new SymbolTableException("ERROR: " + name + " not in Symbol table");
 	}
 
 	/**
