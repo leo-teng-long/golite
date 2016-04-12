@@ -194,6 +194,58 @@ public class CodeGenerator extends DepthFirstAdapter {
     }
 
     /**
+     * Returns the default value for the given type.
+     *
+     * @param type - Type
+     * @return Default value as a string
+     */
+    private static String getDefaultValue(GoLiteType type) {
+        if (type instanceof BoolType)
+            return "False";
+        else if (type instanceof IntType || type instanceof RuneType)
+            return "0";
+        else if (type instanceof FloatType)
+            return "0.";
+        else if (type instanceof StringType)
+            return "";
+        else if (type instanceof AliasType)
+            return getDefaultValue(type.getUnderlyingType());
+        else if (type instanceof ArrayType) {
+            StringBuilder sb = new StringBuilder();
+            sb.append("[");
+
+            String elemDefaultValue = getDefaultValue(((ArrayType) type).getElemType());
+            for (int i = 0; i < ((ArrayType) type).getBound(); i++)
+                sb.append(elemDefaultValue);
+
+            sb.append("]");
+            return sb.toString();
+        } else if (type instanceof SliceType)
+            return "[]";
+        else if (type instanceof StructType) {
+            StringBuilder sb = new StringBuilder();
+            sb.append("{");
+
+            Iterator<StructType.Field> it = ((StructType) type).getFieldIterator();
+            StructType.Field field;
+            boolean first = true;
+            while(it.hasNext()) {
+                if (first)
+                    first = false;
+                else
+                    sb.append(", ");
+
+                field = it.next();
+                sb.append("'" + field.getId() + "': " + getDefaultValue(field.getType()));
+            }
+
+            sb.append("}");
+            return sb.toString();
+        } else
+            throw new IllegalArgumentException("Cannot get default value for type " + type);
+    }
+
+    /**
      * Overhead for Generated Python Code
      *
      */
@@ -287,79 +339,6 @@ public class CodeGenerator extends DepthFirstAdapter {
         this.outAVarsTopDec(node);
     }
 
-    private String getStructString(AStructTypeExpr node)
-    {
-        String defaultValue = "{ ";
-        ArrayList<PFieldSpec> fields = new ArrayList<PFieldSpec>(((AStructTypeExpr) node).getFieldSpec());
-        Boolean first = true;
-        for (PFieldSpec f: fields)
-        {
-            if (!(first))
-            {
-                defaultValue += ", ";
-            }
-            ArrayList<POptId> opts = new ArrayList<POptId>(((ASpecFieldSpec) f).getOptId());
-            first = true;
-            for (POptId o: opts)
-            {
-                if (!(first))
-                {
-                    defaultValue += ", ";
-                }
-                defaultValue += ((AIdOptId) o).toString();
-                defaultValue += ": ";
-                defaultValue += getTypeString(((ASpecFieldSpec) f).getTypeExpr());
-                first = false;
-            }
-            first = false;
-        }
-        defaultValue += " }";
-        return defaultValue;
-    }
-
-    private String getArrayString(AArrayTypeExpr node)
-    {
-        String defaultValue = "[";
-        defaultValue += getTypeString(node.getTypeExpr());
-        defaultValue += "] * ";
-        defaultValue += node.getExpr().toString();
-        defaultValue = defaultValue.substring(0,defaultValue.length() - 1);
-        return defaultValue;
-    }
-
-    private String getAliasString(AAliasTypeExpr node)
-    {
-        //TODO
-        return "";
-    }
-
-    private String getTypeString(PTypeExpr type)
-    {
-        String defaultValue = "";
-
-        if (type instanceof ABoolTypeExpr) {
-            defaultValue = "False";
-        } else if (type instanceof AIntTypeExpr) {
-            defaultValue = "0";
-        } else if (type instanceof AFloatTypeExpr) {
-            defaultValue = "0.";
-        } else if (type instanceof ARuneTypeExpr) {
-            defaultValue = "0";
-        } else if (type instanceof AStringTypeExpr) {
-            defaultValue = "";
-        } else if (type instanceof AAliasTypeExpr) {
-            // TODO:
-            // defaultValue = getAliasString((AAliasTypeExpr) type);
-        } else if (type instanceof AArrayTypeExpr) {
-            defaultValue = getArrayString((AArrayTypeExpr) type);
-        } else if (type instanceof ASliceTypeExpr) {
-            defaultValue = "[]";
-        } else if (type instanceof AStructTypeExpr) {
-            defaultValue = getStructString((AStructTypeExpr) type);
-        }
-        return defaultValue;
-    }
-
     @Override
     public void inASpecVarSpec(ASpecVarSpec node) {
         // Loop over each Id, tracking the position in the specfication.
@@ -393,8 +372,7 @@ public class CodeGenerator extends DepthFirstAdapter {
         buffer.append(" = ");
 
         if (node.getTypeExpr() != null && node.getExpr().size() == 0) {
-            PTypeExpr type = node.getTypeExpr();
-            String defaultValue = getTypeString(type);
+            String defaultValue = getDefaultValue(this.getType(node.getTypeExpr()));
 
             for (int i = 0; i < node.getOptId().size(); i++) {
                 if (i > 0) {
