@@ -447,6 +447,16 @@ public class CodeGenerator extends DepthFirstAdapter {
     }
 
     @Override
+    public void inASpecTypeSpec(ASpecTypeSpec node) {
+        for (TId id: this.getIds(node)) {
+            // Get the GoLite type of the type expression.
+            GoLiteType type = this.getType(node.getTypeExpr());
+            // Add a type alias symbol to the symbol table.
+            this.symbolTable.putSymbol(new TypeAliasSymbol(id.getText(), type, node));
+        }
+    }
+
+    @Override
     public void caseASpecTypeSpec(ASpecTypeSpec node) {
         /* TODO */
     }
