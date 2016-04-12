@@ -22,4 +22,16 @@ public class VariableSymbol extends Symbol {
 		this.node = node;
 	}
 
+	/**
+	 * Constructor.
+	 *
+	 * @param id - Variable Id
+	 * @param node - Corresponding AST node
+	 */
+	public VariableSymbol(String id, Node node) {
+		this.name = id;
+		this.type = null;
+		this.node = node;
+	}
+
 }
