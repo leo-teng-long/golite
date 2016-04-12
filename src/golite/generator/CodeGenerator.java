@@ -20,6 +20,8 @@ public class CodeGenerator extends DepthFirstAdapter {
     /** Keep track of the end statement of for loop */
     private PStmt lastForEnd;
 
+    /** Symbol table. */
+    private SymbolTable symbolTable;
     /** Contain information about expressions */
     private HashMap<Node, GoLiteType> typeTable;
 
@@ -57,17 +59,145 @@ public class CodeGenerator extends DepthFirstAdapter {
     }
 
     /**
+     * Rename the symbol with the given name.
+     *
+     * @param name - Name of variable
+     * @return New name (obtained by simply appending the scope depth of the
+        corresponding symbol declaration)
+     */
+    private String rename(String name) {
+        return name + this.symbolTable.getScopeDepth(name);
+    }
+
+    /**
+     * Get Id tokens from the given AST node.
+     *
+     * @param node - AST node
+     * @return List of Id tokens
+     */
+    private ArrayList<TId> getIds(Node node) {
+        ArrayList<TId> ids = new ArrayList<TId>();
+
+        // Variable specification.
+        if (node instanceof ASpecVarSpec) {
+            LinkedList<POptId> pOptIds = ((ASpecVarSpec) node).getOptId();
+            
+            for (POptId o: pOptIds) {
+                // Ignore blank Id's.
+                if (o instanceof AIdOptId)
+                    ids.add(((AIdOptId) o).getId());
+            }
+        // Type specification.
+        } else if (node instanceof ASpecTypeSpec) {
+            POptId pOptId = ((ASpecTypeSpec) node).getOptId();
+            
+            if (pOptId instanceof AIdOptId)
+                ids.add(((AIdOptId) pOptId).getId());
+        } else if (node instanceof AArgArgGroup)
+            ids = new ArrayList<TId>(((AArgArgGroup) node).getId());
+        else if (node instanceof AShortAssignStmt) {
+            LinkedList<POptId> pOptIds = ((AShortAssignStmt) node).getOptId();
+            
+            for (POptId o: pOptIds) {
+                // Ignore blank Id's.
+                if (o instanceof AIdOptId)
+                    ids.add(((AIdOptId) o).getId());
+            }
+        }
+
+        return ids;
+    }
+
+    /**
+     * Returns the GoLite type for the given type expression.
+     *
+     * @param node - Type expression AST node
+     * @return Corresponding GoLite type
+     * @throws TypeCheckerException
+     */
+    private GoLiteType getType(PTypeExpr node) {
+        if (node == null)
+            return null;
+
+        if (node instanceof ABoolTypeExpr)
+            return new BoolType();
+        else if (node instanceof AIntTypeExpr)
+            return new IntType();
+        else if (node instanceof AFloatTypeExpr)
+            return new FloatType();
+        else if (node instanceof ARuneTypeExpr)
+            return new RuneType();
+        else if (node instanceof AStringTypeExpr)
+            return new StringType();
+        else if (node instanceof AAliasTypeExpr) {
+            TId id = ((AAliasTypeExpr) node).getId();
+            GoLiteType type = this.symbolTable.getSymbolType(id.getText());            
+            return new AliasType(id.getText(), type);
+        } else if (node instanceof AArrayTypeExpr) {
+            PExpr pExpr = ((AArrayTypeExpr) node).getExpr();
+
+            int bound = 0;
+            if (pExpr instanceof AIntLitExpr)
+                bound = Integer.parseInt(((AIntLitExpr) pExpr).getIntLit().getText());
+            else if (pExpr instanceof AOctLitExpr)
+                bound = Integer.parseInt(((AOctLitExpr) pExpr).getOctLit().getText(), 8);
+            else if (pExpr instanceof AHexLitExpr)
+                bound = Integer.parseInt(((AHexLitExpr) pExpr).getHexLit().getText(), 16);
+            // Bound check is already performed in type checking so this should never be thrown.
+            else {
+
+            }
+                
+            return new ArrayType(getType(((AArrayTypeExpr) node).getTypeExpr()), bound);
+        } else if (node instanceof ASliceTypeExpr)
+            return new SliceType(getType(((ASliceTypeExpr) node).getTypeExpr()));
+        else if (node instanceof AStructTypeExpr) {
+            StructType structType = new StructType();
+
+            // Keep track of the field Id's to ensure there are no duplicates.
+            HashSet<String> fieldIds = new HashSet<String>();
+
+            // Loop over the field specifications.
+            for (PFieldSpec pFieldSpec : ((AStructTypeExpr) node).getFieldSpec()) {
+                // Get the optional Id's.
+                LinkedList<POptId> pOptIds = ((ASpecFieldSpec) pFieldSpec).getOptId();
+
+                // Loop over each Id.
+                for(POptId pOptId : pOptIds) {
+                    // Do not consider blank Id's.
+                    if (pOptId instanceof AIdOptId) {
+                        TId id = ((AIdOptId) pOptId).getId();
+                        structType.addField(id.getText(),
+                            getType(((ASpecFieldSpec) pFieldSpec).getTypeExpr()));
+                        fieldIds.add(id.getText());
+                    }
+                }
+            }
+
+            return structType;
+        }
+
+        return null;
+    }
+
+    /**
      * Overhead for Generated Python Code
      *
      */
     @Override
     public void inAProgProg(AProgProg node) {
         generateOverheadIn();
+
+        // Enter the global scope.
+        this.symbolTable.scope();
     }
 
     @Override
     public void outAProgProg(AProgProg node) {
         generateOverheadOut();
+
+        // Unscope the global scope upon program exit.
+        this.symbolTable.unscope();
     }
 
     private void generateOverheadIn() {
@@ -80,7 +210,24 @@ public class CodeGenerator extends DepthFirstAdapter {
 
     private void generateOverheadOut() {
         buffer.append("if __name__ == '__main__':\n");
-        buffer.append("\tmain()\n");
+        buffer.append("\tmain0()\n");
+    }
+
+    @Override
+    public void inStart(Start node) {
+        // Enter the 0th scope.
+        this.symbolTable = new SymbolTable();
+        this.symbolTable.scope();
+
+        // Initialize boolean literals.
+        this.symbolTable.putSymbol(new VariableSymbol("true", new BoolType(), node));
+        this.symbolTable.putSymbol(new VariableSymbol("false", new BoolType(), node));
+    }
+
+    @Override
+    public void outStart(Start node) {
+        // Unscope the 0th scope upon exit.
+        this.symbolTable.unscope();
     }
 
     @Override
@@ -107,12 +254,10 @@ public class CodeGenerator extends DepthFirstAdapter {
     public void caseAVarsTopDec(AVarsTopDec node) {
         this.inAVarsTopDec(node);
 
-        {
-            List<PVarSpec> copy = new ArrayList<PVarSpec>(node.getVarSpec());
-            for (PVarSpec e : copy) {
-                e.apply(this);
-                addLines(1);
-            }
+        // Loop over the variable specifications and recurse.
+        for(PVarSpec pVarSpec : node.getVarSpec()) {
+            pVarSpec.apply(this);
+            addLines(1);
         }
 
         this.outAVarsTopDec(node);
@@ -238,6 +383,41 @@ public class CodeGenerator extends DepthFirstAdapter {
         this.outASpecVarSpec(node);
     }
 
+    // Add declared variables into the symbol table.
+    @Override
+    public void outASpecVarSpec(ASpecVarSpec node) {
+        // Get the expressions on the R.H.S.
+        LinkedList<PExpr> pExprs = node.getExpr();
+
+        // Flag for whether the variables are initialized with expressions.
+        boolean isInitialized = (pExprs.size() > 0);
+
+        // Loop over each Id, tracking the position in the specfication.
+        int i = 0;
+        for (TId id : this.getIds(node)) {
+            PTypeExpr pTypeExpr = node.getTypeExpr();
+            if (pTypeExpr == null) {
+                // Initializing expression.
+                PExpr pExpr = node.getExpr().get(i);
+                // Type of expression.
+                GoLiteType type = this.typeTable.get(pExpr);
+                // Put a new variable symbol into the symbol table. 
+                this.symbolTable.putSymbol(new VariableSymbol(id.getText(), type,
+                    node));
+            } else {
+                // GoLite type of the type expression.
+                GoLiteType typeExprType = this.getType(pTypeExpr);
+                // Put a new variable symbol into the symbol table.
+                this.symbolTable.putSymbol(new VariableSymbol(id.getText(),
+                    typeExprType, node));
+            }
+
+            // Increment the position.
+            i++;
+        }
+    }
+
+
     /**
      * Top-Level Type Declarations
      *
@@ -263,9 +443,35 @@ public class CodeGenerator extends DepthFirstAdapter {
         buffer.append("def");
         addSpace();
 
-        if (node.getId() != null) {
-            buffer.append(node.getId().getText());
+        // Function name.
+        String name = node.getId().getText();
+
+        // Function symbol.
+        FunctionSymbol funcSymbol = null;
+        // Return type expression.
+        PTypeExpr pTypeExpr = node.getTypeExpr();
+
+        // No return type.
+        if (pTypeExpr == null)
+            funcSymbol = new FunctionSymbol(name, node);
+        // Has return type.
+        else
+            funcSymbol = new FunctionSymbol(name, this.getType(pTypeExpr), node);
+
+        // Add argument types to the function symbol.
+        AArgArgGroup g = null;
+        for (PArgGroup p : node.getArgGroup()) {
+            g = (AArgArgGroup) p;
+            funcSymbol.addArgType(this.getType(g.getTypeExpr()), g.getId().size());
         }
+
+        // Enter symbol into the table.
+        this.symbolTable.putSymbol(funcSymbol);
+
+        buffer.append(this.rename(name));
+
+        // Enter the function body.
+        this.symbolTable.scope();
 
         addLeftParen();
 
@@ -297,12 +503,17 @@ public class CodeGenerator extends DepthFirstAdapter {
             exitCodeBlock(isBlockEmpty(copy));
         }
 
+        // Exit the fucntion body.
+        this.symbolTable.unscope();
+
         this.outAFuncTopDec(node);
     }
 
     @Override
     public void caseAArgArgGroup(AArgArgGroup node) {
         this.inAArgArgGroup(node);
+
+        GoLiteType type = this.getType(node.getTypeExpr());
 
         {
             List<TId> copy = new ArrayList<TId>(node.getId());
@@ -312,7 +523,9 @@ public class CodeGenerator extends DepthFirstAdapter {
                     addComma();
                     addSpace();
                 }
-                buffer.append(copy.get(i).getText());
+                String name = copy.get(i).getText();
+                this.symbolTable.putSymbol(new VariableSymbol(name, type, node));
+                buffer.append(this.rename(name));
             }
         }
 
@@ -387,6 +600,34 @@ public class CodeGenerator extends DepthFirstAdapter {
         this.outAShortAssignStmt(node);
     }
 
+    // Short assignment statement.
+    @Override
+    public void outAShortAssignStmt(AShortAssignStmt node) {
+        // Get L.H.S. (non-blank) Id's.
+        ArrayList<TId> ids = this.getIds(node);
+        // Get R.H.S. expressions.
+        ArrayList<PExpr> pExprs = new ArrayList<PExpr>(node.getExpr());
+
+        // Loop through the Id's in sequence, tracking the position.
+        for (int i = 0; i < ids.size(); i++) {
+            TId id = ids.get(i);
+            String name = id.getText();
+
+            // Get the corresponding expression node.
+            PExpr pExpr = pExprs.get(i);
+            // Get its GoLite type.
+            GoLiteType exprType = this.typeTable.get(pExpr);
+
+            // A symbol with the given name doesn't exist in the current scope.
+            if (!this.symbolTable.defSymbolInCurrentScope(name))
+                // Go ahead and add it to the symbol table, using its inferred type, which may
+                // shadow an outer scope symbol with the same name.
+                this.symbolTable.putSymbol(new VariableSymbol(name, exprType, node));
+
+            this.typeTable.put(id, exprType);
+        }
+    }
+
     @Override
     public void caseABlankOptId(ABlankOptId node) {
         this.inABlankOptId(node);
@@ -401,7 +642,7 @@ public class CodeGenerator extends DepthFirstAdapter {
         this.inAIdOptId(node);
 
         if (node.getId() != null) {
-            buffer.append(node.getId().getText());
+            buffer.append(this.rename(node.getId().getText()));
         }
 
         this.outAIdOptId(node);
@@ -820,6 +1061,9 @@ public class CodeGenerator extends DepthFirstAdapter {
     public void caseAIfElseStmt(AIfElseStmt node) {
         this.inAIfElseStmt(node);
 
+        // Create a new scope for the if-else initializer and blocks.
+        this.symbolTable.scope();
+
         if (node.getCondition() != null) {
             node.getCondition().apply(this);
         }
@@ -827,11 +1071,18 @@ public class CodeGenerator extends DepthFirstAdapter {
         {
             enterCodeBlock();
 
+            // Create a new scope for the if-block.
+            this.symbolTable.scope();
+
             List<PStmt> copy = new ArrayList<PStmt>(node.getIfBlock());
+            
             for (PStmt e : copy) {
                 generateStatement(e);
             }
 
+            // Exit the scope for the if-block.
+            this.symbolTable.unscope();
+            
             exitCodeBlock(isBlockEmpty(copy));
         }
 
@@ -842,13 +1093,22 @@ public class CodeGenerator extends DepthFirstAdapter {
         {
             enterCodeBlock();
 
+            // Create a new scope for the else-block.
+            this.symbolTable.scope();
+
             List<PStmt> copy = new ArrayList<PStmt>(node.getElseBlock());
             for (PStmt e : copy) {
                 generateStatement(e);
             }
 
+            // Exit the scope for the else-block.
+            this.symbolTable.unscope();
+
             exitCodeBlock(isBlockEmpty(copy));
         }
+
+        // Exit the scope for the if-else initializer and blocks.
+        this.symbolTable.unscope();
 
         this.outAIfElseStmt(node);
     }
@@ -882,6 +1142,9 @@ public class CodeGenerator extends DepthFirstAdapter {
     @Override
     public void caseASwitchStmt(ASwitchStmt node) {
         this.inASwitchStmt(node);
+
+        // Create a new scope for the switch initializer and blocks.
+        this.symbolTable.scope();
 
         if (node.getStmt() != null) {
             node.getStmt().apply(this);
@@ -953,7 +1216,16 @@ public class CodeGenerator extends DepthFirstAdapter {
             defaultBlock.apply(this);
         }
 
+        // Exit the scope for the switch initializer and blocks.
+        this.symbolTable.unscope();
+
         this.outASwitchStmt(node);
+    }
+
+    // Create a new scope for the case block.
+    @Override
+    public void inABlockCaseBlock(ABlockCaseBlock node) {
+        this.symbolTable.scope();
     }
 
     @Override
@@ -978,6 +1250,13 @@ public class CodeGenerator extends DepthFirstAdapter {
         this.outABlockCaseBlock(node);
     }
 
+    // Exit the scope for the case block.
+    @Override
+    public void outABlockCaseBlock(ABlockCaseBlock node) {
+        this.symbolTable.unscope();
+    }
+
+
     @Override
     public void caseAExprsCaseCondition(AExprsCaseCondition node) {
         // do nothing;
@@ -995,6 +1274,9 @@ public class CodeGenerator extends DepthFirstAdapter {
     @Override
     public void caseALoopStmt(ALoopStmt node) {
         this.inALoopStmt(node);
+
+        // Create a new scope for the loop initializer and body.
+        this.symbolTable.scope();
 
         /**
          * Only used when generating for Loops
@@ -1027,13 +1309,27 @@ public class CodeGenerator extends DepthFirstAdapter {
             copy.add(node.getEnd());
         }
 
+        // Create a new scope for the loop body.
+        this.symbolTable.scope();
+
         for (PStmt e : copy) {
             generateStatement(e);
         }
 
         exitCodeBlock(isBlockEmpty(copy));
 
+        // Exit the scope for the loop body.
+        this.symbolTable.unscope();
+        // Exit the scope for the loop initializer and body.
+        this.symbolTable.unscope();
+
         this.outALoopStmt(node);
+    }
+
+    // Create a new scope.
+    @Override
+    public void inABlockStmt(ABlockStmt node) {
+        this.symbolTable.scope();
     }
 
     /**
@@ -1052,6 +1348,12 @@ public class CodeGenerator extends DepthFirstAdapter {
         }
 
         this.outABlockStmt(node);
+    }
+
+    // Drop the block scope.
+    @Override
+    public void outABlockStmt(ABlockStmt node) {
+        this.symbolTable.unscope();
     }
 
     /**
@@ -1568,7 +1870,7 @@ public class CodeGenerator extends DepthFirstAdapter {
         this.inAFuncCallExpr(node);
 
         if (node.getId() != null) {
-            buffer.append(node.getId().getText());
+            buffer.append(this.rename(node.getId().getText()));
         }
 
         addLeftParen();
@@ -1685,7 +1987,7 @@ public class CodeGenerator extends DepthFirstAdapter {
         this.inAVariableExpr(node);
 
         if (node.getId() != null) {
-            buffer.append(node.getId().getText());
+            buffer.append(this.rename(node.getId().getText()));
         }
 
         this.outAVariableExpr(node);
