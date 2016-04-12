@@ -22,6 +22,8 @@ public class CodeGenerator extends DepthFirstAdapter {
     private int tabDepth;
     /** Keep track of the end statement of for loop */
     private PStmt lastForEnd;
+    /** Tracks whether the traversal is inside a struct type expression. */
+    private boolean inStructTypeExpr;
 
     /** Flag to signal weather or not aplyt bit mask */
     private static final boolean APPLY_BIT_MASK = true;
@@ -444,16 +446,6 @@ public class CodeGenerator extends DepthFirstAdapter {
         }
     }
 
-
-    /**
-     * Top-Level Type Declarations
-     *
-     */
-    @Override
-    public void caseATypesTopDec(ATypesTopDec node) {
-        /* TODO */
-    }
-
     @Override
     public void inASpecTypeSpec(ASpecTypeSpec node) {
         for (TId id: this.getIds(node)) {
@@ -462,11 +454,6 @@ public class CodeGenerator extends DepthFirstAdapter {
             // Add a type alias symbol to the symbol table.
             this.symbolTable.putSymbol(new TypeAliasSymbol(id.getText(), type, node));
         }
-    }
-
-    @Override
-    public void caseASpecTypeSpec(ASpecTypeSpec node) {
-        /* TODO */
     }
 
     /**
@@ -723,7 +710,8 @@ public class CodeGenerator extends DepthFirstAdapter {
         this.inAIdOptId(node);
 
         if (node.getId() != null) {
-            buffer.append(this.rename(node.getId().getText()));
+            if (!this.inStructTypeExpr)
+                buffer.append(this.rename(node.getId().getText()));
         }
 
         this.outAIdOptId(node);
@@ -1435,6 +1423,18 @@ public class CodeGenerator extends DepthFirstAdapter {
     @Override
     public void outABlockStmt(ABlockStmt node) {
         this.symbolTable.unscope();
+    }
+
+    @Override
+    public void inAStructTypeExpr(AStructTypeExpr node) {
+        // Set flag to true.
+        this.inStructTypeExpr = true;
+    }
+
+    @Override
+    public void outAStructTypeExpr(AStructTypeExpr node) {
+        // Set flag to false.
+        this.inStructTypeExpr = false;
     }
 
     /**
