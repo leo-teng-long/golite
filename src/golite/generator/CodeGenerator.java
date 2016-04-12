@@ -23,6 +23,9 @@ public class CodeGenerator extends DepthFirstAdapter {
     /** Keep track of the end statement of for loop */
     private PStmt lastForEnd;
 
+    /** Flag to signal weather or not aplyt bit mask */
+    private static final boolean APPLY_BIT_MASK = true;
+
     /** Symbol table. */
     private SymbolTable symbolTable;
     /** Contain information about expressions */
@@ -42,6 +45,11 @@ public class CodeGenerator extends DepthFirstAdapter {
      */
     public void bitMask(Node n)
     {
+        if (!APPLY_BIT_MASK) {
+            n.apply(this);
+            return;
+        }
+
         if (typeTable.get(n) instanceof IntType || typeTable.get(n) instanceof RuneType)
         {
             buffer.append("bit_mask(");
