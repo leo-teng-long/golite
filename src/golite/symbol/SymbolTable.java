@@ -67,19 +67,19 @@ public class SymbolTable {
 	}
 
 	/**
-	 * Return the scope depth of the symbol with the given name.
+	 * Return the (most-inner) scope depth of the symbol with the given name.
 	 *
 	 * @param name - Name
 	 * @return Scope depth of symbol
 	 * @throws SymbolTableException if no symbol with the given name exists.
 	 */
 	public int getScopeDepth(String name) {
-		int i = 0;
+		int i = this.scopes.size() - 1;
 		for (LinkedHashMap<String, Symbol> scope : this.scopes) {
 			if (scope.get(name) != null)
 				return i;
 
-			i++;
+			i--;
 		}
 
 		throw new SymbolTableException("ERROR: " + name + " not in Symbol table");
