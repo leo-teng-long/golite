@@ -84,7 +84,7 @@ public class CodeGenerator extends DepthFirstAdapter {
         // Variable specification.
         if (node instanceof ASpecVarSpec) {
             LinkedList<POptId> pOptIds = ((ASpecVarSpec) node).getOptId();
-            
+
             for (POptId o: pOptIds) {
                 // Ignore blank Id's.
                 if (o instanceof AIdOptId)
@@ -93,14 +93,14 @@ public class CodeGenerator extends DepthFirstAdapter {
         // Type specification.
         } else if (node instanceof ASpecTypeSpec) {
             POptId pOptId = ((ASpecTypeSpec) node).getOptId();
-            
+
             if (pOptId instanceof AIdOptId)
                 ids.add(((AIdOptId) pOptId).getId());
         } else if (node instanceof AArgArgGroup)
             ids = new ArrayList<TId>(((AArgArgGroup) node).getId());
         else if (node instanceof AShortAssignStmt) {
             LinkedList<POptId> pOptIds = ((AShortAssignStmt) node).getOptId();
-            
+
             for (POptId o: pOptIds) {
                 // Ignore blank Id's.
                 if (o instanceof AIdOptId)
@@ -134,7 +134,7 @@ public class CodeGenerator extends DepthFirstAdapter {
             return new StringType();
         else if (node instanceof AAliasTypeExpr) {
             TId id = ((AAliasTypeExpr) node).getId();
-            GoLiteType type = this.symbolTable.getSymbolType(id.getText());            
+            GoLiteType type = this.symbolTable.getSymbolType(id.getText());
             return new AliasType(id.getText(), type);
         } else if (node instanceof AArrayTypeExpr) {
             PExpr pExpr = ((AArrayTypeExpr) node).getExpr();
@@ -150,7 +150,7 @@ public class CodeGenerator extends DepthFirstAdapter {
             else {
 
             }
-                
+
             return new ArrayType(getType(((AArrayTypeExpr) node).getTypeExpr()), bound);
         } else if (node instanceof ASliceTypeExpr)
             return new SliceType(getType(((ASliceTypeExpr) node).getTypeExpr()));
@@ -207,8 +207,9 @@ public class CodeGenerator extends DepthFirstAdapter {
         buffer.append("from __future__ import print_function\n");
         addLines(1);
 
-        buffer.append("true_0 = True\nfalse_0 = False\n");
         buffer.append("bit_mask = lambda x : (x + 2**31) % 2**32 - 2**31\n");
+        buffer.append("true_0 = True\n");
+        buffer.append("false_0 = False\n");
         addLines(1);
     }
 
@@ -1084,14 +1085,14 @@ public class CodeGenerator extends DepthFirstAdapter {
             this.symbolTable.scope();
 
             List<PStmt> copy = new ArrayList<PStmt>(node.getIfBlock());
-            
+
             for (PStmt e : copy) {
                 generateStatement(e);
             }
 
             // Exit the scope for the if-block.
             this.symbolTable.unscope();
-            
+
             exitCodeBlock(isBlockEmpty(copy));
         }
 
