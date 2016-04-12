@@ -152,7 +152,7 @@ public class CodeGenerator extends DepthFirstAdapter {
     {
         String defaultValue = "[";
         defaultValue += getTypeString(node.getTypeExpr());
-        defaultValue += "]*";
+        defaultValue += "] * ";
         defaultValue += node.getExpr().toString();
         defaultValue = defaultValue.substring(0,defaultValue.length() - 1);
         return defaultValue;
@@ -169,24 +169,24 @@ public class CodeGenerator extends DepthFirstAdapter {
         System.out.println(type.getClass());
         String defaultValue = "";
         if (type instanceof ABoolTypeExpr) {
-            defaultValue += "False";
+            defaultValue = "False";
         } else if (type instanceof AIntTypeExpr) {
-            defaultValue += "0";
+            defaultValue = "0";
         } else if (type instanceof AFloatTypeExpr) {
-            defaultValue += "0.";
+            defaultValue = "0.";
         } else if (type instanceof ARuneTypeExpr) {
-            defaultValue += "0";
+            defaultValue = "0";
         } else if (type instanceof AStringTypeExpr) {
-            defaultValue += "";
-        } else if (type instanceof AStructTypeExpr) {
-            defaultValue += getStructString((AStructTypeExpr) type);
+            defaultValue = "";
+        } else if (type instanceof AAliasTypeExpr) {
+            // TODO:
+            // defaultValue = getAliasString((AAliasTypeExpr) type);
         } else if (type instanceof AArrayTypeExpr) {
-            defaultValue += getArrayString((AArrayTypeExpr) type);
+            defaultValue = getArrayString((AArrayTypeExpr) type);
         } else if (type instanceof ASliceTypeExpr) {
             defaultValue = "[]";
-        } else if (type instanceof AAliasTypeExpr) {
-            //TODO:
-            //defaultValue = getAliasString((AAliasTypeExpr) type);
+        } else if (type instanceof AStructTypeExpr) {
+            defaultValue = getStructString((AStructTypeExpr) type);
         }
         return defaultValue;
     }
