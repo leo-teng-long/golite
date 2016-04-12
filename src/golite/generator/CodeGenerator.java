@@ -25,6 +25,9 @@ public class CodeGenerator extends DepthFirstAdapter {
     /** Tracks whether the traversal is inside a struct type expression. */
     private boolean inStructTypeExpr;
 
+    /** Flag to signal weather or not aplyt bit mask */
+    private static final boolean APPLY_BIT_MASK = true;
+
     /** Symbol table. */
     private SymbolTable symbolTable;
     /** Contain information about expressions */
@@ -44,6 +47,11 @@ public class CodeGenerator extends DepthFirstAdapter {
      */
     public void bitMask(Node n)
     {
+        if (!APPLY_BIT_MASK) {
+            n.apply(this);
+            return;
+        }
+
         if (typeTable.get(n) instanceof IntType || typeTable.get(n) instanceof RuneType)
         {
             buffer.append("bit_mask(");
@@ -210,12 +218,21 @@ public class CodeGenerator extends DepthFirstAdapter {
         addLines(1);
 
         buffer.append("bit_mask = lambda x : (x + 2**31) % 2**32 - 2**31\n");
-        buffer.append("true_0 = True\n");
-        buffer.append("false_0 = False\n");
+        buffer.append("true_0, false_0 = True, False\n");
+        addLines(1);
+
+        buffer.append("#######################################################\n");
+        buffer.append("###### The miracle of GoLite to Python2.7 begins ######\n");
+        buffer.append("#######################################################\n");
         addLines(1);
     }
 
     private void generateOverheadOut() {
+        buffer.append("#####################################################\n");
+        buffer.append("###### The miracle of GoLite to Python2.7 ends ######\n");
+        buffer.append("#####################################################\n");
+        addLines(1);
+
         buffer.append("if __name__ == '__main__':\n");
         buffer.append("\t" + OUT_MAIN_NAME + "()\n");
     }
@@ -318,8 +335,8 @@ public class CodeGenerator extends DepthFirstAdapter {
 
     private String getTypeString(PTypeExpr type)
     {
-        System.out.println(type.getClass());
         String defaultValue = "";
+
         if (type instanceof ABoolTypeExpr) {
             defaultValue = "False";
         } else if (type instanceof AIntTypeExpr) {
@@ -378,7 +395,7 @@ public class CodeGenerator extends DepthFirstAdapter {
         if (node.getTypeExpr() != null && node.getExpr().size() == 0) {
             PTypeExpr type = node.getTypeExpr();
             String defaultValue = getTypeString(type);
-            System.out.println(defaultValue);
+
             for (int i = 0; i < node.getOptId().size(); i++) {
                 if (i > 0) {
                     addComma();
@@ -479,7 +496,7 @@ public class CodeGenerator extends DepthFirstAdapter {
 
         // All renamed 0th-scope and gloval variables to declare global for the function.
         ArrayList<String> globals = new ArrayList<String>();
-        
+
         for (Symbol s : this.symbolTable.getSymbolsFromScope(0)) {
             if (s instanceof VariableSymbol)
                 globals.add(this.rename((s.getName())));
@@ -516,10 +533,20 @@ public class CodeGenerator extends DepthFirstAdapter {
             enterCodeBlock();
 
             // Allow access to all 0th-scope and global variables.
-            for (String n : globals) {
+            if (!globals.isEmpty()) {
                 addTabs();
-                this.buffer.append("global " + n);
-                this.addLines(1);
+                buffer.append("global ");
+
+                for (int i = 0; i < globals.size(); i++) {
+                    if (i > 0) {
+                        addComma();
+                        addSpace();
+                    }
+
+                    buffer.append(globals.get(i));
+                }
+
+                addLines(1);
             }
 
             List<PStmt> copy = new ArrayList<PStmt>(node.getStmt());
@@ -2232,7 +2259,7 @@ public class CodeGenerator extends DepthFirstAdapter {
         }
 
         e.apply(this);
-        
+
         if (!(e instanceof AIfElseStmt) && !(e instanceof ASwitchStmt) && !(e instanceof ALoopStmt) && !(e instanceof ABlockStmt)) {
             addLines(1);
         }
