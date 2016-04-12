@@ -13,6 +13,9 @@ import java.io.*;
  */
 public class CodeGenerator extends DepthFirstAdapter {
 
+    /** Output name for the main function. */
+    private static final String OUT_MAIN_NAME = "main_1";
+
     /** Buffer storing generated python code */
     private StringBuffer buffer;
     /** Keep track of how many tabs need to be added */
@@ -66,7 +69,7 @@ public class CodeGenerator extends DepthFirstAdapter {
         corresponding symbol declaration)
      */
     private String rename(String name) {
-        return name + this.symbolTable.getScopeDepth(name);
+        return name + "_" + this.symbolTable.getScopeDepth(name);
     }
 
     /**
@@ -204,13 +207,14 @@ public class CodeGenerator extends DepthFirstAdapter {
         buffer.append("from __future__ import print_function\n");
         addLines(1);
 
+        buffer.append("true_0 = True\nfalse_0 = False\n");
         buffer.append("bit_mask = lambda x : (x + 2**31) % 2**32 - 2**31\n");
         addLines(1);
     }
 
     private void generateOverheadOut() {
         buffer.append("if __name__ == '__main__':\n");
-        buffer.append("\tmain0()\n");
+        buffer.append("\t" + OUT_MAIN_NAME + "()\n");
     }
 
     @Override
@@ -336,6 +340,19 @@ public class CodeGenerator extends DepthFirstAdapter {
         return defaultValue;
     }
 
+    @Override
+    public void inASpecVarSpec(ASpecVarSpec node) {
+        // Loop over each Id, tracking the position in the specfication.
+        int i = 0;
+        for (TId id : this.getIds(node)) {
+            // Pre-emptively enter the symbol for the variable into the symbol table so that
+            // variable renaming has access to it. The type will be filled in upon exit of this
+            // node.
+            this.symbolTable.putSymbol(new VariableSymbol(id.getText(), null, node));
+            // Increment the position.
+            i++;
+        }
+    }
 
     @Override
     public void caseASpecVarSpec(ASpecVarSpec node) {
@@ -383,16 +400,9 @@ public class CodeGenerator extends DepthFirstAdapter {
         this.outASpecVarSpec(node);
     }
 
-    // Add declared variables into the symbol table.
     @Override
     public void outASpecVarSpec(ASpecVarSpec node) {
-        // Get the expressions on the R.H.S.
-        LinkedList<PExpr> pExprs = node.getExpr();
-
-        // Flag for whether the variables are initialized with expressions.
-        boolean isInitialized = (pExprs.size() > 0);
-
-        // Loop over each Id, tracking the position in the specfication.
+        // Loop over each Id, tracking the position in the specification.
         int i = 0;
         for (TId id : this.getIds(node)) {
             PTypeExpr pTypeExpr = node.getTypeExpr();
@@ -400,16 +410,15 @@ public class CodeGenerator extends DepthFirstAdapter {
                 // Initializing expression.
                 PExpr pExpr = node.getExpr().get(i);
                 // Type of expression.
-                GoLiteType type = this.typeTable.get(pExpr);
-                // Put a new variable symbol into the symbol table. 
-                this.symbolTable.putSymbol(new VariableSymbol(id.getText(), type,
-                    node));
+                GoLiteType exprType = this.typeTable.get(pExpr);
+                // The variable symbol is already in the symbol table, but this fills in the type.
+                this.symbolTable.getSymbol(id.getText()).setType(exprType);
             } else {
                 // GoLite type of the type expression.
                 GoLiteType typeExprType = this.getType(pTypeExpr);
-                // Put a new variable symbol into the symbol table.
-                this.symbolTable.putSymbol(new VariableSymbol(id.getText(),
-                    typeExprType, node));
+                // The variable symbol is already in the symbol table, but this fills in the type.
+                Symbol s = this.symbolTable.getSymbol(id.getText());
+                s.setType(typeExprType);
             }
 
             // Increment the position.
@@ -1900,7 +1909,7 @@ public class CodeGenerator extends DepthFirstAdapter {
         addLeftParen();
 
         if (node.getId() != null) {
-            buffer.append(node.getId().getText());
+            buffer.append(this.rename(node.getId().getText()));
         }
 
         buffer.append(" + ");
