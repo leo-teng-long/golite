@@ -480,6 +480,22 @@ public class CodeGenerator extends DepthFirstAdapter {
 
         buffer.append(this.rename(name));
 
+        // All renamed 0th-scope and gloval variables to declare global for the function.
+        ArrayList<String> globals = new ArrayList<String>();
+        
+        for (Symbol s : this.symbolTable.getSymbolsFromScope(0)) {
+            if (s instanceof VariableSymbol)
+                globals.add(this.rename((s.getName())));
+        }
+
+        for (Symbol s : this.symbolTable.getSymbolsFromScope(1)) {
+            if (s instanceof VariableSymbol)
+                 globals.add(this.rename((s.getName())));
+        }
+
+        // Enter the function body.
+        this.symbolTable.scope();
+
         addLeftParen();
 
         {
@@ -497,30 +513,16 @@ public class CodeGenerator extends DepthFirstAdapter {
         addRightParen();
         addColon();
 
-        // Enter the function body.
-        this.symbolTable.scope();
-
         // do nothing with return type info;
 
         {
             enterCodeBlock();
 
-            // Allow access to all 0th-scope variables.
-            for (Symbol s : this.symbolTable.getSymbolsFromScope(0)) {
-                if (s instanceof VariableSymbol) {
-                    addTabs();
-                    this.buffer.append("global " + this.rename(s.getName()));
-                    this.addLines(1);
-                }
-            }
-
-            // Allow access to all global variables.
-            for (Symbol s : this.symbolTable.getSymbolsFromScope(1)) {
-                if (s instanceof VariableSymbol) {
-                    addTabs();
-                    this.buffer.append("global " + this.rename(s.getName()));
-                    this.addLines(1);
-                }
+            // Allow access to all 0th-scope and global variables.
+            for (String n : globals) {
+                addTabs();
+                this.buffer.append("global " + n);
+                this.addLines(1);
             }
 
             List<PStmt> copy = new ArrayList<PStmt>(node.getStmt());
@@ -595,6 +597,22 @@ public class CodeGenerator extends DepthFirstAdapter {
     }
 
     @Override
+    public void inAShortAssignStmt(AShortAssignStmt node) {
+        // Loop over each Id, tracking the position in the specfication.
+        int i = 0;
+        for (TId id : this.getIds(node)) {
+            String name = id.getText();
+            // Pre-emptively enter the symbol for the variable into the symbol table (if it's not
+            // already defined in the current scope) so that variable renaming has access to it. The
+            // type will be filled in upon exit of this node.
+            if (!this.symbolTable.defSymbolInCurrentScope(name))
+                this.symbolTable.putSymbol(new VariableSymbol(name, null, node));
+            // Increment the position.
+            i++;
+        }
+    }
+
+    @Override
     public void caseAShortAssignStmt(AShortAssignStmt node) {
         this.inAShortAssignStmt(node);
 
@@ -648,11 +666,9 @@ public class CodeGenerator extends DepthFirstAdapter {
 
             // A symbol with the given name doesn't exist in the current scope.
             if (!this.symbolTable.defSymbolInCurrentScope(name))
-                // Go ahead and add it to the symbol table, using its inferred type, which may
-                // shadow an outer scope symbol with the same name.
-                this.symbolTable.putSymbol(new VariableSymbol(name, exprType, node));
-
-            this.typeTable.put(id, exprType);
+                // Go ahead and set the type of the symbol, which has already been entered, using
+                // its inferred type.
+                this.symbolTable.getSymbol(name).setType(exprType);
         }
     }
 
