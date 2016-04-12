@@ -2025,7 +2025,14 @@ public class CodeGenerator extends DepthFirstAdapter {
 
     @Override
     public void caseAFieldExpr(AFieldExpr node) {
-        /* TODO */
+        this.inAFieldExpr(node);
+
+        if (node.getExpr() != null)
+            node.getExpr().apply(this);
+
+        buffer.append("['" + node.getId().getText() + "']");
+
+        this.outAFieldExpr(node);
     }
 
     /**
