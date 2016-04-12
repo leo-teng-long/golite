@@ -59,7 +59,11 @@ public class CodeGenerator extends DepthFirstAdapter {
     }
 
     /**
-     * Rename the variable with the given name 
+     * Rename the symbol with the given name.
+     *
+     * @param name - Name of variable
+     * @return New name (obtained by simply appending the scope depth of the
+        corresponding symbol declaration)
      */
     private String rename(String name) {
         return name + this.symbolTable.getScopeDepth(name);
@@ -182,26 +186,29 @@ public class CodeGenerator extends DepthFirstAdapter {
      */
     @Override
     public void inAProgProg(AProgProg node) {
-        generateImport();
+        generateOverheadIn();
+
         // Enter the global scope.
         this.symbolTable.scope();
     }
 
     @Override
     public void outAProgProg(AProgProg node) {
-        generateMain();
+        generateOverheadOut();
+
         // Unscope the global scope upon program exit.
         this.symbolTable.unscope();
     }
 
-    private void generateImport() {
+    private void generateOverheadIn() {
         buffer.append("from __future__ import print_function\n");
         addLines(1);
+
         buffer.append("bit_mask = lambda x : (x + 2**31) % 2**32 - 2**31\n");
         addLines(1);
     }
 
-    private void generateMain() {
+    private void generateOverheadOut() {
         buffer.append("if __name__ == '__main__':\n");
         buffer.append("\tmain0()\n");
     }
@@ -256,6 +263,80 @@ public class CodeGenerator extends DepthFirstAdapter {
         this.outAVarsTopDec(node);
     }
 
+    private String getStructString(AStructTypeExpr node)
+    {
+        String defaultValue = "{ ";
+        ArrayList<PFieldSpec> fields = new ArrayList<PFieldSpec>(((AStructTypeExpr) node).getFieldSpec());
+        Boolean first = true;
+        for (PFieldSpec f: fields)
+        {
+            if (!(first))
+            {
+                defaultValue += ", ";
+            }
+            ArrayList<POptId> opts = new ArrayList<POptId>(((ASpecFieldSpec) f).getOptId());
+            first = true;
+            for (POptId o: opts)
+            {
+                if (!(first))
+                {
+                    defaultValue += ", ";
+                }
+                defaultValue += ((AIdOptId) o).toString();
+                defaultValue += ": ";
+                defaultValue += getTypeString(((ASpecFieldSpec) f).getTypeExpr());
+                first = false;
+            }
+            first = false;
+        }
+        defaultValue += " }";
+        return defaultValue;
+    }
+
+    private String getArrayString(AArrayTypeExpr node)
+    {
+        String defaultValue = "[";
+        defaultValue += getTypeString(node.getTypeExpr());
+        defaultValue += "] * ";
+        defaultValue += node.getExpr().toString();
+        defaultValue = defaultValue.substring(0,defaultValue.length() - 1);
+        return defaultValue;
+    }
+
+    private String getAliasString(AAliasTypeExpr node)
+    {
+        //TODO
+        return "";
+    }
+
+    private String getTypeString(PTypeExpr type)
+    {
+        System.out.println(type.getClass());
+        String defaultValue = "";
+        if (type instanceof ABoolTypeExpr) {
+            defaultValue = "False";
+        } else if (type instanceof AIntTypeExpr) {
+            defaultValue = "0";
+        } else if (type instanceof AFloatTypeExpr) {
+            defaultValue = "0.";
+        } else if (type instanceof ARuneTypeExpr) {
+            defaultValue = "0";
+        } else if (type instanceof AStringTypeExpr) {
+            defaultValue = "";
+        } else if (type instanceof AAliasTypeExpr) {
+            // TODO:
+            // defaultValue = getAliasString((AAliasTypeExpr) type);
+        } else if (type instanceof AArrayTypeExpr) {
+            defaultValue = getArrayString((AArrayTypeExpr) type);
+        } else if (type instanceof ASliceTypeExpr) {
+            defaultValue = "[]";
+        } else if (type instanceof AStructTypeExpr) {
+            defaultValue = getStructString((AStructTypeExpr) type);
+        }
+        return defaultValue;
+    }
+
+
     @Override
     public void caseASpecVarSpec(ASpecVarSpec node) {
         this.inASpecVarSpec(node);
@@ -276,20 +357,8 @@ public class CodeGenerator extends DepthFirstAdapter {
 
         if (node.getTypeExpr() != null && node.getExpr().size() == 0) {
             PTypeExpr type = node.getTypeExpr();
-            String defaultValue = null;
-
-            if (type instanceof ABoolTypeExpr) {
-                defaultValue = "False";
-            } else if (type instanceof AIntTypeExpr) {
-                defaultValue = "0";
-            } else if (type instanceof AFloatTypeExpr) {
-                defaultValue = "0.";
-            } else if (type instanceof ARuneTypeExpr) {
-                defaultValue = "0";
-            } else if (type instanceof AStringTypeExpr) {
-                defaultValue = "";
-            }
-
+            String defaultValue = getTypeString(type);
+            System.out.println(defaultValue);
             for (int i = 0; i < node.getOptId().size(); i++) {
                 if (i > 0) {
                     addComma();
@@ -1826,12 +1895,50 @@ public class CodeGenerator extends DepthFirstAdapter {
 
     @Override
     public void caseAAppendExpr(AAppendExpr node) {
-        /* TODO */
+        this.inAAppendExpr(node);
+
+        addLeftParen();
+
+        if (node.getId() != null) {
+            buffer.append(node.getId().getText());
+        }
+
+        buffer.append(" + ");
+
+        addLeftBracket();
+
+        if (node.getExpr() != null) {
+            node.getExpr().apply(this);
+        }
+
+        addRightBracket();
+
+        addRightParen();
+
+        this.outAAppendExpr(node);
     }
 
     @Override
     public void caseATypeCastExpr(ATypeCastExpr node) {
-        /* TODO */
+        String type = "";
+        PTypeExpr expr = node.getTypeExpr();
+        if (expr instanceof AFloatTypeExpr)
+        {
+            type = "float";
+        }
+        else if (expr instanceof ARuneTypeExpr)
+        {
+            type = "int";
+        }
+        else if (expr instanceof ABoolTypeExpr || expr instanceof AIntTypeExpr)
+        {
+            buffer.append(expr.toString());
+            buffer.setLength(buffer.length() - 1);
+        }
+        buffer.append(type);
+        buffer.append("(");
+        node.getExpr().apply(this);
+        buffer.append(")");
     }
 
     /**
@@ -1840,7 +1947,21 @@ public class CodeGenerator extends DepthFirstAdapter {
      */
     @Override
     public void caseAArrayElemExpr(AArrayElemExpr node) {
-        /* TODO */
+        this.inAArrayElemExpr(node);
+
+        if (node.getArray() != null) {
+            node.getArray().apply(this);
+        }
+
+        addLeftBracket();
+
+        if (node.getIndex() != null) {
+            node.getIndex().apply(this);
+        }
+
+        addRightBracket();
+
+        this.outAArrayElemExpr(node);
     }
 
     @Override
@@ -2033,6 +2154,14 @@ public class CodeGenerator extends DepthFirstAdapter {
         buffer.append(')');
     }
 
+    private void addLeftBracket() {
+        buffer.append('[');
+    }
+
+    private void addRightBracket() {
+        buffer.append(']');
+    }
+
     private void deleteLastCharacter() {
         buffer.deleteCharAt(buffer.length() - 1);
     }
@@ -2044,7 +2173,9 @@ public class CodeGenerator extends DepthFirstAdapter {
 
         addTabs();
         e.apply(this);
-        addLines(1);
+        if (!(e instanceof AIfElseStmt) && !(e instanceof ASwitchStmt) && !(e instanceof ALoopStmt) && !(e instanceof ABlockStmt)) {
+            addLines(1);
+        }
     }
 
     private void enterCodeBlock() {
@@ -2061,6 +2192,7 @@ public class CodeGenerator extends DepthFirstAdapter {
             buffer.append("pass");
             addLines(1);
         }
+
         tabDepth--;
     }
 
