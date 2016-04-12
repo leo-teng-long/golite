@@ -480,9 +480,6 @@ public class CodeGenerator extends DepthFirstAdapter {
 
         buffer.append(this.rename(name));
 
-        // Enter the function body.
-        this.symbolTable.scope();
-
         addLeftParen();
 
         {
@@ -500,10 +497,31 @@ public class CodeGenerator extends DepthFirstAdapter {
         addRightParen();
         addColon();
 
+        // Enter the function body.
+        this.symbolTable.scope();
+
         // do nothing with return type info;
 
         {
             enterCodeBlock();
+
+            // Allow access to all 0th-scope variables.
+            for (Symbol s : this.symbolTable.getSymbolsFromScope(0)) {
+                if (s instanceof VariableSymbol) {
+                    addTabs();
+                    this.buffer.append("global " + this.rename(s.getName()));
+                    this.addLines(1);
+                }
+            }
+
+            // Allow access to all global variables.
+            for (Symbol s : this.symbolTable.getSymbolsFromScope(1)) {
+                if (s instanceof VariableSymbol) {
+                    addTabs();
+                    this.buffer.append("global " + this.rename(s.getName()));
+                    this.addLines(1);
+                }
+            }
 
             List<PStmt> copy = new ArrayList<PStmt>(node.getStmt());
             for (PStmt e : copy) {
@@ -2181,8 +2199,12 @@ public class CodeGenerator extends DepthFirstAdapter {
             return;
         }
 
-        addTabs();
+        if (!(e instanceof ABlockStmt)) {
+            addTabs();
+        }
+
         e.apply(this);
+        
         if (!(e instanceof AIfElseStmt) && !(e instanceof ASwitchStmt) && !(e instanceof ALoopStmt) && !(e instanceof ABlockStmt)) {
             addLines(1);
         }

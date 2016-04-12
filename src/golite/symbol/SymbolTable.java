@@ -134,6 +134,25 @@ public class SymbolTable {
 	}
 
 	/**
+	 * Returns the symbols in the given scope.
+	 *
+	 * @param scopeDepth - Depth of desired scope
+	 * @return Collection of symbols in the given scope
+	 * @throws SymbolTableException if the scope depth is invalid
+	 */
+	public Collection<Symbol> getSymbolsFromScope(int scopeDepth) {
+		int i = this.scopes.size() - 1;
+		for (LinkedHashMap<String, Symbol> scope : this.scopes) {
+			if (scopeDepth == i)
+				return scope.values();
+
+			i--;
+		}
+
+		throw new SymbolTableException("ERROR: Invalid scope depth " + scopeDepth);
+	}
+
+	/**
 	 * Puts the given symbol into the symbol table (in the current scope).
 	 *
 	 * @param symbol - Symbol
