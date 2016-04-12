@@ -80,6 +80,9 @@ public abstract class Symbol {
 	 * @return Print-friendly string representation of the type.
 	 */
 	public String getTypeString() {
+		if (this.type == null)
+			return "null";
+
 		return this.type.toString();
 	}
 
@@ -89,6 +92,9 @@ public abstract class Symbol {
 	 * @return Print-friendly string representation of the underlying type.
 	 */
 	public String getUnderlyingTypeString() {
+		if (this.type == null)
+			return "null";
+		
 		return this.type.getUnderlyingType().toString();
 	}
 
