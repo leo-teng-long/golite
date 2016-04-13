@@ -22,8 +22,11 @@ public class CodeGenerator extends DepthFirstAdapter {
     private int tabDepth;
     /** Keep track of the end statement of for loop */
     private PStmt lastForEnd;
+    /** Tracks whether the traversal is inside a type specification. */
+    private boolean inTypeSpec;
     /** Tracks whether the traversal is inside a struct type expression. */
     private boolean inStructTypeExpr;
+    
 
     /** Flag to apply normalization to int and rune */
     private static final boolean APPLY_NORMALIZATION = true;
@@ -434,12 +437,19 @@ public class CodeGenerator extends DepthFirstAdapter {
 
     @Override
     public void inASpecTypeSpec(ASpecTypeSpec node) {
+        this.inTypeSpec = true;
+
         for (TId id: this.getIds(node)) {
             // Get the GoLite type of the type expression.
             GoLiteType type = this.getType(node.getTypeExpr());
             // Add a type alias symbol to the symbol table.
             this.symbolTable.putSymbol(new TypeAliasSymbol(id.getText(), type, node));
         }
+    }
+
+    @Override
+    public void outASpecTypeSpec(ASpecTypeSpec node) {
+        this.inTypeSpec = false;
     }
 
     /**
@@ -696,7 +706,7 @@ public class CodeGenerator extends DepthFirstAdapter {
         this.inAIdOptId(node);
 
         if (node.getId() != null) {
-            if (!this.inStructTypeExpr)
+            if (!this.inTypeSpec && !this.inStructTypeExpr)
                 buffer.append(this.rename(node.getId().getText()));
         }
 
