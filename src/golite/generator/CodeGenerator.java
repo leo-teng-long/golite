@@ -15,6 +15,9 @@ public class CodeGenerator extends DepthFirstAdapter {
 
     /** Output name for the main function. */
     private static final String OUT_MAIN_NAME = "main_1";
+    
+    /** Flag to apply normalization to int and rune */
+    private static final boolean APPLY_NORMALIZATION = true;
 
     /** Buffer storing generated python code */
     private StringBuffer buffer;
@@ -26,10 +29,6 @@ public class CodeGenerator extends DepthFirstAdapter {
     private boolean inTypeSpec;
     /** Tracks whether the traversal is inside a struct type expression. */
     private boolean inStructTypeExpr;
-    
-
-    /** Flag to apply normalization to int and rune */
-    private static final boolean APPLY_NORMALIZATION = true;
 
     /** Symbol table. */
     private SymbolTable symbolTable;
@@ -280,20 +279,23 @@ public class CodeGenerator extends DepthFirstAdapter {
         buffer.append("from __future__ import print_function\n");
         addLines(1);
 
-        buffer.append("normalize = lambda x : (x + 2**31) % 2**32 - 2**31\n");
+        buffer.append("twoExp31, twoExp32 = 2 ** 31, 2 ** 32\n");
+        buffer.append("normalize = lambda x : (x + twoExp31) % twoExp32 - twoExp31\n");
+        addLines(1);
+
         buffer.append("true_0, false_0 = True, False\n");
         addLines(1);
 
-        buffer.append("#######################################################\n");
-        buffer.append("###### The miracle of GoLite to Python2.7 begins ######\n");
-        buffer.append("#######################################################\n");
+        buffer.append("#########################################################\n");
+        buffer.append("###### The miracle from GoLite to Python2.7 begins ######\n");
+        buffer.append("#########################################################\n");
         addLines(1);
     }
 
     private void generateOverheadOut() {
-        buffer.append("#####################################################\n");
-        buffer.append("###### The miracle of GoLite to Python2.7 ends ######\n");
-        buffer.append("#####################################################\n");
+        buffer.append("#######################################################\n");
+        buffer.append("###### The miracle from GoLite to Python2.7 ends ######\n");
+        buffer.append("#######################################################\n");
         addLines(1);
 
         buffer.append("if __name__ == '__main__':\n");
