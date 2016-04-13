@@ -15,6 +15,8 @@ public class CodeGenerator extends DepthFirstAdapter {
 
     /** Output name for the main function. */
     private static final String OUT_MAIN_NAME = "main_1";
+    /** Flag to apply normalization to int and rune */
+    private static final boolean APPLY_NORMALIZATION = true;
 
     /** Buffer storing generated python code */
     private StringBuffer buffer;
@@ -26,10 +28,6 @@ public class CodeGenerator extends DepthFirstAdapter {
     private boolean inTypeSpec;
     /** Tracks whether the traversal is inside a struct type expression. */
     private boolean inStructTypeExpr;
-    
-
-    /** Flag to apply normalization to int and rune */
-    private static final boolean APPLY_NORMALIZATION = true;
 
     /** Symbol table. */
     private SymbolTable symbolTable;
@@ -48,7 +46,7 @@ public class CodeGenerator extends DepthFirstAdapter {
     /**
      * Wrap an expression in bit_mask()
      */
-    public void bitMask(Node n)
+    public void normalizeExpr(Node n)
     {
         if (!APPLY_NORMALIZATION) {
             n.apply(this);
@@ -280,20 +278,23 @@ public class CodeGenerator extends DepthFirstAdapter {
         buffer.append("from __future__ import print_function\n");
         addLines(1);
 
-        buffer.append("normalize = lambda x : (x + 2**31) % 2**32 - 2**31\n");
+        buffer.append("twoExp31, twoExp32 = 2 ** 31, 2 ** 32\n");
+        buffer.append("normalize = lambda x : (x + twoExp31) % twoExp32 - twoExp31\n");
+        addLines(1);
+
         buffer.append("true_0, false_0 = True, False\n");
         addLines(1);
 
-        buffer.append("#######################################################\n");
-        buffer.append("###### The miracle of GoLite to Python2.7 begins ######\n");
-        buffer.append("#######################################################\n");
+        buffer.append("#########################################################\n");
+        buffer.append("###### The miracle from GoLite to Python2.7 begins ######\n");
+        buffer.append("#########################################################\n");
         addLines(1);
     }
 
     private void generateOverheadOut() {
-        buffer.append("#####################################################\n");
-        buffer.append("###### The miracle of GoLite to Python2.7 ends ######\n");
-        buffer.append("#####################################################\n");
+        buffer.append("#######################################################\n");
+        buffer.append("###### The miracle from GoLite to Python2.7 ends ######\n");
+        buffer.append("#######################################################\n");
         addLines(1);
 
         buffer.append("if __name__ == '__main__':\n");
@@ -402,7 +403,7 @@ public class CodeGenerator extends DepthFirstAdapter {
                     addComma();
                     addSpace();
                 }
-                bitMask(copy.get(i));
+                normalizeExpr(copy.get(i));
             }
         }
 
@@ -659,7 +660,7 @@ public class CodeGenerator extends DepthFirstAdapter {
                     addSpace();
                 }
 
-                bitMask(copy.get(i));
+                normalizeExpr(copy.get(i));
             }
         }
 
@@ -752,7 +753,7 @@ public class CodeGenerator extends DepthFirstAdapter {
                     addComma();
                     addSpace();
                 }
-                bitMask(copy.get(i));
+                normalizeExpr(copy.get(i));
             }
         }
 
@@ -771,10 +772,17 @@ public class CodeGenerator extends DepthFirstAdapter {
         if (node.getLhs() != null) {
             node.getLhs().apply(this);
         }
+
         buffer.append(" += ");
+
         if (node.getRhs() != null) {
-            bitMask(node.getRhs());
+            normalizeExpr(node.getRhs());
         }
+
+        if (typeTable.get(node.getLhs()) instanceof IntType || typeTable.get(node.getLhs()) instanceof RuneType) {
+            normalizeAssignable(node.getLhs());
+        }
+
         this.outAPlusAssignStmt(node);
     }
 
@@ -789,7 +797,11 @@ public class CodeGenerator extends DepthFirstAdapter {
         buffer.append(" -= ");
 
         if (node.getRhs() != null) {
-            bitMask(node.getRhs());
+            normalizeExpr(node.getRhs());
+        }
+
+        if (typeTable.get(node.getLhs()) instanceof IntType || typeTable.get(node.getLhs()) instanceof RuneType) {
+            normalizeAssignable(node.getLhs());
         }
 
         this.outAMinusAssignStmt(node);
@@ -806,7 +818,11 @@ public class CodeGenerator extends DepthFirstAdapter {
         buffer.append(" *= ");
 
         if (node.getRhs() != null) {
-            bitMask(node.getRhs());
+            normalizeExpr(node.getRhs());
+        }
+
+        if (typeTable.get(node.getLhs()) instanceof IntType || typeTable.get(node.getLhs()) instanceof RuneType) {
+            normalizeAssignable(node.getLhs());
         }
 
         this.outAStarAssignStmt(node);
@@ -823,7 +839,11 @@ public class CodeGenerator extends DepthFirstAdapter {
         buffer.append(" /= ");
 
         if (node.getRhs() != null) {
-            bitMask(node.getRhs());
+            normalizeExpr(node.getRhs());
+        }
+
+        if (typeTable.get(node.getLhs()) instanceof IntType || typeTable.get(node.getLhs()) instanceof RuneType) {
+            normalizeAssignable(node.getLhs());
         }
 
         this.outASlashAssignStmt(node);
@@ -840,7 +860,11 @@ public class CodeGenerator extends DepthFirstAdapter {
         buffer.append(" %= ");
 
         if (node.getRhs() != null) {
-            bitMask(node.getRhs());
+            normalizeExpr(node.getRhs());
+        }
+
+        if (node.getLhs() != null) {
+            normalizeAssignable(node.getLhs());
         }
 
         this.outAPercAssignStmt(node);
@@ -862,7 +886,11 @@ public class CodeGenerator extends DepthFirstAdapter {
         buffer.append(" &= ");
 
         if (node.getRhs() != null) {
-            bitMask(node.getRhs());
+            normalizeExpr(node.getRhs());
+        }
+
+        if (node.getLhs() != null) {
+            normalizeAssignable(node.getLhs());
         }
 
         this.outAAndAssignStmt(node);
@@ -879,7 +907,11 @@ public class CodeGenerator extends DepthFirstAdapter {
         buffer.append(" |= ");
 
         if (node.getRhs() != null) {
-            bitMask(node.getRhs());
+            normalizeExpr(node.getRhs());
+        }
+
+        if (node.getLhs() != null) {
+            normalizeAssignable(node.getLhs());
         }
 
         this.outAPipeAssignStmt(node);
@@ -896,7 +928,11 @@ public class CodeGenerator extends DepthFirstAdapter {
         buffer.append(" ^= ");
 
         if (node.getRhs() != null) {
-            bitMask(node.getRhs());
+            normalizeExpr(node.getRhs());
+        }
+
+        if (node.getLhs() != null) {
+            normalizeAssignable(node.getLhs());
         }
 
         this.outACarotAssignStmt(node);
@@ -913,7 +949,11 @@ public class CodeGenerator extends DepthFirstAdapter {
         buffer.append(" &= ~ ");
 
         if (node.getRhs() != null) {
-            bitMask(node.getRhs());
+            normalizeExpr(node.getRhs());
+        }
+
+        if (node.getLhs() != null) {
+            normalizeAssignable(node.getLhs());
         }
 
         this.outAAmpCarotAssignStmt(node);
@@ -930,7 +970,11 @@ public class CodeGenerator extends DepthFirstAdapter {
         buffer.append(" <<= ");
 
         if (node.getRhs() != null) {
-            bitMask(node.getRhs());
+            normalizeExpr(node.getRhs());
+        }
+
+        if (node.getLhs() != null) {
+            normalizeAssignable(node.getLhs());
         }
 
         this.outALshiftAssignStmt(node);
@@ -947,7 +991,11 @@ public class CodeGenerator extends DepthFirstAdapter {
         buffer.append(" >>= ");
 
         if (node.getRhs() != null) {
-            bitMask(node.getRhs());
+            normalizeExpr(node.getRhs());
+        }
+
+        if (node.getLhs() != null) {
+            normalizeAssignable(node.getLhs());
         }
 
         this.outARshiftAssignStmt(node);
@@ -967,14 +1015,8 @@ public class CodeGenerator extends DepthFirstAdapter {
 
         buffer.append(" += 1");
 
-        addLines(1);
-        addTabs();
         if (node.getExpr() != null) {
-            node.getExpr().apply(this);
-        }
-        buffer.append(" = ");
-        if (node.getExpr() != null) {
-            bitMask(node.getExpr());
+            normalizeAssignable(node.getExpr());
         }
 
         this.outAIncrStmt(node);
@@ -990,16 +1032,20 @@ public class CodeGenerator extends DepthFirstAdapter {
 
         buffer.append(" -= 1");
 
+        if (node.getExpr() != null) {
+            normalizeAssignable(node.getExpr());
+        }
+
+        this.outADecrStmt(node);
+    }
+
+    private void normalizeAssignable(PExpr expr) {
         addLines(1);
         addTabs();
-        if (node.getExpr() != null) {
-            node.getExpr().apply(this);
-        }
+
+        expr.apply(this);
         buffer.append(" = ");
-        if (node.getExpr() != null) {
-            bitMask(node.getExpr());
-        }
-        this.outADecrStmt(node);
+        normalizeExpr(expr);
     }
 
     @Override
@@ -1459,13 +1505,13 @@ public class CodeGenerator extends DepthFirstAdapter {
         addLeftParen();
 
         if (node.getLeft() != null) {
-            bitMask(node.getLeft());
+            normalizeExpr(node.getLeft());
         }
 
         buffer.append(" + ");
 
         if (node.getRight() != null) {
-            bitMask(node.getRight());
+            normalizeExpr(node.getRight());
         }
 
         addRightParen();
@@ -1480,13 +1526,13 @@ public class CodeGenerator extends DepthFirstAdapter {
         addLeftParen();
 
         if (node.getLeft() != null) {
-            bitMask(node.getLeft());
+            normalizeExpr(node.getLeft());
         }
 
         buffer.append(" - ");
 
         if (node.getRight() != null) {
-            bitMask(node.getRight());
+            normalizeExpr(node.getRight());
         }
 
         addRightParen();
@@ -1501,13 +1547,13 @@ public class CodeGenerator extends DepthFirstAdapter {
         addLeftParen();
 
         if (node.getLeft() != null) {
-            bitMask(node.getLeft());
+            normalizeExpr(node.getLeft());
         }
 
         buffer.append(" * ");
 
         if (node.getRight() != null) {
-            bitMask(node.getRight());
+            normalizeExpr(node.getRight());
         }
 
         addRightParen();
@@ -1522,13 +1568,13 @@ public class CodeGenerator extends DepthFirstAdapter {
         addLeftParen();
 
         if (node.getLeft() != null) {
-            bitMask(node.getLeft());
+            normalizeExpr(node.getLeft());
         }
 
         buffer.append(" / ");
 
         if (node.getRight() != null) {
-            bitMask(node.getRight());
+            normalizeExpr(node.getRight());
         }
 
         addRightParen();
@@ -1543,13 +1589,13 @@ public class CodeGenerator extends DepthFirstAdapter {
         addLeftParen();
 
         if (node.getLeft() != null) {
-            bitMask(node.getLeft());
+            normalizeExpr(node.getLeft());
         }
 
         buffer.append(" % ");
 
         if (node.getRight() != null) {
-            bitMask(node.getRight());
+            normalizeExpr(node.getRight());
         }
 
         addRightParen();
@@ -1569,13 +1615,13 @@ public class CodeGenerator extends DepthFirstAdapter {
         addLeftParen();
 
         if (node.getLeft() != null) {
-            bitMask(node.getLeft());
+            normalizeExpr(node.getLeft());
         }
 
         buffer.append(" & ");
 
         if (node.getRight() != null) {
-            bitMask(node.getRight());
+            normalizeExpr(node.getRight());
         }
 
         addRightParen();
@@ -1590,13 +1636,13 @@ public class CodeGenerator extends DepthFirstAdapter {
         addLeftParen();
 
         if (node.getLeft() != null) {
-            bitMask(node.getLeft());
+            normalizeExpr(node.getLeft());
         }
 
         buffer.append(" | ");
 
         if (node.getRight() != null) {
-            bitMask(node.getRight());
+            normalizeExpr(node.getRight());
         }
 
         addRightParen();
@@ -1611,13 +1657,13 @@ public class CodeGenerator extends DepthFirstAdapter {
         addLeftParen();
 
         if (node.getLeft() != null) {
-            bitMask(node.getLeft());
+            normalizeExpr(node.getLeft());
         }
 
         buffer.append(" ^ ");
 
         if (node.getRight() != null) {
-            bitMask(node.getRight());
+            normalizeExpr(node.getRight());
         }
 
         addRightParen();
@@ -1632,13 +1678,13 @@ public class CodeGenerator extends DepthFirstAdapter {
         addLeftParen();
 
         if (node.getLeft() != null) {
-            bitMask(node.getLeft());
+            normalizeExpr(node.getLeft());
         }
 
         buffer.append(" &~ ");
 
         if (node.getRight() != null) {
-            bitMask(node.getRight());
+            normalizeExpr(node.getRight());
         }
 
         addRightParen();
@@ -1653,13 +1699,13 @@ public class CodeGenerator extends DepthFirstAdapter {
         addLeftParen();
 
         if (node.getLeft() != null) {
-            bitMask(node.getLeft());
+            normalizeExpr(node.getLeft());
         }
 
         buffer.append(" << ");
 
         if (node.getRight() != null) {
-            bitMask(node.getRight());
+            normalizeExpr(node.getRight());
         }
 
         addRightParen();
@@ -1680,7 +1726,7 @@ public class CodeGenerator extends DepthFirstAdapter {
         buffer.append(" >> ");
 
         if (node.getRight() != null) {
-            bitMask(node.getRight());
+            normalizeExpr(node.getRight());
         }
 
         addRightParen();
@@ -1703,7 +1749,7 @@ public class CodeGenerator extends DepthFirstAdapter {
         addSpace();
 
         if (node.getExpr() != null) {
-            bitMask(node.getExpr());
+            normalizeExpr(node.getExpr());
         }
 
         addRightParen();
@@ -1721,7 +1767,7 @@ public class CodeGenerator extends DepthFirstAdapter {
         addSpace();
 
         if (node.getExpr() != null) {
-            bitMask(node.getExpr());
+            normalizeExpr(node.getExpr());
         }
 
         addRightParen();
@@ -1739,7 +1785,7 @@ public class CodeGenerator extends DepthFirstAdapter {
         addSpace();
 
         if (node.getExpr() != null) {
-            bitMask(node.getExpr());
+            normalizeExpr(node.getExpr());
         }
 
         addRightParen();
@@ -1757,7 +1803,7 @@ public class CodeGenerator extends DepthFirstAdapter {
         addSpace();
 
         if (node.getExpr() != null) {
-            bitMask(node.getExpr());
+            normalizeExpr(node.getExpr());
         }
 
         addRightParen();
@@ -1777,13 +1823,13 @@ public class CodeGenerator extends DepthFirstAdapter {
         addLeftParen();
 
         if (node.getLeft() != null) {
-            bitMask(node.getLeft());
+            normalizeExpr(node.getLeft());
         }
 
         buffer.append(" == ");
 
         if (node.getRight() != null) {
-            bitMask(node.getRight());
+            normalizeExpr(node.getRight());
         }
 
         addRightParen();
@@ -1798,13 +1844,13 @@ public class CodeGenerator extends DepthFirstAdapter {
         addLeftParen();
 
         if (node.getLeft() != null) {
-            bitMask(node.getLeft());
+            normalizeExpr(node.getLeft());
         }
 
         buffer.append(" != ");
 
         if (node.getRight() != null) {
-            bitMask(node.getRight());
+            normalizeExpr(node.getRight());
         }
 
         addRightParen();
@@ -1819,13 +1865,13 @@ public class CodeGenerator extends DepthFirstAdapter {
         addLeftParen();
 
         if (node.getLeft() != null) {
-            bitMask(node.getLeft());
+            normalizeExpr(node.getLeft());
         }
 
         buffer.append(" < ");
 
         if (node.getRight() != null) {
-            bitMask(node.getRight());
+            normalizeExpr(node.getRight());
         }
 
         addRightParen();
@@ -1840,13 +1886,13 @@ public class CodeGenerator extends DepthFirstAdapter {
         addLeftParen();
 
         if (node.getLeft() != null) {
-            bitMask(node.getLeft());
+            normalizeExpr(node.getLeft());
         }
 
         buffer.append(" <= ");
 
         if (node.getRight() != null) {
-            bitMask(node.getRight());
+            normalizeExpr(node.getRight());
         }
 
         addRightParen();
@@ -1861,13 +1907,13 @@ public class CodeGenerator extends DepthFirstAdapter {
         addLeftParen();
 
         if (node.getLeft() != null) {
-            bitMask(node.getLeft());
+            normalizeExpr(node.getLeft());
         }
 
         buffer.append(" > ");
 
         if (node.getRight() != null) {
-            bitMask(node.getRight());
+            normalizeExpr(node.getRight());
         }
 
         addRightParen();
@@ -1882,13 +1928,13 @@ public class CodeGenerator extends DepthFirstAdapter {
         addLeftParen();
 
         if (node.getLeft() != null) {
-            bitMask(node.getLeft());
+            normalizeExpr(node.getLeft());
         }
 
         buffer.append(" >= ");
 
         if (node.getRight() != null) {
-            bitMask(node.getRight());
+            normalizeExpr(node.getRight());
         }
 
         addRightParen();
@@ -1907,13 +1953,13 @@ public class CodeGenerator extends DepthFirstAdapter {
         addLeftParen();
 
         if (node.getLeft() != null) {
-            bitMask(node.getLeft());
+            normalizeExpr(node.getLeft());
         }
 
         buffer.append(" and ");
 
         if (node.getRight() != null) {
-            bitMask(node.getRight());
+            normalizeExpr(node.getRight());
         }
 
         addRightParen();
@@ -1928,13 +1974,13 @@ public class CodeGenerator extends DepthFirstAdapter {
         addLeftParen();
 
         if (node.getLeft() != null) {
-            bitMask(node.getLeft());
+            normalizeExpr(node.getLeft());
         }
 
         buffer.append(" or ");
 
         if (node.getRight() != null) {
-            bitMask(node.getRight());
+            normalizeExpr(node.getRight());
         }
 
         addRightParen();
