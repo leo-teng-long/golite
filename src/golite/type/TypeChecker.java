@@ -702,8 +702,8 @@ public class TypeChecker extends DepthFirstAdapter {
             PExpr rightExpr = pExprsRHS.get(i);
             GoLiteType rightExprType = this.getType(rightExpr);
 
-            // Throw an error if the L.H.S. and R.H.S. types are not compatible.
-        	if (!(leftExprType.isCompatible(rightExprType)))
+            // Throw an error if the L.H.S. and R.H.S. surface types are not equal.
+        	if (!(leftExprType.equals(rightExprType)))
                 this.throwTypeCheckException(rightExpr, "Cannot use type " + rightExprType
         				+ " as type " + leftExprType + " in assignment");
         }
