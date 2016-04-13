@@ -1,6 +1,7 @@
 \documentclass{article}
 \usepackage[utf8]{inputenc}
 \usepackage{tikz}
+\usepackage{hyperref}
 
 \title{Comp 520: Milestone \#4}
 \author{The Heapsters: \\Teng Long, Ethan Macdonald, Hardik Vala}
@@ -15,17 +16,42 @@
 \subsection{Motivation}
 We decided to work on a GoLite project because we wanted to gain experience writing a compiler for a general purpose language (as opposed to a domain specific language). Additionally, we felt that the project might have a bit more structure (i.e., more detailed specifications). We believed this be a good thing since all of us were new to writing compilers and were still developing our intuition with regard to the workload created by various design choices (i.e., we did not want too many degrees of freedom).
 
-We used SableCC3 to build the scanner, parser, and abstract syntax tree (AST) since we had some familiarity with it from the first two assignments, and it simplified much of the heavy lifting for the early stages of the compiler. This allowed us to focus more on having a correct grammar and well-designed AST in lieu of building our own parser, scanner, and AST from scratch.
+We used Java with SableCC3 to build the scanner, parser, and abstract syntax tree (AST) since we had some familiarity with it from the first two assignments, and it simplified much of the heavy lifting for the early stages of the compiler. This allowed us to focus more on having a correct grammar and well-designed AST in lieu of building our own parser, scanner, and AST from scratch.
 
 \subsection{Contributions}
+\subsubsection{Overall}
 Although individual contributions did vary from milestone to milestone, the work was pretty evenly distributed between group members over the course of the semester. When possible, we tried to work in the same physical location with one another. This allowed us to bounce ideas off of each other or sort out complicated issues without miscommunication.
 
-During milestone 1 Ethan and Leo came up with most of the context-free grammar while Hardik modified it to work with SableCC3, Ethan wrote the report, Leo did the pretty printer, and Hardik did most of the AST. During milestone 2, Ethan and Leo worked on the typechecker together. Hardik wrote the pretty printer and report. For milestone 3, Hardik re-did the typechecker (everyone agreed it had to be done), Ethan and Leo started redoing the typechecker but passed the task on to Hardik so as not to duplicate work, and Leo did the first part of the code generator. On milestone 4, everyone worked together to finish up the code generator. Ethan wrote the first draft of this report, and everyone made edits as necessary. TODO: pull out details from our old reports
+\subsubsection{Milestone \#1}
+During milestone 1 Ethan and Leo came up with most of the context-free grammar while Hardik modified it to work with SableCC3 and wrote the semicolon insertion rules, Ethan wrote the report, Leo did the pretty printer, and Hardik did most of the AST. 
+
+\subsubsection{Milestone \#2}
+During milestone 2, Ethan and Leo worked on the typechecker and tests together. Ethan wrote the weeder. Hardik wrote the pretty printer and report. 
+
+\subsubsection{Milestone \#3}
+During milestone 3, Hardik re-did the typechecker (everyone agreed it had to be done), Ethan and Leo started redoing the typechecker but passed the task on to Hardik so as not to duplicate work, and Leo did the first part of the code generator. 
+
+\subsubsection{Milestone \#4}
+During milestone 4, everyone worked together to finish up the code generator (especially Leo \& Hardik). Ethan wrote the first draft of this report, and everyone made edits as necessary.
 
 
 \subsection{Resources}
-Aside from SableCC3 and Java, the only resources used were the reference materials and source code referenced in the README.md of our GitHub repository. TODO: These resources
+Aside from SableCC3 and Java, the only resources used were the reference materials and source code referenced in the README.md of our GitHub repository. Below is another list of hyperlinks to those resources.
 
+\subsubsection{Viewed}
+\begin{itemize}
+\item \href{https://golang.org/ref/spec}{The Go Programming Language Specification}
+\item \href{http://www.sable.mcgill.ca/~hendren/520/2016/tiny/}{Tiny language example}
+\item \href{https://github.com/leo-teng-long/minipart2/blob/master/src/mini/PrettyPrinter.java}{Leo's MiniLang Pretty Printer}
+\item \href{http://www.sable.mcgill.ca/~hendren/520/2016/joos/jjoos-scc-3/}{JOOS SabelCC 3}
+\item \href{http://www.sable.mcgill.ca/listarchives/sablecc-list/msg00639.html}{Re: Redefinition Error}
+\end{itemize}
+
+\subsubsection{Used}
+\begin{itemize}
+\item \href{http://www.sable.mcgill.ca/~hendren/520/2016/semicolon-test/}{Example SableCC code for handling GoLite semicolon rule}
+\item \href{http://lists.sablecc.org/pipermail/sablecc-discussion/msg00144.html}{Re: SableCC feature suggestion}
+\end{itemize}
 \section{Compiler Structure}
 
 \subsection{Phase Diagram}
@@ -47,6 +73,26 @@ Aside from SableCC3 and Java, the only resources used were the reference materia
 
 \end{tikzpicture}
 
+\subsection{Scanner \& Parser}
+
+The scanner was a pretty straightforward implementation using SableCC3. We did have a bit of difficulty figuring out the regex for the comments. Our scanner takes in a GoLite program and outputs tokens.
+
+The parser and AST were also fairly straightforward, it just took a long time to agree upon the precise structure that we eventually went with. The biggest challenge was trying to predict which structures would cause issues during later milestones. During later milestones we wound up going back and modifying our grammar/AST somewhat. Our parser takes in tokens and outputs an AST.
+
+We included constraints within our grammar to reduce the amount of weeding required (e.g., we limited the set of allowed top-level statements). Some issues that we chose to defer until later stages included the removal of quotes/backticks from strings, checking proper usage of breaks and continues, checking that fields and array accesses happen on the correct elements, checking for string casts, checking that expressions in simple\_stmt are valid (e.g., function calls), mismatching numbers of ids and values in declaration statements, and distinguishing between function calls and custom type casts.
+
+\subsection{Weeder}
+
+After our milestone 1 was complete we brainstormed a big list of cases that we needed to weed. Some examples include break/continue statements, checking that fields and array accesses happen on the correct elements, and mismatching numbers of ids and values in declaration statements. Later, we thought of a few more weeding conditions while we were working on the typechecker, so we added them. Our weeder takes in an AST and outputs an AST.
+
+\subsection{Typechecker}
+
+Our first attempt at this section was quite messy. We made some poor design choices early on (e.g., we didn't define our own types, we used a hashmap that pointed to the AST for our symbol table) that we wound up scrapping after the milestone, in favour of re-writing the entire typechecker. This was especially challenging for dealing with aliases, which we never got to work in our original implementation. However, in the second implementation, most of these problems were resolved. Our typechecker takes in an AST and outputs an AST as well as a type/symbol table.
+
+\subsection{Generator}
+
+Python code generation had a few challenges. For example, dynamic scoping was initially a bit of an issue for us, so we decided to go back and alter the names of all of our variables to indicate which scope they were declared in. We also feel like our code runs significantly slower because we chose to handle proper integer overflows, which means we had to make a lot of function calls to force python to behave properly at runtime. Our generator takes in an AST and type/symbol table and outputs python code.
+
 \subsection{Code Generation Justification}
 Our compiler writes to python for a few reasons. Python is currently more likely to be on a computer than Go. Additionally, Python is interpreted rather than compiled. We believe this sort of compiler could be useful for languages that have a large compile time but a short run time. Instead of sending the source code to many remote machines, where each of them might need to be compiled individually with a Go compiler, it might be more useful to send code that has been pre-compiled by our compiler so that remote machines can simply run the .py file right away.
 
@@ -59,28 +105,49 @@ Lastly, we were interested in developing a deeper understanding of static vs. du
 \subsubsection{Scanner}
 \begin{itemize}
 \item Multiline/nested comments issue
+\item Semicolon insertion rule was a bit tricky
 \end{itemize}
 \subsubsection{Parser}
 \begin{itemize}
 \item Figuring out a sensible context-free grammar
+\begin{itemize}
+	\item Hardik started working bottom-up, and Leo \& Ethan worked top-down on this until we had the entire CFG defined
+\end{itemize}
 \item Figuring out a sensible abstract syntax tree
+\begin{itemize}
+	\item In later parts of our compiler we wound up having extraneous function calls because of how our AST was defined (e.g., node.getOptId().getId() when, in hindsight, it could have been just node.getId()).
+	\item Since we're generating Python, it might have been better to have an "elif" statement in our AST, but we didn't realize this until hitting roadblocks during code generation
+\end{itemize}
 \item For the most part this milestone went smoothly (maybe our design choices didn't bother us until later)
 \end{itemize}
 \subsubsection{Weeder}
 \begin{itemize}
-\item Cleaning up cases that we didn't want to handle during parsing
+\item Cleaning up cases that we didn't want to handle during parsing (e.g., break/continue statements)
+\item This part was pretty fast to implement/went pretty smoothly
 \end{itemize}
 \subsubsection{Typechecker}
 \begin{itemize}
 \item Made a bad design decision that we paid for dearly later
+	\begin{itemize}
+		\item We should have defined our own types
+		\item We should have defined a symbol class
+		\item We wound up redoing the entire thing with the symbol class and types later
+	\end{itemize}
 \item Wound up redoing our typechecker with a more sensible design
 \item Structs and aliases caused us some grief
+	\begin{itemize}
+		\item We never did get aliases correct until after we re-did the whole thing
+		\item Structs were a bit of a pain because we had chosen an AST representation that was more intuitive for writing the AST than it was for writing the typechecker. However, after wrapping our heads around the problem we were able to work around this inconvenience.
+	\end{itemize}
 \end{itemize}
 \subsubsection{Generator}
 \begin{itemize}
 \item Dynamic scoping: had to rename all of our variables with their scopes appended to the end so that we were using the right variables for each operation
-\item Had to define a function (bit\_mask) that would synthetically cause our integers to overflow. This slowed our programs down a lot but caused correct runtime behaviour.
-\item Structs were turned into dicts!
+\item Had to define a function (normalization) that would synthetically cause our integers to overflow. This slowed our programs down a lot but caused correct runtime behaviour.
+\item Structs were turned into dicts! Instead of outputting type definitions, we constructed dicts that we inserted into our code when variables were declared. This allowed us to ensure proper runtime behaviour in a language that uses duck typing instead of static typing.
+\item Python doesn't have switch statements but we found a way to make them work using if/else statements. TODO: Leo?
+\item We used Python while loops in place of Go for loops, because python loops do not map properly to Go for loops (they work more like an iterator than a for loop)
+\item Aliasing was a bit of a highlight. TODO: Hardik?
 \end{itemize}
 
 \section{Examples}
@@ -89,6 +156,11 @@ TODO
 
 \section{Conclusion and Future work}
 
-TODO (at end)
+\subsection{Future work}
+Our generated code has not been optimized at all, so there is a lot of room for optimization (e.g., peephole optimizer). Additionally, it would be worthwhile to modify our AST somewhat to include "elif" statements (this would simplify our control structures during code generation). There is always room for more tests.
+
+\subsection{Conclusion}
+
+This was fun. We are done.
 
 \end{document}
