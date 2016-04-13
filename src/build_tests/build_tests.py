@@ -470,7 +470,8 @@ def main():
 	# Create the code generator test (but not for the reference compiler).
 	if not args.ref:
 		logging.info("Creating code generator tests...")
-		create_test(OUT_GEN_TNAME, [VALID_GEN_PROGS_DIRPATH], 'gen', False,
+		create_test(OUT_GEN_TNAME,
+			[VALID_ACTUAL_PROGS_DIRPATH, VALID_GEN_PROGS_DIRPATH], 'gen', False,
 			args.ignore_path, os.path.join(OUT_TEST_DIRPATH,
 				'%s.java' % OUT_GEN_TNAME))
 
