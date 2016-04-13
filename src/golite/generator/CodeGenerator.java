@@ -1140,7 +1140,11 @@ public class CodeGenerator extends DepthFirstAdapter {
 
             exitCodeBlock(isBlockEmpty(copy));
         }
-
+        /*
+        if (isBlockEmpty(node.getElseBlock())) {
+            return;
+        }
+        */
         addTabs();
         buffer.append("else");
         addColon();
