@@ -11,6 +11,7 @@ import golite.analysis.*;
 import golite.node.*;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -103,12 +104,15 @@ public class TypeChecker extends DepthFirstAdapter {
             return new StringType();
         else if (node instanceof AAliasTypeExpr) {
         	TId id = ((AAliasTypeExpr) node).getId();
-            GoLiteType type = this.symbolTable.getSymbolType(id.getText());
-
-            if (type == null)
-            	this.throwTypeCheckException(id, "Undefined: " + id.getText());
+            String name = id.getText();
             
-            return new AliasType(id.getText(), type);
+            Symbol symbol = this.symbolTable.getSymbol(name);
+            if (symbol == null)
+                this.throwTypeCheckException(id, "Undefined: " + name);
+            if (!(symbol instanceof TypeAliasSymbol))
+                this.throwTypeCheckException(id, name + " is not a type");
+            
+            return new AliasType(id.getText(), symbol.getType());
         } else if (node instanceof AArrayTypeExpr) {
             PExpr pExpr = ((AArrayTypeExpr) node).getExpr();
 
@@ -425,8 +429,8 @@ public class TypeChecker extends DepthFirstAdapter {
                 		// Get its GoLite type.
                 		GoLiteType exprType = this.getType(pExpr);
                 		
-                		// Check the types for compatibility, throwing an error if not.
-                		if (!typeExprType.equals(exprType))
+                		// Check the surface types for equality, throwing an error if not.
+                        if (!typeExprType.equals(exprType))
                 			this.throwTypeCheckException(pExpr,
                 				"Cannot use value of type " + exprType + " for "
                 				+ typeExprType);
@@ -592,9 +596,8 @@ public class TypeChecker extends DepthFirstAdapter {
             		// Get its GoLite type.
             		GoLiteType exprType = this.getType(pExpr);
             		
-            		// Check the L.H.S. and R.H.S. are type compatible, throwing an error if their
-            		// not.
-            		if (!(typeExprType.isCompatible(exprType)))
+                    // Check the surface types for equality, throwing an error if not.
+            		if (!(typeExprType.equals(exprType)))
             			this.throwTypeCheckException(pExpr, "Cannot use type " + exprType
             				+ " as type " + typeExprType + " in assignment");
             	}
@@ -642,8 +645,17 @@ public class TypeChecker extends DepthFirstAdapter {
     public void outAShortAssignStmt(AShortAssignStmt node) {
        	// Get L.H.S. (non-blank) Id's.
         ArrayList<TId> ids = this.getIds(node);
+        // Sort the Id's (for duplicate detection).
+        Collections.sort(ids, (i1, i2) -> i1.getText().compareTo(i2.getText()));
         // Get R.H.S. expressions.
         ArrayList<PExpr> pExprs = new ArrayList<PExpr>(node.getExpr());
+
+        // Check for duplicates on the L.H.S.
+        for (int i = 0; i < ids.size() - 1; i++) {
+            String name = ids.get(i).getText();
+            if (name.equals(ids.get(i + 1).getText()))
+                this.throwTypeCheckException(node, name + " repeated on the left side of :=");
+        }
 
         // Flag for whether the L.H.S. has any new variables declared in the current scope.
         boolean hasNewDecInCurrentScope = false;
@@ -702,8 +714,8 @@ public class TypeChecker extends DepthFirstAdapter {
             PExpr rightExpr = pExprsRHS.get(i);
             GoLiteType rightExprType = this.getType(rightExpr);
 
-            // Throw an error if the L.H.S. and R.H.S. types are not compatible.
-        	if (!(leftExprType.isCompatible(rightExprType)))
+            // Throw an error if the L.H.S. and R.H.S. surface types are not equal.
+        	if (!(leftExprType.equals(rightExprType)))
                 this.throwTypeCheckException(rightExpr, "Cannot use type " + rightExprType
         				+ " as type " + leftExprType + " in assignment");
         }
@@ -955,7 +967,7 @@ public class TypeChecker extends DepthFirstAdapter {
             GoLiteType type = this.getType(pExpr);
             
             // Only primitive types can be printed.
-            if (!(type instanceof PrimitiveGoLiteType))
+            if (!(type.getUnderlyingType() instanceof PrimitiveGoLiteType))
                 this.throwTypeCheckException(pExpr, "Cannot print type " + type);
         }
     }
@@ -967,7 +979,7 @@ public class TypeChecker extends DepthFirstAdapter {
             GoLiteType type = this.getType(pExpr);
             
             // Only primitive types can be printed.
-            if (!(type instanceof PrimitiveGoLiteType))
+            if (!(type.getUnderlyingType() instanceof PrimitiveGoLiteType))
                 this.throwTypeCheckException(pExpr, "Cannot println type " + type);
         }
     }
@@ -1004,10 +1016,10 @@ public class TypeChecker extends DepthFirstAdapter {
          	if (returnType instanceof VoidType)
                 this.throwTypeCheckException(pExpr, "Too many arguments to return");
 
-            // Check the return type and return expression for type compatibility, throw an error if
-            // their not.
+            // Check the return type and return expression for surface type equality, throw an error
+            // if their equal.
             GoLiteType exprType = this.typeTable.get(pExpr);
-            if (!(returnType.isCompatible(exprType)))
+            if (!(returnType.equals(exprType)))
                 this.throwTypeCheckException(pExpr, "Cannot use type " + exprType + " as type "
                 	+ returnType + " in return argument");
         }
@@ -1058,9 +1070,9 @@ public class TypeChecker extends DepthFirstAdapter {
     	// If-else expression.
         PExpr pExpr = node.getExpr();
         if (pExpr != null) {
-        	// Make sure the expression evaluates to a boolean, otherwise throw an error.
+        	// Make sure the underlying expression evaluates to a boolean, otherwise throw an error.
             GoLiteType type = this.getType(pExpr);
-            if (!(type instanceof BoolType))
+            if (!(type.getUnderlyingType() instanceof BoolType))
                 this.throwTypeCheckException(pExpr,
                 	"Non-bool (type " + type + ") used as if condition");
         }
@@ -1122,11 +1134,11 @@ public class TypeChecker extends DepthFirstAdapter {
     // Non-default case block contiion.
     @Override
     public void outAExprsCaseCondition(AExprsCaseCondition node) {
-        // Make sure each expression in the case condition is type compatible with the switch
+        // Make sure each expression in the case condition is equal in surface type with the switch
         // condition.
         for (PExpr pExpr : node.getExpr()) {
             GoLiteType type = this.typeTable.get(pExpr);
-            if (!(this.currentSwitchCondType.isCompatible(type)))
+            if (!(this.currentSwitchCondType.equals(type)))
                 this.throwTypeCheckException(pExpr, "Invalid case in switch (mismatched types "
                 	+ type + " and " + this.currentSwitchCondType + ")");
         }
@@ -1155,7 +1167,7 @@ public class TypeChecker extends DepthFirstAdapter {
     	if (pExpr != null) {
             pExpr.apply(this);
             GoLiteType condType = this.typeTable.get(pExpr);
-            if (!(condType instanceof BoolType))
+            if (!(condType.getUnderlyingType() instanceof BoolType))
                 this.throwTypeCheckException(pExpr,
                 	"Non-bool (type " + condType + ") used as for condition");
         }
@@ -1209,8 +1221,8 @@ public class TypeChecker extends DepthFirstAdapter {
         GoLiteType leftExprType = this.getType(leftExpr);
         GoLiteType rightExprType = this.getType(rightExpr);
 
-        // Make sure operands are type compatible, otherwise throw an error.
-        if (!(leftExprType.isCompatible(rightExprType) || rightExprType.isCompatible(leftExprType)))
+        // Make sure operands are equal in surface type, otherwise throw an error.
+        if (!(leftExprType.equals(rightExprType)))
             this.throwTypeCheckException(node,
             	"Invalid operation '+': mismatched types " + leftExprType + " and "
             	+ rightExprType);
@@ -1232,8 +1244,8 @@ public class TypeChecker extends DepthFirstAdapter {
         GoLiteType leftExprType = this.getType(leftExpr);
         GoLiteType rightExprType = this.getType(rightExpr);
 
-        // Make sure operands are type compatible, otherwise throw an error.
-        if (!(leftExprType.isCompatible(rightExprType) || rightExprType.isCompatible(leftExprType)))
+        // Make sure operands are equal in surface type, otherwise throw an error.
+        if (!(leftExprType.equals(rightExprType)))
             this.throwTypeCheckException(node,
             	"Invalid operation '-': mismatched types " + leftExprType + " and "
             	+ rightExprType);
@@ -1255,8 +1267,8 @@ public class TypeChecker extends DepthFirstAdapter {
         GoLiteType leftExprType = this.getType(leftExpr);
         GoLiteType rightExprType = this.getType(rightExpr);
 
-        // Make sure operands are type compatible, otherwise throw an error.
-        if (!(leftExprType.isCompatible(rightExprType) || rightExprType.isCompatible(leftExprType)))
+        // Make sure operands are equal in surface type, otherwise throw an error.
+        if (!(leftExprType.equals(rightExprType)))
             this.throwTypeCheckException(node,
             	"Invalid operation '*': mismatched types " + leftExprType + " and "
             	+ rightExprType);
@@ -1278,8 +1290,8 @@ public class TypeChecker extends DepthFirstAdapter {
         GoLiteType leftExprType = this.getType(leftExpr);
         GoLiteType rightExprType = this.getType(rightExpr);
 
-        // Make sure operands are type compatible, otherwise throw an error.
-        if (!(leftExprType.isCompatible(rightExprType) || rightExprType.isCompatible(leftExprType)))
+        // Make sure operands are equal in surface type, otherwise throw an error.
+        if (!(leftExprType.equals(rightExprType)))
             this.throwTypeCheckException(node,
             	"Invalid operation '/': mismatched types " + leftExprType + " and "
             	+ rightExprType);
@@ -1301,8 +1313,8 @@ public class TypeChecker extends DepthFirstAdapter {
         GoLiteType leftExprType = this.getType(leftExpr);
         GoLiteType rightExprType = this.getType(rightExpr);
 
-        // Make sure operands are type compatible, otherwise throw an error.
-        if (!(leftExprType.isCompatible(rightExprType) || rightExprType.isCompatible(leftExprType)))
+        // Make sure operands are equal in surface type, otherwise throw an error.
+        if (!(leftExprType.equals(rightExprType)))
             this.throwTypeCheckException(node,
             	"Invalid operation '%': mismatched types " + leftExprType + " and "
             	+ rightExprType);
@@ -1724,12 +1736,12 @@ public class TypeChecker extends DepthFirstAdapter {
 	        if (numArgTypes > numExprs)
 	        	this.throwTypeCheckException(node, "Not enough arguments in call to " + name);
 
-	        // Check type compatibility of the declared argument types and passed argument types.
+	        // Check surface type equality of the declared argument types and passed argument types.
 	        for (int i = 0; i < numExprs; i++) {
 	        	GoLiteType argType = argTypes.get(i);
 	        	GoLiteType exprType = this.getType(pExprs.get(i));
 
-	        	if (!(argType.isCompatible(exprType)))
+	        	if (!(argType.equals(exprType)))
 	        		this.throwTypeCheckException(node, "Cannot use type " + exprType + " as type "
 	        			+ argType + " in argument to " + name);
 	        }
@@ -1773,23 +1785,30 @@ public class TypeChecker extends DepthFirstAdapter {
         VariableSymbol variableSymbol = this.getVariableSymbol(node.getId());
         // Get its type.
         GoLiteType type = variableSymbol.getType();
+        // Get its underlying type
+        GoLiteType underlyingType = type.getUnderlyingType();
         
         // Make sure the symbol refers to a slice, otherwise throw an error.
-        if (!(type instanceof SliceType))
+        if (!(underlyingType instanceof SliceType))
         	this.throwTypeCheckException(node.getId(),
         		"Cannot use type " + type + " as slice type in argument to append");
 
+        // Get the slice type, which is before the underlying type if the element type is an alias.
+        GoLiteType sliceType = type;
+        while (sliceType instanceof AliasType)
+            sliceType = ((AliasType) sliceType).getType();
+
     	// Type of each element in the slice.
-    	GoLiteType elemType = ((SliceType) type).getElemType();
+    	GoLiteType elemType = ((SliceType) sliceType).getElemType();
     	// Expression argument and its type.
     	PExpr pExpr = node.getExpr();
     	GoLiteType exprType = this.getType(pExpr);
 
-    	// Make sure the element type of the slice and the expression argument are type compatible,
-    	// otherwise throw an error.
-    	if (!(elemType.isCompatible(exprType)))
+    	// Make sure the element type of the slice and the expression argument are equal in surface
+        // type, otherwise throw an error.
+    	if (!(elemType.equals(exprType)))
         	this.throwTypeCheckException(pExpr,
-        		"Cannot use type " + exprType + " as type " + elemType + "in argument to append");
+        		"Cannot use type " + exprType + " as type " + elemType + " in argument to append");
 
         this.typeTable.put(node, type);
     }

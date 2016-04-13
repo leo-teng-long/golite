@@ -58,4 +58,18 @@
 ../programs/invalid/syntax/weeding/return_void.go
 # Same as previous.
 ../programs/invalid/syntax/other_groups/03/invalid_vardecl_6.go
+# Same as previous.
+../programs/invalid/syntax/weeding/func_ending_wt_while_loop.go
+# Same as previous.
+../programs/invalid/syntax/weeding/missing_return_in_func_wt_if-elses.go
+# Same as previous.
+../programs/invalid/syntax/weeding/missing_return_in_empty_func.go
+# Same as previous.
+../programs/invalid/syntax/weeding/short_assign_to_only_underscore.go
+# Same as previous.
+../programs/invalid/syntax/other_groups/03/invalid_switch10.go
+# Blank switch condition is not permitted by the ref. compiler.
+../programs/invalid/syntax/switch_wt_blank_cond.go
+# TODO: Reference compiler doesn't allow redeclaration of a variable in a loop init, gotta check this with Vince.
+../programs/valid/type/loop_wt_shadowing_index.go
 

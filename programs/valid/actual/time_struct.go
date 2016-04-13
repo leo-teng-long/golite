@@ -11,4 +11,7 @@ func main() {
   var time Time
   time.Hour = 6
   time.Minute = 30
+
+  println(time.Hour)
+  println(time.Minute)
 }

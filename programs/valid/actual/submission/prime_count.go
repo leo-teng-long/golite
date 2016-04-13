@@ -28,8 +28,6 @@ func main() {
 		} else {
 			lnx += term
 		}
-		
-		println(lnx)
 	}
 
 	println(x / lnx)

@@ -36,6 +36,8 @@ INVALID_TYPE_PROGS_DIRPATH = os.path.join(INVALID_PROGS_DIRPATH, "type")
 
 # Directory name for tests from other groups.
 OTHER_GROUPS_PROGS_DIRNAME = "other_groups"
+# Directory name for tests from Vince.
+VINCE_PROGS_DIRNAME = "vince"
 
 
 # Filepath to test class template.
@@ -140,6 +142,17 @@ def is_other_groups_test(prog_fpath):
 	"""
 
 	return OTHER_GROUPS_PROGS_DIRNAME in os.path.split(prog_fpath)[0]
+
+
+def is_vinces_test(prog_fpath):
+	"""
+	Checks if the test program is from Vince.
+
+	@param prog_fpath - Filepath to program
+	@return True if the program is one of Vince's, false otherwise.
+	"""
+
+	return VINCE_PROGS_DIRNAME in os.path.split(prog_fpath)[0]
 
 
 def create_test_method_str(prog_fname, prog_fpath, tpe, ref):
@@ -282,6 +295,9 @@ def create_test_method_str(prog_fname, prog_fpath, tpe, ref):
 	if is_other_groups_test(prog_fpath):
 		test_name = "Group" + os.path.basename(os.path.dirname(prog_fpath)) + \
 			capitalize(test_name)
+
+	if is_vinces_test(prog_fpath):
+		test_name = "Vinces" + capitalize(test_name)
 
 	if tpe == 'valid_parse' and ref:
 		method_body = create_ref_method_body("parse", prog_fpath, True, 2)
@@ -470,7 +486,8 @@ def main():
 	# Create the code generator test (but not for the reference compiler).
 	if not args.ref:
 		logging.info("Creating code generator tests...")
-		create_test(OUT_GEN_TNAME, [VALID_GEN_PROGS_DIRPATH], 'gen', False,
+		create_test(OUT_GEN_TNAME,
+			[VALID_ACTUAL_PROGS_DIRPATH, VALID_GEN_PROGS_DIRPATH], 'gen', False,
 			args.ignore_path, os.path.join(OUT_TEST_DIRPATH,
 				'%s.java' % OUT_GEN_TNAME))
 

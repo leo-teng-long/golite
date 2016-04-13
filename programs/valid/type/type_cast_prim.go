@@ -1,6 +1,6 @@
 package main
 
-func main () {
+func main() {
 	var i float64
 	var j int
 	var k bool

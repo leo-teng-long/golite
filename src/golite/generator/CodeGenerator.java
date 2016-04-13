@@ -22,11 +22,14 @@ public class CodeGenerator extends DepthFirstAdapter {
     private int tabDepth;
     /** Keep track of the end statement of for loop */
     private PStmt lastForEnd;
+    /** Tracks whether the traversal is inside a type specification. */
+    private boolean inTypeSpec;
     /** Tracks whether the traversal is inside a struct type expression. */
     private boolean inStructTypeExpr;
+    
 
-    /** Flag to signal weather or not aplyt bit mask */
-    private static final boolean APPLY_BIT_MASK = true;
+    /** Flag to apply normalization to int and rune */
+    private static final boolean APPLY_NORMALIZATION = true;
 
     /** Symbol table. */
     private SymbolTable symbolTable;
@@ -47,14 +50,14 @@ public class CodeGenerator extends DepthFirstAdapter {
      */
     public void bitMask(Node n)
     {
-        if (!APPLY_BIT_MASK) {
+        if (!APPLY_NORMALIZATION) {
             n.apply(this);
             return;
         }
 
         if (typeTable.get(n) instanceof IntType || typeTable.get(n) instanceof RuneType)
         {
-            buffer.append("bit_mask(");
+            buffer.append("normalize(");
         }
         n.apply(this);
         if (typeTable.get(n) instanceof IntType || typeTable.get(n) instanceof RuneType)
@@ -266,10 +269,18 @@ public class CodeGenerator extends DepthFirstAdapter {
     }
 
     private void generateOverheadIn() {
+        buffer.append("'''\n\n");
+        buffer.append("Presented by [The Heapsters]:\n\n");
+        buffer.append("\t@ Long, Teng\n");
+        buffer.append("\t@ Macdonald, Ethan\n");
+        buffer.append("\t@ Vala, Hardik\n\n");
+        buffer.append("'''\n");
+        addLines(1);
+
         buffer.append("from __future__ import print_function\n");
         addLines(1);
 
-        buffer.append("bit_mask = lambda x : (x + 2**31) % 2**32 - 2**31\n");
+        buffer.append("normalize = lambda x : (x + 2**31) % 2**32 - 2**31\n");
         buffer.append("true_0, false_0 = True, False\n");
         addLines(1);
 
@@ -426,12 +437,19 @@ public class CodeGenerator extends DepthFirstAdapter {
 
     @Override
     public void inASpecTypeSpec(ASpecTypeSpec node) {
+        this.inTypeSpec = true;
+
         for (TId id: this.getIds(node)) {
             // Get the GoLite type of the type expression.
             GoLiteType type = this.getType(node.getTypeExpr());
             // Add a type alias symbol to the symbol table.
             this.symbolTable.putSymbol(new TypeAliasSymbol(id.getText(), type, node));
         }
+    }
+
+    @Override
+    public void outASpecTypeSpec(ASpecTypeSpec node) {
+        this.inTypeSpec = false;
     }
 
     /**
@@ -688,7 +706,7 @@ public class CodeGenerator extends DepthFirstAdapter {
         this.inAIdOptId(node);
 
         if (node.getId() != null) {
-            if (!this.inStructTypeExpr)
+            if (!this.inTypeSpec && !this.inStructTypeExpr)
                 buffer.append(this.rename(node.getId().getText()));
         }
 
@@ -1132,7 +1150,11 @@ public class CodeGenerator extends DepthFirstAdapter {
 
             exitCodeBlock(isBlockEmpty(copy));
         }
-
+        /*
+        if (isBlockEmpty(node.getElseBlock())) {
+            return;
+        }
+        */
         addTabs();
         buffer.append("else");
         addColon();
