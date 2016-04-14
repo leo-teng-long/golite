@@ -52,15 +52,37 @@ public class CodeGenerator extends DepthFirstAdapter {
             n.apply(this);
             return;
         }
-
-        if (typeTable.get(n) instanceof IntType || typeTable.get(n) instanceof RuneType)
+        boolean normalize = false;
+        if (typeTable.get(n) instanceof IntType)
+        {   
+            if (n instanceof AIntLitExpr)
+            {
+                int value = Integer.parseInt(((AIntLitExpr) n).getIntLit().getText());
+                if (value >= 2147483647)
+                {
+                    buffer.append("normalize(");
+                    normalize = true;
+                }
+            }
+            else
+            {
+                buffer.append("normalize(");
+                normalize = true;
+            }
+        }
+        else if (typeTable.get(n) instanceof RuneType)
         {
-            buffer.append("normalize(");
+            if (!(n instanceof ARuneLitExpr))
+            {
+                buffer.append("normalize(");
+            }
         }
         n.apply(this);
         if (typeTable.get(n) instanceof IntType || typeTable.get(n) instanceof RuneType)
         {
-            buffer.append(")");
+            if (normalize) {
+                buffer.append(")");
+            }
         }
     }
 
@@ -77,7 +99,7 @@ public class CodeGenerator extends DepthFirstAdapter {
      *
      * @param name - Name of variable
      * @return New name (obtained by simply appending the scope depth of the
-        corresponding symbol declaration)
+     * corresponding symbol declaration)
      */
     private String rename(String name) {
         return name + "_" + this.symbolTable.getScopeDepth(name);
