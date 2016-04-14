@@ -754,6 +754,29 @@ public class CodeGenerator extends DepthFirstAdapter {
         this.inAAssignStmt(node);
 
         {
+            List<PExpr> lhsExprs = new ArrayList<PExpr>(node.getLhs());
+            List<PExpr> rhsExprs = new ArrayList<PExpr>(node.getRhs());
+
+            if (lhsExprs.size() == 1 && rhsExprs.size() == 1 &&
+                lhsExprs.get(0) instanceof AVariableExpr && rhsExprs.get(0) instanceof AAppendExpr) {
+                AVariableExpr lhs = (AVariableExpr) lhsExprs.get(0);
+                AAppendExpr rhs = (AAppendExpr) rhsExprs.get(0);
+
+                if (lhs.getId().getText().equals(rhs.getId().getText())) {
+                    buffer.append(this.rename(lhs.getId().getText()));
+                    addDot();
+
+                    buffer.append("append");
+                    addLeftParen();
+                    rhs.getExpr().apply(this);
+                    addRightParen();
+
+                    return;
+                }
+            }
+        }
+
+        {
             List<PExpr> copy = new ArrayList<PExpr>(node.getLhs());
 
             for (int i = 0; i < copy.size(); i++) {
@@ -2300,6 +2323,10 @@ public class CodeGenerator extends DepthFirstAdapter {
 
     private void addColon() {
         buffer.append(':');
+    }
+
+    private void addDot() {
+        buffer.append('.');
     }
 
     private void addLeftParen() {
