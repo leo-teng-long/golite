@@ -3,9 +3,9 @@ package main
 var N = 1000
 
 func main() {
-	var fact = 0
-	for i := 0; i < N; i++ {
-		fact *= i
+	var fact = 1
+	for i := 1; i < 10; i++ {
+		fact = fact*i
   	}
   	print(fact)
 }
