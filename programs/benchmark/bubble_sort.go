@@ -37,6 +37,8 @@ func rand() int {
 	return last
 }
 
+// Runs for about 52 sec. on Mimi with normalization and 4 sec. on Mimi without
+// normalization.
 func main() {
 	var list []int
 	var size int = 5786

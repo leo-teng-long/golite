@@ -30,6 +30,7 @@ def rand():
 	last = (7 * last + 9) % 11
 	return last
 
+# Runs for about 4 sec. on Mimi.
 def main():
 	size = 5786
 
