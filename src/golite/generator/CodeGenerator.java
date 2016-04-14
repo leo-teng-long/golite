@@ -2041,23 +2041,41 @@ public class CodeGenerator extends DepthFirstAdapter {
     public void caseAFuncCallExpr(AFuncCallExpr node) {
         this.inAFuncCallExpr(node);
 
-        if (node.getId() != null) {
-            buffer.append(this.rename(node.getId().getText()));
+        // Function Id token and name.
+        TId id = node.getId();
+        String name = id.getText();
+        // Corresponding symbol.
+        Symbol symbol = this.symbolTable.getSymbol(name);
+
+        // Function call.
+        if (symbol instanceof FunctionSymbol)
+            buffer.append(this.rename(id.getText()));
+        // Type cast with an alias.
+        else if (symbol instanceof TypeAliasSymbol) {
+            TypeAliasSymbol typeAliasSymbol = ((TypeAliasSymbol) symbol);
+            GoLiteType underlyingType = typeAliasSymbol.getUnderlyingType();
+
+            if (underlyingType instanceof IntType)
+                buffer.append("int");
+            else if (underlyingType instanceof FloatType)
+                buffer.append("float");
+            else if (underlyingType instanceof BoolType)
+                buffer.append("bool");
+            else if (underlyingType instanceof RuneType)
+                buffer.append("int");
         }
 
         addLeftParen();
 
-        {
-            List<PExpr> copy = new ArrayList<PExpr>(node.getExpr());
+        List<PExpr> copy = new ArrayList<PExpr>(node.getExpr());
 
-            for (int i = 0; i < copy.size(); i++) {
-                if (i > 0) {
-                    addComma();
-                    addSpace();
-                }
-
-                copy.get(i).apply(this);
+        for (int i = 0; i < copy.size(); i++) {
+            if (i > 0) {
+                addComma();
+                addSpace();
             }
+
+            copy.get(i).apply(this);
         }
 
         addRightParen();
