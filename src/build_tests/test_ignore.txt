@@ -36,3 +36,6 @@
 ../programs/invalid/type/vince/struct2.go
 # A single blank variable on the left-hand side of := is taken care of in weeding.
 ../programs/invalid/type/vince/short_decl4.go
+# Vince said it was cool if we don't handle long chains of if-else's.
+../programs/valid/gen/chained_if-elses.go
+../programs/valid/gen/chained_if-elses_wt_init.go
