@@ -230,7 +230,7 @@ public class CodeGenerator extends DepthFirstAdapter {
         else if (type instanceof FloatType)
             return "0.";
         else if (type instanceof StringType)
-            return "";
+            return "\"\"";
         else if (type instanceof AliasType)
             return getDefaultValue(type.getUnderlyingType());
         else if (type instanceof ArrayType) {
