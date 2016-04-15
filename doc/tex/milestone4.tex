@@ -14,9 +14,9 @@
 \section{Introduction}
 
 \subsection{Motivation}
-We decided to work on a GoLite project because we wanted to gain experience writing a compiler for a general purpose language (as opposed to a domain specific language). Additionally, we felt that the project might have a bit more structure (i.e., more detailed specifications). We believed this be a good thing since all of us were new to writing compilers and were still developing our intuition with regard to the workload created by various design choices (i.e., we did not want too many degrees of freedom).
+We decided to work on a GoLite project for a few key reasons. First of all, we wanted to gain insight into the inner-workings of the languages we most frequently use. Most of these are imperative, general purpose languages like Go. Secondly, we were more interested in the engineering aspects of the compiler than the design of a domain-specific language. Lastly, we felt that the project might have a bit more structure (i.e., more detailed specifications). We believed this be a good thing since all of us were new to writing compilers and were still developing our intuition with regard to the workload created by various design choices (i.e., we did not want too many degrees of freedom).
 
-We used Java with SableCC3 to build the scanner, parser, and abstract syntax tree (AST) since we had some familiarity with it from the first two assignments, and it simplified much of the heavy lifting for the early stages of the compiler. This allowed us to focus more on having a correct grammar and well-designed AST in lieu of building our own parser, scanner, and AST from scratch.
+We used Java with SableCC3 to build the scanner, parser, and abstract syntax tree (AST) since we had some familiarity with SableCC from the first two assignments, and it simplified much of the heavy lifting for the early stages of the compiler. Thereafter, we utilized the generated SableCC code throughout the rest of the compiler (e.g., for traversing the AST during weeding, type checking, and code generation). This allowed us to focus more the design of our compiler rather than the implementation details. For instance, we were able to focus more on having a correct grammar and well-designed AST in lieu of building our own parser, scanner, and AST from scratch. 
 
 \subsection{Contributions}
 \subsubsection{Overall}
