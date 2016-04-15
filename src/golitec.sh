@@ -6,13 +6,22 @@
 
 
 usage() {
-	echo -e "Usage: $0 <scan | tokens | parse | pretty | type | dumpsymtab | pptype | gen | help> filepath"
+	echo -e "Usage: $0 <scan | tokens | parse | pretty | type | dumpsymtab | pptype | gen | help> [-safe] filepath"
 }
 
 # Compiler option.
 OPT=$1
-# Program filepath.
-PROG_PATH=$2
+
+# No safe flag.
+if [[ -z $3 ]]
+then
+	# Program filepath.
+	PROG_PATH=$2
+# Safe flag.
+else
+	SAFE_FLAG=$2
+	PROG_PATH=$3
+fi
 
 if [[ $OPT != "scan" && $OPT != "tokens" && $OPT != "parse" && $OPT != "pretty" && $OPT != "type" && $OPT != "dumpsymtab" && $OPT != "pptype" && $OPT != "gen" && $OPT != "help" ]]
 then
@@ -38,4 +47,4 @@ then
 	exit -1
 fi
 
-java -cp jars/commons-cli-1.3.1.jar: golite.Main -$OPT $PROG_PATH
+java -cp jars/commons-cli-1.3.1.jar: golite.Main -$OPT $SAFE_FLAG $PROG_PATH
