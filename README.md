@@ -30,7 +30,7 @@ Finally, to run the compiler, execute the runner script with the appropriate arg
 ./golitec.sh <scan | tokens | parse | pretty | type | dumpsymtab | pptype | gen | help> [-safe] filepath
 ```
 
-where `filepath` points to the program file. The optinal `-safe` flag enforces the wrapping-around of integers and runes upon overflow/underflow for code generation (`gen`), but comes at the cost of producing much slower output.
+where `filepath` points to the program file. The optinal `-safe` flag enforces the wrapping-around of integers and runes upon overflow/underflow (to conform with how Go represents 32-bit representations of integer) for code generation (`gen`), but comes at the cost of producing much slower output.
 
 (Run `./golitec.sh -help` for more info.)
 
