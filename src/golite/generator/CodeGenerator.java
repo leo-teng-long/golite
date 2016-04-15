@@ -15,6 +15,7 @@ public class CodeGenerator extends DepthFirstAdapter {
 
     /** Output name for the main function. */
     private static final String OUT_MAIN_NAME = "main_1";
+    
     /** Flag to apply normalization to int and rune */
     private static final boolean APPLY_NORMALIZATION = true;
 
@@ -75,6 +76,7 @@ public class CodeGenerator extends DepthFirstAdapter {
             if (!(n instanceof ARuneLitExpr))
             {
                 buffer.append("normalize(");
+                normalize = true;
             }
         }
         n.apply(this);
@@ -244,7 +246,7 @@ public class CodeGenerator extends DepthFirstAdapter {
                     first = false;
                 else
                     sb.append(", ");
-                
+
                 sb.append(elemDefaultValue);
             }
 
@@ -1069,7 +1071,7 @@ public class CodeGenerator extends DepthFirstAdapter {
                 buffer.append("str");
                 addLeftParen();
 
-                copy.get(i).apply(this);
+                normalizeExpr(copy.get(i));
 
                 addRightParen();
             }
@@ -1102,7 +1104,7 @@ public class CodeGenerator extends DepthFirstAdapter {
                     addSpace();
                 }
 
-                copy.get(i).apply(this);
+                normalizeExpr(copy.get(i));
             }
         }
 
