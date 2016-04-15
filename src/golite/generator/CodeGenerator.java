@@ -238,8 +238,15 @@ public class CodeGenerator extends DepthFirstAdapter {
             sb.append("[");
 
             String elemDefaultValue = getDefaultValue(((ArrayType) type).getElemType());
-            for (int i = 0; i < ((ArrayType) type).getBound(); i++)
+            boolean first = true;
+            for (int i = 0; i < ((ArrayType) type).getBound(); i++) {
+                if (first)
+                    first = false;
+                else
+                    sb.append(", ");
+                
                 sb.append(elemDefaultValue);
+            }
 
             sb.append("]");
             return sb.toString();
