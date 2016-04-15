@@ -1159,7 +1159,7 @@ public class CodeGenerator extends DepthFirstAdapter {
         addSpace();
 
         if (node.getExpr() != null) {
-            node.getExpr().apply(this);
+            normalizeExpr(node.getExpr());
         }
 
         this.outAReturnStmt(node);
