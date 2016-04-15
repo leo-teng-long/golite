@@ -15,7 +15,7 @@ public class CodeGenerator extends DepthFirstAdapter {
 
     /** Output name for the main function. */
     private static final String OUT_MAIN_NAME = "main_1";
-    
+
     /** Buffer storing generated python code. */
     private StringBuffer buffer;
     /** Keep track of how many tabs need to be added. */
@@ -311,9 +311,9 @@ public class CodeGenerator extends DepthFirstAdapter {
     private void generateOverheadIn() {
         buffer.append("'''\n\n");
         buffer.append("Presented by [The Heapsters]:\n\n");
-        buffer.append("\t@the generator: Long, Teng\n");
-        buffer.append("\t@the typer: Macdonald, Ethan\n");
-        buffer.append("\t@the peeper: Vala, Hardik\n\n");
+        buffer.append("\t@the Generator: Long, Teng\n");
+        buffer.append("\t@the PrettyPrinter: Macdonald, Ethan\n");
+        buffer.append("\t@the Stoner: Vala, Hardik\n\n");
         buffer.append("'''\n");
         addLines(1);
 
