@@ -16,14 +16,11 @@ public class CodeGenerator extends DepthFirstAdapter {
     /** Output name for the main function. */
     private static final String OUT_MAIN_NAME = "main_1";
     
-    /** Flag to apply normalization to int and rune */
-    private static final boolean APPLY_NORMALIZATION = true;
-
-    /** Buffer storing generated python code */
+    /** Buffer storing generated python code. */
     private StringBuffer buffer;
-    /** Keep track of how many tabs need to be added */
+    /** Keep track of how many tabs need to be added. */
     private int tabDepth;
-    /** Keep track of the end statement of for loop */
+    /** Keep track of the end statement of for loop. */
     private PStmt lastForEnd;
     /** Tracks whether the traversal is inside a type specification. */
     private boolean inTypeSpec;
@@ -32,16 +29,30 @@ public class CodeGenerator extends DepthFirstAdapter {
 
     /** Symbol table. */
     private SymbolTable symbolTable;
-    /** Contain information about expressions */
+    /** Contain information about expressions. */
     private HashMap<Node, GoLiteType> typeTable;
 
+    /** Flag to apply normalization to int and rune. */
+    private static boolean norm;
+
     /**
-     * CodeGenerator Constructor
+     * Constructor
+     */
+    public CodeGenerator(HashMap<Node, GoLiteType> typeTable, boolean norm) {
+        this.buffer = new StringBuffer();
+        this.tabDepth = 0;
+        this.typeTable = typeTable;
+        this.norm = norm;
+    }
+
+    /**
+     * Constructor (No normalization of integers and runes)
      */
     public CodeGenerator(HashMap<Node, GoLiteType> typeTable) {
         this.buffer = new StringBuffer();
         this.tabDepth = 0;
         this.typeTable = typeTable;
+        this.norm = false;
     }
 
     /**
@@ -49,7 +60,7 @@ public class CodeGenerator extends DepthFirstAdapter {
      */
     public void normalizeExpr(Node n)
     {
-        if (!APPLY_NORMALIZATION) {
+        if (!this.norm) {
             n.apply(this);
             return;
         }
@@ -1019,7 +1030,7 @@ public class CodeGenerator extends DepthFirstAdapter {
         lhs.apply(this);
         buffer.append(" = ");
 
-        if (this.APPLY_NORMALIZATION) {
+        if (this.norm) {
             buffer.append("normalize");
             addLeftParen();
         }
@@ -1033,7 +1044,7 @@ public class CodeGenerator extends DepthFirstAdapter {
             buffer.append('1');
         }
 
-        if (this.APPLY_NORMALIZATION) {
+        if (this.norm) {
             addRightParen();
         }
     }

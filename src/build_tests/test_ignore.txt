@@ -18,12 +18,6 @@
 ../programs/invalid/syntax/other_groups/04/33.go
 # Same as previous.
 ../programs/invalid/syntax/other_groups/04/39.go
-# Pretty sure an expression that evaluates to a constant for an array size is valid.
-../programs/invalid/syntax/other_groups/07/invalid_goLiteArrayDeclIndexing.go
-# Same as previous.
-../programs/invalid/syntax/other_groups/07/invalid_only_intconst_array_decl.go
-# Same as previous.
-../programs/invalid/syntax/other_groups/08/badArrayDec.go
 # Size of integer will be checked for overflow later.
 ../programs/invalid/syntax/other_groups/11/test11.go
 # Parenthesized type expressions are valid.

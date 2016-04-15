@@ -298,8 +298,6 @@ Productions
         | {decr} expr minus_minus
             {-> New stmt.decr(expr)} ;
 
-    // TODO: L.H.S assignability should be checked in the weeder.
-
     assignment {-> stmt} =
           {assign} opt_assignable_list assign expr_list
             {-> New stmt.assign([opt_assignable_list.expr], [expr_list.expr])}
@@ -343,9 +341,6 @@ Productions
             {-> New expr.blank()}
         | {assignable} assignable
             {-> assignable.expr} ;
-    // TODO: Add support for parenthesization.
-    //    | {paren} lparen opt_assignable rparen
-    //        {-> opt_assignable.expr} ;
 
     assignable {-> expr} =
           {id} id
@@ -354,9 +349,6 @@ Productions
             {-> field.expr}
         | {array_elem} array_elem
             {-> array_elem.expr} ;
-    // TODO: Add support for parenthesization.
-    //   | {paren} lparen assignable rparen
-    //       {-> assignable.expr} ;
 
     // Weeding checks the "dotting" is conducted on a "dottable".
     field {-> expr} = atom dot id {-> New expr.field(atom.expr, id)} ;
@@ -687,7 +679,6 @@ Abstract Syntax Tree
     //* Expression. *//
 
     expr =
-        // TODO: Remove {empty} or {blank}
           {empty}
         | {add} [left]:expr [right]:expr
         | {subtract} [left]:expr [right]:expr
