@@ -14,9 +14,9 @@
 \section{Introduction}
 
 \subsection{Motivation}
-We decided to work on a GoLite project because we wanted to gain experience writing a compiler for a general purpose language (as opposed to a domain specific language). Additionally, we felt that the project might have a bit more structure (i.e., more detailed specifications). We believed this be a good thing since all of us were new to writing compilers and were still developing our intuition with regard to the workload created by various design choices (i.e., we did not want too many degrees of freedom).
+We decided to work on a GoLite project for a few key reasons. First of all, we wanted to gain insight into the inner-workings of the languages we most frequently use. Most of these are imperative, general purpose languages like Go. Secondly, we were more interested in the engineering aspects of the compiler than the design of a domain-specific language. Lastly, we felt that the project might have a bit more structure (i.e., more detailed specifications). We believed this be a good thing since all of us were new to writing compilers and were still developing our intuition with regard to the workload created by various design choices (i.e., we did not want too many degrees of freedom).
 
-We used Java with SableCC3 to build the scanner, parser, and abstract syntax tree (AST) since we had some familiarity with it from the first two assignments, and it simplified much of the heavy lifting for the early stages of the compiler. This allowed us to focus more on having a correct grammar and well-designed AST in lieu of building our own parser, scanner, and AST from scratch.
+We used Java with SableCC3 to build the scanner, parser, and abstract syntax tree (AST) since we had some familiarity with SableCC from the first two assignments, and it simplified much of the heavy lifting for the early stages of the compiler. Thereafter, we utilized the generated SableCC code throughout the rest of the compiler (e.g., for traversing the AST during weeding, type checking, and code generation). This allowed us to focus more the design of our compiler rather than the implementation details. For instance, we were able to focus more on having a correct grammar and well-designed AST in lieu of building our own parser, scanner, and AST from scratch. 
 
 \subsection{Contributions}
 \subsubsection{Overall}
@@ -83,7 +83,25 @@ We included constraints within our grammar to reduce the amount of weeding requi
 
 \subsection{Weeder}
 
-After our milestone 1 was complete we brainstormed a big list of cases that we needed to weed. Some examples include break/continue statements, checking that fields and array accesses happen on the correct elements, and mismatching numbers of ids and values in declaration statements. Later, we thought of a few more weeding conditions while we were working on the typechecker, so we added them. Our weeder takes in an AST and outputs an AST.
+After our milestone 1 was complete we brainstormed a big list of cases that we needed to weed. Later, we thought of a few more weeding conditions while we were working on the typechecker, so we added them. Our weeder takes in an AST and outputs an AST.
+
+Our weeder throws an exception if one of the following occurs:
+\begin{itemize}
+\item Missing return statement in non-void function (checks all execution paths)
+\item Aray in an array access is not non-constant and not a function call
+\item Object in a field access is not non-constant and not a function call
+\item Type casting for string.
+\item Array bound is not an integer
+\item Last part of a loop statement is a short assignment
+\item Continue statement occurs outside a loop
+\item Break statement occurs outside a loop
+\item Switch statement contains multiple default cases
+\item Decrement is applied to a non-decrementable
+\item Increment is applied to a non-incrementable
+\item Number of identifiers on the R.H.S. of an assignment, short assignment, or variable specification statement is not equal to the number of expressions on the L.H.S.
+\item Number of identifiers on the R.H.S. of a short assignment is not equal to the number of expressions on the L.H.S. or the L.H.S. is a sole blank.
+\item Expression statement does not comprise solely of a function call
+\end{itemize}
 
 \subsection{Typechecker}
 
@@ -159,7 +177,7 @@ TODO
 \subsection{Future work}
 Data flow analysis.
 
-Our generated code has not been optimized at all, so there is a lot of room for optimization (e.g., peephole optimizer). Additionally, it would be worthwhile to modify our AST somewhat to include "elif" statements (this would simplify our control structures during code generation). There is always room for more tests.
+Our generated code has not been optimized very much, so there is a lot of room for optimization (e.g., peephole optimizer). Additionally, it would be worthwhile to modify our AST somewhat to include "elif" statements (this would simplify our control structures during code generation). There is always room for more tests.
 
 \subsection{Conclusion}
 
