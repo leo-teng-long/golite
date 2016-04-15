@@ -27,10 +27,10 @@ make build
 Finally, to run the compiler, execute the runner script with the appropriate arguments like so:
 
 ```
-./golitec.sh <scan | tokens | parse | pretty | type | dumpsymtab | pptype | gen | help> filepath
+./golitec.sh <scan | tokens | parse | pretty | type | dumpsymtab | pptype | gen | help> [-safe] filepath
 ```
 
-where `filepath` points to the program file.
+where `filepath` points to the program file. The optinal `-safe` flag enforces the wrapping-around of integers and runes upon overflow/underflow for code generation (`gen`), but comes at the cost of producing much slower output.
 
 (Run `./golitec.sh -help` for more info.)
 
