@@ -52,6 +52,8 @@ class Main {
         options.addOption("pptype", false, "typed pretty print the program to file");
         options.addOption("gen", false, "compile and generate Python code");
 
+        options.addOption("safe", false,
+            "enforce wrap-arounds for integers (slows down generated code)");
         options.addOption("ut", false, "allow top-level declarations to be unordered");
         options.addOption("help", false, "display help");
 
@@ -63,7 +65,7 @@ class Main {
         }
 
         // Throw an error if the number of arguments passed is off.
-        if (args.length < 1 || args.length > 3) {
+        if (args.length < 1 || args.length > 4) {
             printUsage();
             System.exit(-1);
         }
@@ -85,6 +87,9 @@ class Main {
 
         // Flag for whether top declarations are allowed in any order or not.
         boolean ut = parsed.hasOption("ut");
+        // Flag for whether to enforce wrap-arounds for integers in the generated code at the cost
+        // of really slow code.
+        boolean safe = parsed.hasOption("safe");
 
         try {
             if (parsed.hasOption("scan")) {
@@ -111,7 +116,7 @@ class Main {
             else if (parsed.hasOption("pptype"))
                 typedPrettyPrint(programPath, ut);
             else if (parsed.hasOption("gen"))
-                generateCode(programPath, ut);
+                generateCode(programPath, ut, safe);
             else if (parsed.hasOption("help"))
                 new HelpFormatter().printHelp("GoLite Compiler", options);
             else {
@@ -349,9 +354,11 @@ class Main {
      *
      * @param inPath - Filepath to GoLite program
      * @param ut - Flag indicating whether top-declarations are allowed to be unordered
+     * @param wrap - Flag indicating whether to enforce wrap-arounds for integers at the cost of
+     *  slower code
      * @throws IOException
      */
-    private static void generateCode(String inPath, boolean ut) throws IOException {
+    private static void generateCode(String inPath, boolean ut, boolean wrap) throws IOException {
         try {
             Lexer lexer = new GoLiteLexer(new PushbackReader(new FileReader(inPath), 1024));
             Parser parser = new Parser(lexer);
@@ -371,7 +378,7 @@ class Main {
 
             ast.apply(typeChecker);
 
-            CodeGenerator codeGenerator = new CodeGenerator(typeChecker.getTypeTable());
+            CodeGenerator codeGenerator = new CodeGenerator(typeChecker.getTypeTable(), wrap);
             ast.apply(codeGenerator);
 
             dump(codeGenerator.getGeneratedCode(), inPath, ".golite.py");

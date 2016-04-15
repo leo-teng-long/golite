@@ -140,7 +140,8 @@ public class <<<INSERT NAME HERE>>> {
         TypeChecker typeChecker = new TypeChecker();
         ast.apply(typeChecker);
 
-        CodeGenerator codeGenerator = new CodeGenerator(typeChecker.getTypeTable());
+        // Enforce normalization of integers and runes for the purposes of testing.
+        CodeGenerator codeGenerator = new CodeGenerator(typeChecker.getTypeTable(), true);
         ast.apply(codeGenerator);
 
         try (PrintWriter out = new PrintWriter(new FileWriter(outPath))) {
