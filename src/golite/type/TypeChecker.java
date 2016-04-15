@@ -1352,8 +1352,8 @@ public class TypeChecker extends DepthFirstAdapter {
         GoLiteType leftExprType = this.getType(leftExpr);
         GoLiteType rightExprType = this.getType(rightExpr);
 
-       	// Make sure operands are type compatible, otherwise throw an error.
-	    if (!(leftExprType.isCompatible(rightExprType) || rightExprType.isCompatible(leftExprType)))
+       	// Make sure operands are equal in surface type, otherwise throw an error.
+        if (!(leftExprType.equals(rightExprType)))
 	        this.throwTypeCheckException(node,
 	        	"Invalid operation '&': mismatched types " + leftExprType + " and "
 	        	+ rightExprType);
@@ -1375,8 +1375,8 @@ public class TypeChecker extends DepthFirstAdapter {
         GoLiteType leftExprType = this.getType(leftExpr);
         GoLiteType rightExprType = this.getType(rightExpr);
 
-       	// Make sure operands are type compatible, otherwise throw an error.
-	    if (!(leftExprType.isCompatible(rightExprType) || rightExprType.isCompatible(leftExprType)))
+       // Make sure operands are equal in surface type, otherwise throw an error.
+        if (!(leftExprType.equals(rightExprType)))
 	        this.throwTypeCheckException(node,
 	        	"Invalid operation '|': mismatched types " + leftExprType + " and "
 	        	+ rightExprType);
@@ -1398,8 +1398,8 @@ public class TypeChecker extends DepthFirstAdapter {
         GoLiteType leftExprType = this.getType(leftExpr);
         GoLiteType rightExprType = this.getType(rightExpr);
 
-       	// Make sure operands are type compatible, otherwise throw an error.
-	    if (!(leftExprType.isCompatible(rightExprType) || rightExprType.isCompatible(leftExprType)))
+       // Make sure operands are equal in surface type, otherwise throw an error.
+        if (!(leftExprType.equals(rightExprType)))
 	        this.throwTypeCheckException(node,
 	        	"Invalid operation '^': mismatched types " + leftExprType + " and "
 	        	+ rightExprType);
@@ -1421,8 +1421,8 @@ public class TypeChecker extends DepthFirstAdapter {
         GoLiteType leftExprType = this.getType(leftExpr);
         GoLiteType rightExprType = this.getType(rightExpr);
 
-       	// Make sure operands are type compatible, otherwise throw an error.
-	    if (!(leftExprType.isCompatible(rightExprType) || rightExprType.isCompatible(leftExprType)))
+       // Make sure operands are equal in surface type, otherwise throw an error.
+        if (!(leftExprType.equals(rightExprType)))
 	        this.throwTypeCheckException(node,
 	        	"Invalid operation '&^': mismatched types " + leftExprType + " and "
 	        	+ rightExprType);
@@ -1444,8 +1444,8 @@ public class TypeChecker extends DepthFirstAdapter {
         GoLiteType leftExprType = this.getType(leftExpr);
         GoLiteType rightExprType = this.getType(rightExpr);
 
-       	// Make sure operands are type compatible, otherwise throw an error.
-	    if (!(leftExprType.isCompatible(rightExprType) || rightExprType.isCompatible(leftExprType)))
+       // Make sure operands are equal in surface type, otherwise throw an error.
+        if (!(leftExprType.equals(rightExprType)))
 	        this.throwTypeCheckException(node,
 	        	"Invalid operation '<<': mismatched types " + leftExprType + " and "
 	        	+ rightExprType);
@@ -1467,8 +1467,8 @@ public class TypeChecker extends DepthFirstAdapter {
         GoLiteType leftExprType = this.getType(leftExpr);
         GoLiteType rightExprType = this.getType(rightExpr);
 
-       	// Make sure operands are type compatible, otherwise throw an error.
-	    if (!(leftExprType.isCompatible(rightExprType) || rightExprType.isCompatible(leftExprType)))
+       // Make sure operands are equal in surface type, otherwise throw an error.
+        if (!(leftExprType.equals(rightExprType)))
 	        this.throwTypeCheckException(node,
 	        	"Invalid operation '>>': mismatched types " + leftExprType + " and "
 	        	+ rightExprType);
@@ -1552,8 +1552,8 @@ public class TypeChecker extends DepthFirstAdapter {
         GoLiteType leftExprType = this.getType(node.getLeft());
         GoLiteType rightExprType = this.getType(node.getRight());
 
-        // Make sure operands are type compatible, otherwise throw an error.
-        if (!(leftExprType.isCompatible(rightExprType) || rightExprType.isCompatible(leftExprType)))
+        // Make sure operands are equal in surface type, otherwise throw an error.
+        if (!(leftExprType.equals(rightExprType)))
             this.throwTypeCheckException(node.getLeft(),
             	"Invalid operation '==': (mismatched types " + leftExprType
             		+ " and " + rightExprType + ")");
@@ -1573,8 +1573,8 @@ public class TypeChecker extends DepthFirstAdapter {
         GoLiteType leftExprType = this.getType(node.getLeft());
         GoLiteType rightExprType = this.getType(node.getRight());
 
-        // Make sure operands are type compatible, otherwise throw an error.
-        if (!(leftExprType.isCompatible(rightExprType) || rightExprType.isCompatible(leftExprType)))
+        // Make sure operands are equal in surface type, otherwise throw an error.
+        if (!(leftExprType.equals(rightExprType)))
             this.throwTypeCheckException(node.getLeft(),
             	"Invalid operation '!=': (mismatched types " + leftExprType
             		+ " and " + rightExprType + ")");
@@ -1594,8 +1594,8 @@ public class TypeChecker extends DepthFirstAdapter {
         GoLiteType leftExprType = this.getType(node.getLeft());
         GoLiteType rightExprType = this.getType(node.getRight());
 
-       	// Make sure operands are type compatible, otherwise throw an error.
-        if (!(leftExprType.isCompatible(rightExprType) || rightExprType.isCompatible(leftExprType)))
+       	// Make sure operands are equal in surface type, otherwise throw an error.
+        if (!(leftExprType.equals(rightExprType)))
             this.throwTypeCheckException(node.getLeft(),
             	"Invalid operation '<': (mismatched types " + leftExprType
             		+ " and " + rightExprType + ")");
@@ -1615,8 +1615,8 @@ public class TypeChecker extends DepthFirstAdapter {
         GoLiteType leftExprType = this.getType(node.getLeft());
         GoLiteType rightExprType = this.getType(node.getRight());
 
-       	// Make sure operands are type compatible, otherwise throw an error.
-        if (!(leftExprType.isCompatible(rightExprType) || rightExprType.isCompatible(leftExprType)))
+       	// Make sure operands are equal in surface type, otherwise throw an error.
+        if (!(leftExprType.equals(rightExprType)))
             this.throwTypeCheckException(node.getLeft(),
             	"Invalid operation '<=': (mismatched types " + leftExprType
             		+ " and " + rightExprType + ")");
@@ -1636,8 +1636,8 @@ public class TypeChecker extends DepthFirstAdapter {
         GoLiteType leftExprType = this.getType(node.getLeft());
         GoLiteType rightExprType = this.getType(node.getRight());
 
-        // Make sure operands are type compatible, otherwise throw an error.
-        if (!(leftExprType.isCompatible(rightExprType) || rightExprType.isCompatible(leftExprType)))
+        // Make sure operands are equal in surface type, otherwise throw an error.
+        if (!(leftExprType.equals(rightExprType)))
             this.throwTypeCheckException(node.getLeft(),
             	"Invalid operation '>': (mismatched types " + leftExprType
             		+ " and " + rightExprType + ")");
@@ -1657,8 +1657,8 @@ public class TypeChecker extends DepthFirstAdapter {
         GoLiteType leftExprType = this.getType(node.getLeft());
         GoLiteType rightExprType = this.getType(node.getRight());
 
-       	// Make sure operands are type compatible, otherwise throw an error.
-        if (!(leftExprType.isCompatible(rightExprType) || rightExprType.isCompatible(leftExprType)))
+       	// Make sure operands are equal in surface type, otherwise throw an error.
+        if (!(leftExprType.equals(rightExprType)))
             this.throwTypeCheckException(node.getLeft(),
             	"Invalid operation '>=': (mismatched types " + leftExprType
             		+ " and " + rightExprType + ")");
@@ -1682,8 +1682,8 @@ public class TypeChecker extends DepthFirstAdapter {
         GoLiteType leftExprType = this.getType(leftExpr);
         GoLiteType rightExprType = this.getType(rightExpr);
 
-        // Make sure operands are type compatible, otherwise throw an error.
-	    if (!(leftExprType.isCompatible(rightExprType) || rightExprType.isCompatible(leftExprType)))
+        // Make sure operands are equal in surface type, otherwise throw an error.
+        if (!(leftExprType.equals(rightExprType)))
 	        this.throwTypeCheckException(node,
 	        	"Invalid operation '&&' mismatched types " + leftExprType + " and "
 	        	+ rightExprType);
@@ -1705,8 +1705,8 @@ public class TypeChecker extends DepthFirstAdapter {
         GoLiteType leftExprType = this.getType(leftExpr);
         GoLiteType rightExprType = this.getType(rightExpr);
 
-        // Make sure operands are type compatible, otherwise throw an error.
-	    if (!(leftExprType.isCompatible(rightExprType) || rightExprType.isCompatible(leftExprType)))
+        // Make sure operands are equal in surface type, otherwise throw an error.
+        if (!(leftExprType.equals(rightExprType)))
 	        this.throwTypeCheckException(node,
 	        	"Invalid operation '||' mismatched types " + leftExprType + " and "
 	        	+ rightExprType);
@@ -1865,7 +1865,6 @@ public class TypeChecker extends DepthFirstAdapter {
 		GoLiteType indexExprType = this.getType(indexExpr);
 
 		// Make sure index is of type integer, otherwise throw an error.
-		// TODO: Remove this check from the weeder.
 		if (!(indexExprType instanceof IntType))
 			this.throwTypeCheckException(indexExpr, "Non-integer array bound");
 
@@ -1894,7 +1893,7 @@ public class TypeChecker extends DepthFirstAdapter {
     	// error.
 		if (!(exprUnderlyingType instanceof StructType))
 			this.throwTypeCheckException(pExpr,
-				"Undefined: type " + exprType + " has no field " + fieldName);
+                "Undefined: type " + exprType + " has no field " + fieldName);
 
         StructType structType = ((StructType) this.getNonAliasType(exprType));
 

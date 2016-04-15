@@ -15,6 +15,7 @@ public class CodeGenerator extends DepthFirstAdapter {
 
     /** Output name for the main function. */
     private static final String OUT_MAIN_NAME = "main_1";
+    
     /** Flag to apply normalization to int and rune */
     private static final boolean APPLY_NORMALIZATION = true;
 
@@ -54,7 +55,7 @@ public class CodeGenerator extends DepthFirstAdapter {
         }
         boolean normalize = false;
         if (typeTable.get(n) instanceof IntType)
-        {   
+        {
             if (n instanceof AIntLitExpr)
             {
                 int value = Integer.parseInt(((AIntLitExpr) n).getIntLit().getText());
@@ -75,6 +76,7 @@ public class CodeGenerator extends DepthFirstAdapter {
             if (!(n instanceof ARuneLitExpr))
             {
                 buffer.append("normalize(");
+                normalize = true;
             }
         }
         n.apply(this);
@@ -244,7 +246,7 @@ public class CodeGenerator extends DepthFirstAdapter {
                     first = false;
                 else
                     sb.append(", ");
-                
+
                 sb.append(elemDefaultValue);
             }
 
@@ -298,9 +300,9 @@ public class CodeGenerator extends DepthFirstAdapter {
     private void generateOverheadIn() {
         buffer.append("'''\n\n");
         buffer.append("Presented by [The Heapsters]:\n\n");
-        buffer.append("\t@ Long, Teng\n");
-        buffer.append("\t@ Macdonald, Ethan\n");
-        buffer.append("\t@ Vala, Hardik\n\n");
+        buffer.append("\t@the generator: Long, Teng\n");
+        buffer.append("\t@the typer: Macdonald, Ethan\n");
+        buffer.append("\t@the peeper: Vala, Hardik\n\n");
         buffer.append("'''\n");
         addLines(1);
 
@@ -821,6 +823,11 @@ public class CodeGenerator extends DepthFirstAdapter {
     public void caseAPlusAssignStmt(APlusAssignStmt node) {
         this.inAPlusAssignStmt(node);
 
+        if (typeTable.get(node.getLhs()) instanceof IntType || typeTable.get(node.getLhs()) instanceof RuneType) {
+            normalizeOpAssign(node.getLhs(), " + ", node.getRhs());
+            return;
+        }
+
         if (node.getLhs() != null) {
             node.getLhs().apply(this);
         }
@@ -828,11 +835,7 @@ public class CodeGenerator extends DepthFirstAdapter {
         buffer.append(" += ");
 
         if (node.getRhs() != null) {
-            normalizeExpr(node.getRhs());
-        }
-
-        if (typeTable.get(node.getLhs()) instanceof IntType || typeTable.get(node.getLhs()) instanceof RuneType) {
-            normalizeAssignable(node.getLhs());
+            node.getRhs().apply(this);
         }
 
         this.outAPlusAssignStmt(node);
@@ -842,6 +845,11 @@ public class CodeGenerator extends DepthFirstAdapter {
     public void caseAMinusAssignStmt(AMinusAssignStmt node) {
         this.inAMinusAssignStmt(node);
 
+        if (typeTable.get(node.getLhs()) instanceof IntType || typeTable.get(node.getRhs()) instanceof RuneType) {
+            normalizeOpAssign(node.getLhs(), " - ", node.getRhs());
+            return;
+        }
+
         if (node.getLhs() != null) {
             node.getLhs().apply(this);
         }
@@ -849,11 +857,7 @@ public class CodeGenerator extends DepthFirstAdapter {
         buffer.append(" -= ");
 
         if (node.getRhs() != null) {
-            normalizeExpr(node.getRhs());
-        }
-
-        if (typeTable.get(node.getLhs()) instanceof IntType || typeTable.get(node.getLhs()) instanceof RuneType) {
-            normalizeAssignable(node.getLhs());
+            node.getRhs().apply(this);
         }
 
         this.outAMinusAssignStmt(node);
@@ -863,6 +867,11 @@ public class CodeGenerator extends DepthFirstAdapter {
     public void caseAStarAssignStmt(AStarAssignStmt node) {
         this.inAStarAssignStmt(node);
 
+        if (typeTable.get(node.getLhs()) instanceof IntType || typeTable.get(node.getRhs()) instanceof RuneType) {
+            normalizeOpAssign(node.getLhs(), " * ", node.getRhs());
+            return;
+        }
+
         if (node.getLhs() != null) {
             node.getLhs().apply(this);
         }
@@ -870,11 +879,7 @@ public class CodeGenerator extends DepthFirstAdapter {
         buffer.append(" *= ");
 
         if (node.getRhs() != null) {
-            normalizeExpr(node.getRhs());
-        }
-
-        if (typeTable.get(node.getLhs()) instanceof IntType || typeTable.get(node.getLhs()) instanceof RuneType) {
-            normalizeAssignable(node.getLhs());
+            node.getRhs().apply(this);
         }
 
         this.outAStarAssignStmt(node);
@@ -884,6 +889,11 @@ public class CodeGenerator extends DepthFirstAdapter {
     public void caseASlashAssignStmt(ASlashAssignStmt node) {
         this.inASlashAssignStmt(node);
 
+        if (typeTable.get(node.getLhs()) instanceof IntType || typeTable.get(node.getLhs()) instanceof RuneType) {
+            normalizeOpAssign(node.getLhs(), " / ", node.getRhs());
+            return;
+        }
+
         if (node.getLhs() != null) {
             node.getLhs().apply(this);
         }
@@ -891,11 +901,7 @@ public class CodeGenerator extends DepthFirstAdapter {
         buffer.append(" /= ");
 
         if (node.getRhs() != null) {
-            normalizeExpr(node.getRhs());
-        }
-
-        if (typeTable.get(node.getLhs()) instanceof IntType || typeTable.get(node.getLhs()) instanceof RuneType) {
-            normalizeAssignable(node.getLhs());
+            node.getRhs().apply(this);
         }
 
         this.outASlashAssignStmt(node);
@@ -905,18 +911,8 @@ public class CodeGenerator extends DepthFirstAdapter {
     public void caseAPercAssignStmt(APercAssignStmt node) {
         this.inAPercAssignStmt(node);
 
-        if (node.getLhs() != null) {
-            node.getLhs().apply(this);
-        }
-
-        buffer.append(" %= ");
-
-        if (node.getRhs() != null) {
-            normalizeExpr(node.getRhs());
-        }
-
-        if (node.getLhs() != null) {
-            normalizeAssignable(node.getLhs());
+        if (node.getLhs() != null && node.getRhs() != null) {
+            normalizeOpAssign(node.getLhs(), " % ", node.getRhs());
         }
 
         this.outAPercAssignStmt(node);
@@ -931,18 +927,8 @@ public class CodeGenerator extends DepthFirstAdapter {
     public void caseAAndAssignStmt(AAndAssignStmt node) {
         this.inAAndAssignStmt(node);
 
-        if (node.getLhs() != null) {
-            node.getLhs().apply(this);
-        }
-
-        buffer.append(" &= ");
-
-        if (node.getRhs() != null) {
-            normalizeExpr(node.getRhs());
-        }
-
-        if (node.getLhs() != null) {
-            normalizeAssignable(node.getLhs());
+        if (node.getLhs() != null && node.getRhs() != null) {
+            normalizeOpAssign(node.getLhs(), " & ", node.getRhs());
         }
 
         this.outAAndAssignStmt(node);
@@ -952,18 +938,8 @@ public class CodeGenerator extends DepthFirstAdapter {
     public void caseAPipeAssignStmt(APipeAssignStmt node) {
         this.inAPipeAssignStmt(node);
 
-        if (node.getLhs() != null) {
-            node.getLhs().apply(this);
-        }
-
-        buffer.append(" |= ");
-
-        if (node.getRhs() != null) {
-            normalizeExpr(node.getRhs());
-        }
-
-        if (node.getLhs() != null) {
-            normalizeAssignable(node.getLhs());
+        if (node.getLhs() != null && node.getRhs() != null) {
+            normalizeOpAssign(node.getLhs(), " | ", node.getRhs());
         }
 
         this.outAPipeAssignStmt(node);
@@ -973,18 +949,8 @@ public class CodeGenerator extends DepthFirstAdapter {
     public void caseACarotAssignStmt(ACarotAssignStmt node) {
         this.inACarotAssignStmt(node);
 
-        if (node.getLhs() != null) {
-            node.getLhs().apply(this);
-        }
-
-        buffer.append(" ^= ");
-
-        if (node.getRhs() != null) {
-            normalizeExpr(node.getRhs());
-        }
-
-        if (node.getLhs() != null) {
-            normalizeAssignable(node.getLhs());
+        if (node.getLhs() != null && node.getRhs() != null) {
+            normalizeOpAssign(node.getLhs(), " ^ ", node.getRhs());
         }
 
         this.outACarotAssignStmt(node);
@@ -994,18 +960,8 @@ public class CodeGenerator extends DepthFirstAdapter {
     public void caseAAmpCarotAssignStmt(AAmpCarotAssignStmt node) {
         this.inAAmpCarotAssignStmt(node);
 
-        if (node.getLhs() != null) {
-            node.getLhs().apply(this);
-        }
-
-        buffer.append(" &= ~ ");
-
-        if (node.getRhs() != null) {
-            normalizeExpr(node.getRhs());
-        }
-
-        if (node.getLhs() != null) {
-            normalizeAssignable(node.getLhs());
+        if (node.getLhs() != null && node.getRhs() != null) {
+            normalizeOpAssign(node.getLhs(), " &~ ", node.getRhs());
         }
 
         this.outAAmpCarotAssignStmt(node);
@@ -1015,18 +971,8 @@ public class CodeGenerator extends DepthFirstAdapter {
     public void caseALshiftAssignStmt(ALshiftAssignStmt node) {
         this.inALshiftAssignStmt(node);
 
-        if (node.getLhs() != null) {
-            node.getLhs().apply(this);
-        }
-
-        buffer.append(" <<= ");
-
-        if (node.getRhs() != null) {
-            normalizeExpr(node.getRhs());
-        }
-
-        if (node.getLhs() != null) {
-            normalizeAssignable(node.getLhs());
+        if (node.getLhs() != null && node.getRhs() != null) {
+            normalizeOpAssign(node.getLhs(), " << ", node.getRhs());
         }
 
         this.outALshiftAssignStmt(node);
@@ -1036,18 +982,8 @@ public class CodeGenerator extends DepthFirstAdapter {
     public void caseARshiftAssignStmt(ARshiftAssignStmt node) {
         this.inARshiftAssignStmt(node);
 
-        if (node.getLhs() != null) {
-            node.getLhs().apply(this);
-        }
-
-        buffer.append(" >>= ");
-
-        if (node.getRhs() != null) {
-            normalizeExpr(node.getRhs());
-        }
-
-        if (node.getLhs() != null) {
-            normalizeAssignable(node.getLhs());
+        if (node.getLhs() != null && node.getRhs() != null) {
+            normalizeOpAssign(node.getLhs(), " >> ", node.getRhs());
         }
 
         this.outARshiftAssignStmt(node);
@@ -1062,13 +998,7 @@ public class CodeGenerator extends DepthFirstAdapter {
         this.inAIncrStmt(node);
 
         if (node.getExpr() != null) {
-            node.getExpr().apply(this);
-        }
-
-        buffer.append(" += 1");
-
-        if (node.getExpr() != null) {
-            normalizeAssignable(node.getExpr());
+            normalizeOpAssign(node.getExpr(), " + ", null);
         }
 
         this.outAIncrStmt(node);
@@ -1079,25 +1009,33 @@ public class CodeGenerator extends DepthFirstAdapter {
         this.inADecrStmt(node);
 
         if (node.getExpr() != null) {
-            node.getExpr().apply(this);
-        }
-
-        buffer.append(" -= 1");
-
-        if (node.getExpr() != null) {
-            normalizeAssignable(node.getExpr());
+            normalizeOpAssign(node.getExpr(), " - ", null);
         }
 
         this.outADecrStmt(node);
     }
 
-    private void normalizeAssignable(PExpr expr) {
-        addLines(1);
-        addTabs();
-
-        expr.apply(this);
+    private void normalizeOpAssign(PExpr lhs, String operator, PExpr rhs) {
+        lhs.apply(this);
         buffer.append(" = ");
-        normalizeExpr(expr);
+
+        if (this.APPLY_NORMALIZATION) {
+            buffer.append("normalize");
+            addLeftParen();
+        }
+
+        lhs.apply(this);
+        buffer.append(operator);
+
+        if (rhs != null) {
+            normalizeExpr(rhs);
+        } else {
+            buffer.append('1');
+        }
+
+        if (this.APPLY_NORMALIZATION) {
+            addRightParen();
+        }
     }
 
     @Override
@@ -1133,7 +1071,7 @@ public class CodeGenerator extends DepthFirstAdapter {
                 buffer.append("str");
                 addLeftParen();
 
-                copy.get(i).apply(this);
+                normalizeExpr(copy.get(i));
 
                 addRightParen();
             }
@@ -1166,7 +1104,7 @@ public class CodeGenerator extends DepthFirstAdapter {
                     addSpace();
                 }
 
-                copy.get(i).apply(this);
+                normalizeExpr(copy.get(i));
             }
         }
 
