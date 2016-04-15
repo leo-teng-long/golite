@@ -1,9 +1,13 @@
+/* String concatenation. */
+
 package main
 
 var s string
 
 func main() {
-	var k = " World!"
+	println("Hello" + " World!")
+
+	var k = " Again!"
 	s = "Hello"
-	print(s + k)
+	println(s + k)
 }

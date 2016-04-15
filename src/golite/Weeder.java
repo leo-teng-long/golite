@@ -104,55 +104,70 @@ public class Weeder extends DepthFirstAdapter {
         if (stmts == null || stmts.size() == 0)
             this.throwMissingReturnError(node);
 
-        PStmt lastStmt = stmts.get(stmts.size() - 1);
+        // If one of the statements is a return statement, you're good.
+        for (PStmt stmt : stmts) {
+            if (stmt instanceof AReturnStmt)
+                return;
+        }
 
-        // If the block doesn't end in a returnable, throw an error.
-        if (!isReturnable(lastStmt))
-            throwWeederException(node, "Missing return at end of function");
+        // Otherwise, loop through the statements in reverse until a "returnable" statement is
+        // found.
+        boolean foundReturnable = false;
+        ArrayList<PStmt> stmtsArrayList = new ArrayList<PStmt>(stmts);
+        for (int i = stmts.size() - 1; i >= 0 ; i--) {
+            PStmt stmt = stmtsArrayList.get(i);
 
-        // If the block doesn't end in a return statement, then have to go recursive.
-        if (!(lastStmt instanceof AReturnStmt)) {
-            // Check block statements recursively for required return statements.
-            if (lastStmt instanceof ABlockStmt)
-                this.checkBlockHasReturn(lastStmt, ((ABlockStmt) lastStmt).getStmt());
-            
-            // Check if-else statements recursively, by checking the if-block and else-block, for
-            // required return statements.
-            if (lastStmt instanceof AIfElseStmt) {
-                AIfElseStmt ifElseStmtNode = (AIfElseStmt) lastStmt;
-                this.checkBlockHasReturn(ifElseStmtNode, ifElseStmtNode.getIfBlock());
-                this.checkBlockHasReturn(ifElseStmtNode, ifElseStmtNode.getElseBlock());
-            }
+            if (isReturnable(stmt)) {
+                foundReturnable = true;
 
-            // Check switch statements recursively, by checking each case block, for required
-            // return statements, and making sure there is a default case.
-            if (lastStmt instanceof ASwitchStmt) {
-                boolean hasDefaultCase = false;
-
-                for (PCaseBlock pCaseBlock : ((ASwitchStmt) lastStmt).getCaseBlock()) {
-                    ABlockCaseBlock caseBlock = (ABlockCaseBlock) pCaseBlock;
-                    this.checkBlockHasReturn(caseBlock, caseBlock.getStmt());
-
-                    // Default case has been found.
-                    if ((caseBlock.getCaseCondition()) instanceof ADefaultCaseCondition)
-                        hasDefaultCase = true;
+                // Check block statements recursively for required return statements.
+                if (stmt instanceof ABlockStmt)
+                    this.checkBlockHasReturn(stmt, ((ABlockStmt) stmt).getStmt());
+                
+                // Check if-else statements recursively, by checking the if-block and else-block,
+                // for required return statements.
+                if (stmt instanceof AIfElseStmt) {
+                    AIfElseStmt ifElseStmtNode = (AIfElseStmt) stmt;
+                    this.checkBlockHasReturn(ifElseStmtNode, ifElseStmtNode.getIfBlock());
+                    this.checkBlockHasReturn(ifElseStmtNode, ifElseStmtNode.getElseBlock());
                 }
 
-                // Throw an error if there is no default case.
-                if (!hasDefaultCase)
-                    this.throwMissingReturnError(lastStmt);
-            }
+                // Check switch statements recursively, by checking each case block, for required
+                // return statements, and making sure there is a default case.
+                if (stmt instanceof ASwitchStmt) {
+                    boolean hasDefaultCase = false;
 
-            // Check if a for loop statement doesn't have an expression and doesn't have a break
-            // statment anywhere in it's body.
-            if (lastStmt instanceof ALoopStmt) {
-                ALoopStmt loopStmt = (ALoopStmt) lastStmt;
-                BreakStmtFinder breakStmtFinder = new BreakStmtFinder(loopStmt);
-                if (loopStmt.getExpr() != null && !(loopStmt.getExpr() instanceof AEmptyExpr)
-                    || breakStmtFinder.found())
-                    this.throwMissingReturnError(loopStmt);
+                    for (PCaseBlock pCaseBlock : ((ASwitchStmt) stmt).getCaseBlock()) {
+                        ABlockCaseBlock caseBlock = (ABlockCaseBlock) pCaseBlock;
+                        this.checkBlockHasReturn(caseBlock, caseBlock.getStmt());
+
+                        // Default case has been found.
+                        if ((caseBlock.getCaseCondition()) instanceof ADefaultCaseCondition)
+                            hasDefaultCase = true;
+                    }
+
+                    // Throw an error if there is no default case.
+                    if (!hasDefaultCase)
+                        this.throwMissingReturnError(stmt);
+                }
+
+                // Check if a for loop statement doesn't have an expression and doesn't have a break
+                // statement anywhere in it's body.
+                if (stmt instanceof ALoopStmt) {
+                    ALoopStmt loopStmt = (ALoopStmt) stmt;
+                    BreakStmtFinder breakStmtFinder = new BreakStmtFinder(loopStmt);
+                    if (loopStmt.getExpr() != null && !(loopStmt.getExpr() instanceof AEmptyExpr)
+                        || breakStmtFinder.found())
+                        this.throwMissingReturnError(loopStmt);
+                }
+
+                break;
             }
         }
+
+        // If no "returnable" statement was found, throw an error.
+        if (!foundReturnable)
+            this.throwMissingReturnError(node);
     }
 
     /**
