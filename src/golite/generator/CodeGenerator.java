@@ -26,6 +26,8 @@ public class CodeGenerator extends DepthFirstAdapter {
     private boolean inTypeSpec;
     /** Tracks whether the traversal is inside a struct type expression. */
     private boolean inStructTypeExpr;
+    /** Tracks whether main function has been generated */
+    private boolean generatedMain = false;
 
     /** Symbol table. */
     private SymbolTable symbolTable;
@@ -340,7 +342,11 @@ public class CodeGenerator extends DepthFirstAdapter {
         addLines(1);
 
         buffer.append("if __name__ == '__main__':\n");
-        buffer.append("\t" + OUT_MAIN_NAME + "()\n");
+        if (generatedMain) {
+            buffer.append("\t" + OUT_MAIN_NAME + "()\n");
+        } else {
+            buffer.append("\t" + "pass" + "\n");
+        }
     }
 
     @Override
@@ -508,6 +514,9 @@ public class CodeGenerator extends DepthFirstAdapter {
 
         // Function name.
         String name = node.getId().getText();
+        if (name.equals("main")) {
+            generatedMain = true;
+        }
 
         // Function symbol.
         FunctionSymbol funcSymbol = null;
