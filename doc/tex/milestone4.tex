@@ -123,19 +123,28 @@ We chose Python (2.7) as the target for our compiler for a number of reasons: Py
 
 Nevertheless, generating correct Python code that preserved the semantics of GoLite presented a few challenges:
 \begin{itemize}
-\item The scoping rules for Python are less stringent than GoLite, with new scopes essentially introduced solely by functions. To enforce proper scoping rules, we implemented an elegant solution that simply renames each symbol according to it's scope depth in GoLite. This required the use of the symbol table in code generation to track variable and function symbols along with their scope depth.
+\item The scoping rules for Python are less stringent than GoLite, with functions being essentially the only program element that introduces new scopes. To enforce the scoping rules of GoLite, we implemented an elegant solution that simply renames each symbol according to it's scope depth in GoLite (See example \textbf{TODO}). This required the use of the symbol table in code generation to track variable and function symbols along with their scope depth.
 \item Python permits arbitrarily large integers, where GoLite wraps integers around when they surpass the 32-bit range. To address this, the output of every integer and rune expression is passed to a function that enforces the wrap-around using the following formula,
 \begin{equation}
 (\mbox{expression} - 2^{31}) \mbox{ mod } 2^{32} - 2^{31}
 \end{equation}
 Although this solution properly enforces the correct semantics for integer overflow/underflow, it causes a significant slow down in programs performing numerous arithmetic operations. As a result, applying such normalization is left as a compiler option the programmer must explicitly specify.
+\item We used Python while loops in place of Go for loops, because python loops do not map properly to Go for loops (they work more like an iterator than a for loop) \textbf{TODO}: Refer to example
+\item Python doesn't have switch statements but we found a way to make them work using if/else statements. There are two different cases that need to be considered. The switch statement without expression acts pretty much like an if-else statement, which is fairly easy to implement. The one with expression, however, requires the generated Python code to explicitly compare the values of expressions in switch statement and either case clause.
+\item Since Python does not allow empty indented block, to handle the
+cases such as empty functions, we add the keyword \texttt{pass} to the
+generated code to ensure that a call to an empty function would not
+raise any errors.
+\item An oddity of Python is that functions that reference globally defined variables must be explicitly marked before use in the function (see \textbf{TODO}). Our solution involved marking each global variable, obtained from the global scope of the symbol table, inside every function declaration.
+\item Because Python abides by the offset rule to indicate blocks and imposes a limit on indentation depth, severely nested structures in GoLite programs, such as chained if-else statements, may produce target programs that crash. Our current implementation of the compiler does not address this and we leave it as a topic for future work.
 \end{itemize}
 
-\textbf{TODO}: Discuss how boolean type casting is handled (differs from Go)
-\textbf{TODO}: Discuss handling of printing of float and boolean literals
-\textbf{TODO}: Show examples of generated code for some interesting cases of GoLite (e.g. loops and how continue is handled)
-\textbf{TODO}: Discuss indentation depth issue
-\textbf{TODO}: Discuss how aliasing is handled in general
+In the design of the code generator, the semantics for certain GoLite elements were non-obvious and hence, we took the liberty of imposing our own semantics:
+\begin{itemize}
+\item GoLite allows expressions of a non-string base type to be casted to a boolean, and we define the semantics for such castings according to the semantics defined for Python (e.g. Boolean casting a non-zero integer yields true and casting zero yields false).
+\item The boolean literals represented by \texttt{true} and \texttt{false} are printed as \texttt{True} and \texttt{False}, respectively.
+\item Type alias information is not represented directly in compiled programs, and rather program elements typed by an alias have their types fully resolved before generating the corresponding output. This required the use of the symbol table to access symbols representing type aliases.
+\end{itemize}
 
 % \subsubsection{Parser}
 % \begin{itemize}
@@ -169,22 +178,6 @@ Although this solution properly enforces the correct semantics for integer overf
 % 		\textbf{TODO}: Not true
 % 	\end{itemize}
 
-\subsubsection{Generator}
-\begin{itemize}
-\item Dynamic scoping: had to rename all of our variables with their scopes appended to the end so that we were using the right variables for each operation
-\item Had to define a function (normalization) that would synthetically cause our integers to overflow or underflow. This slowed our programs down a lot but caused correct runtime behaviour.
-\item Structs were turned into dicts! Instead of outputting type definitions, we constructed dicts that we inserted into our code when variables were declared. This allowed us to ensure proper runtime behaviour in a language that uses duck typing instead of static typing.
-\item Python doesn't have switch statements but we found a way to make them work using if/else statements. There are two different cases that need to be considered. The switch statement without expression acts pretty much like an if-else statement, which is fairly easy to implement. The one with expression, however, requires the generated Python code to explicitly compare the values of expressions in switch statement and either case clause.
-\item We used Python while loops in place of Go for loops, because python loops do not map properly to Go for loops (they work more like an iterator than a for loop)
-\item Aliasing was a bit of a highlight. TODO: Discuss handling through symbol table injection
-\item Since Python does not allow empty indented block, to handle the
-cases such as empty functions, we add the keyword \textit{pass} to the
-generated code to ensure that a call to an empty function would not
-raise any errors.
-\end{itemize}
-
-\textbf{TODO}: Globals
-
 \section{Optimization}
 
 Although optimization is outside the scope of the project, we attempt to
@@ -212,7 +205,11 @@ the former.
 
 \subsection{Hello World}
 \subsubsection{Notes}
-Basic "Hello world!" program.
+Basic "Hello world!" program. Notice that to mimic the behavior of
+\textit{print} statement in GoLite, we use the print function imported
+from Python3. Each expression is first casted to string and then
+concatenated today. To prevent it outputting extra space or new lines,
+we set the end to be empty string (default setting being new line).
 
 \subsubsection{GoLite}
 \begin{lstlisting}
@@ -302,7 +299,10 @@ if __name__ == '__main__':
 \subsection{Binary Search}
 
 \subsubsection{Notes}
-TODO 
+A GoLite implementation of Binary Search. Here we present both the
+un-normalized and normalized versions. In the normalized code, as a
+result of our optimization, notice that integer literals that are
+within the range of int32 are not wrapped in \textit{normalize} function.
 
 \subsubsection{GoLite}
 
@@ -455,7 +455,10 @@ if __name__ == '__main__':
 
 \subsection{Bubble Sort}
 \subsubsection{Notes}
-TODO 
+A GoLite implementation of Bubble Sort. Notice that the three-part for
+loops are generated using while loops in Python. To ensure the semantics
+of \textit{continue} statement in the context of for loops, we always
+generate the end statement before outputting \textit{continue}.
 
 \subsubsection{GoLite}
 \begin{lstlisting}
@@ -519,7 +522,10 @@ func main() {
 
 \subsection{Weekday Weekend}
 \subsubsection{Notes}
-TODO 
+A program to demonstrate how switch statement in GoLite (which is not
+supported by Python) is handled in the generated code. Case clauses map
+to either if or elif while default clause always corresponds to else.
+
 \subsubsection{GoLite}
 \begin{lstlisting}
 package main
