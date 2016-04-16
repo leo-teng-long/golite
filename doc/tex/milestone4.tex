@@ -6,7 +6,6 @@
 
 \title{Comp 520: Milestone \#4}
 \author{The Heapsters: \\Teng Long, Ethan Macdonald, Hardik Vala}
-\date{}
 
 \begin{document}
 
@@ -182,12 +181,6 @@ Lastly, we were interested in developing a deeper understanding of static vs. du
   tabsize=3
 }
 
-
-
-
-
-
-
 \subsection{Hello World}
 \subsubsection{Notes}
 Basic "Hello world!" program.
@@ -276,11 +269,6 @@ if __name__ == '__main__':
 	main_1()
 
 \end{lstlisting}
-
-
-
-
-
 
 \subsection{Binary Search}
 
@@ -435,13 +423,6 @@ def main_1():
 if __name__ == '__main__':
 	main_1()
 \end{lstlisting}
-
-
-
-
-
-
-
 
 \subsection{Bubble Sort}
 \subsubsection{Notes}
@@ -618,13 +599,12 @@ if __name__ == '__main__':
 
 \section{Conclusion and Future work}
 
-\subsection{Future work}
-Data flow analysis.
+Our compiler still has a lot of room left for optimization (e.g., peephole optimizer) with respect to our compilers output. In order to handle Go's integer overflow and underflow in Python we decided to implement a function called "normalize" that ensured proper runtime behaviour for ints and runes. With this function enabled our output runs \textit{a lot} slower. We did make a few attempts to minimize this issue with some success (e.g., we no longer wrap int and rune literals with normalize unless they are large), but we believe data flow analysis would be useful for figuring out how to apply normalization more efficiently.
 
-Our generated code has not been optimized very much, so there is a lot of room for optimization (e.g., peephole optimizer). Additionally, it would be worthwhile to modify our AST somewhat to include "elif" statements (this would simplify our control structures during code generation). There is always room for more tests.
+There are a few edge cases that require modifying our grammar, but we did not notice until the late stages of developing our compiler so they remain unresolved. In particular, we found a few edge cases for multiline comments that went uncaught at first. It could also be worthwhile to modify our AST to include "elif" statements (this would simplify our control structures during code generation and improve our maximum if/else depth).
 
-\subsection{Conclusion}
+One extension that we feel would improve the compiler would be the inclusion of implicit typecasts, although it was considerably simpler to typecheck expressions (and ensure proper runtime behaviour) without this feature.
 
-This was fun. We are done.
+Overall, we will miss our compiler, whom we have affectionately named ``Compylor the Gopher Eating Python". RIP Compylor.
 
 \end{document}
