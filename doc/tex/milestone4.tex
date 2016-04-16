@@ -52,17 +52,19 @@ Aside from SableCC3 and Java, the only resources consulted were the reference ma
 
 \subsubsection{Viewed}
 \begin{itemize}
-\item \href{https://golang.org/ref/spec}{The Go Programming Language Specification}
-\item \href{http://www.sable.mcgill.ca/~hendren/520/2016/tiny/}{Tiny language example}
-\item \href{https://github.com/leo-teng-long/minipart2/blob/master/src/mini/PrettyPrinter.java}{Leo's MiniLang Pretty Printer}
-\item \href{http://www.sable.mcgill.ca/~hendren/520/2016/joos/jjoos-scc-3/}{JOOS SabelCC 3}
-\item \href{http://www.sable.mcgill.ca/listarchives/sablecc-list/msg00639.html}{Re: Redefinition Error}
+\item The Go Programming Language Specification: https://golang.org/ref/spec
+\item Tiny language example: http://www.sable.mcgill.ca/~hendren/520/2016/tiny/
+\item Leo's MiniLang Pretty Printer: https://github.com/leo-teng-long/minipart2/blob/master/src/mini/\\
+PrettyPrinter.java
+\item JOOS SabelCC 3: http://www.sable.mcgill.ca/~hendren/520/2016/joos/jjoos-scc-3/
+\item Re: Redefinition Error: http://www.sable.mcgill.ca/listarchives/sablecc-list/msg00639.html
 \end{itemize}
 
 \subsubsection{Used}
 \begin{itemize}
-\item \href{http://www.sable.mcgill.ca/~hendren/520/2016/semicolon-test/}{Example SableCC code for handling GoLite semicolon rule}
-\item \href{http://lists.sablecc.org/pipermail/sablecc-discussion/msg00144.html}{Re: SableCC feature suggestion}
+\item Example SableCC code for handling GoLite semicolon rule: http://www.sable.mcgill.ca/~hendren/520/\\
+2016/semicolon-test/
+\item Re: SableCC feature suggestion: http://lists.sablecc.org/pipermail/sablecc-discussion/msg00144.html
 \end{itemize}
 \section{Compiler Structure}
 
@@ -129,7 +131,7 @@ Nevertheless, generating correct Python code that preserved the semantics of GoL
 (\mbox{expression} - 2^{31}) \mbox{ mod } 2^{32} - 2^{31}
 \end{equation}
 (See example 4.2.4 in Examples.) Although this solution properly enforces the correct semantics for integer overflow/underflow, it causes a significant slow down in programs performing numerous arithmetic operations. As a result, applying such normalization is left as a compiler option the programmer must explicitly specify.
-\item We used Python while loops in place of Go for loops, because python loops do not map properly to Go for loops (they work more like an iterator than a for loop). (See example 4.2 in Examples.)
+\item We used Python while loops in place of Go for loops, because python loops do not map properly to Go for loops (they work more like an iterator than a for loop). (See example 4.3 in Examples.)
 \item Python doesn't have switch statements but we found a way to make them work using if/else statements. There are two different cases that need to be considered. The switch statement without expression acts pretty much like an if-else statement, which is fairly easy to implement. The one with expression, however, requires the generated Python code to explicitly compare the values of expressions in switch statement and either case clause. (See example 4.4 in Examples.)
 \item Since Python does not allow empty indented block, to handle the cases such as empty functions, we add the keyword \texttt{pass} to the generated code to ensure that a call to an empty function would not raise any errors.
 \item An oddity of Python is that functions that reference globally defined variables must be explicitly marked before use in the function (see the Examples section). Our solution involved marking each global variable, obtained from the global scope of the symbol table, inside every function declaration.
@@ -234,6 +236,7 @@ true_0, false_0 = True, False
 #########################################################
 ###### The miracle from GoLite to Python2.7 begins ######
 #########################################################
+(1st-part overhead for code generation above)
 
 def main_1():
 	global true_0, false_0
@@ -241,6 +244,7 @@ def main_1():
 	print(str("Hello") + str(" "), end = '')
 	print(str("world") + str("!"), end = '')
 
+(2nd-part overhead for code generation below)
 #######################################################
 ###### The miracle from GoLite to Python2.7 ends ######
 #######################################################
@@ -298,10 +302,6 @@ func main() {
 \begin{lstlisting}
 (overhead: 1st-part, same as above)
 
-#########################################################
-###### The miracle from GoLite to Python2.7 begins ######
-#########################################################
-
 array_1 = []
 
 def binarySearch_1(array_2, size_2, target_2):
@@ -327,20 +327,12 @@ def main_1():
 		i_3 = i_3 + 1
 	print("Index of 10:", binarySearch_1(array_1, 10, 10))
 
-#######################################################
-###### The miracle from GoLite to Python2.7 ends ######
-#######################################################
-
 (overhead: 2nd-part, same as above)
 \end{lstlisting}
 
 \subsubsection{Python (with normalization)}
 \begin{lstlisting}
 (overhead: 1st-part, same as above)
-
-#########################################################
-###### The miracle from GoLite to Python2.7 begins ######
-#########################################################
 
 array_1 = []
 
@@ -366,10 +358,6 @@ def main_1():
 		array_1.append(i_3)
 		i_3 = normalize(i_3 + 1)
 	print("Index of 10:", normalize(binarySearch_1(array_1, 10, 10)))
-
-#######################################################
-###### The miracle from GoLite to Python2.7 ends ######
-#######################################################
 
 (overhead: 2nd-part, same as above)
 \end{lstlisting}
@@ -431,10 +419,6 @@ func main() {
 \begin{lstlisting}
 (overhead: 1st-part, same as above)
 
-#########################################################
-###### The miracle from GoLite to Python2.7 begins ######
-#########################################################
-
 array_1 = []
 
 def printArray_1(array_2, size_2):
@@ -474,10 +458,6 @@ def main_1():
 	print("Sorted:")
 	printArray_1(array_1, 10)
 
-#######################################################
-###### The miracle from GoLite to Python2.7 ends ######
-#######################################################
-
 (overhead: 2nd-part, same as above)
 \end{lstlisting}
 
@@ -485,9 +465,8 @@ def main_1():
 
 \subsection{Weekday Weekend}
 \subsubsection{Notes}
-A program to demonstrate how switch statement in GoLite (which is not
-supported by Python) is handled in the generated code. Case clauses map
-to either if or elif while default clause always corresponds to else.
+A program to demonstrate how a switch statement in GoLite (which is not directly supported by Python) is handled in the generated code. Case clauses map
+to either \texttt{if} or \texttt{elif} while default clause always correspond to \texttt{else}.
 
 \subsubsection{GoLite}
 \begin{lstlisting}
@@ -513,10 +492,6 @@ func main() {
 \begin{lstlisting}
 (overhead: 1st-part, same as above)
 
-#########################################################
-###### The miracle from GoLite to Python2.7 begins ######
-#########################################################
-
 def foo_1(day_2):
 	global true_0, false_0
 	if (day_2 == "Monday") or (day_2 == "Tuesday") or (day_2 == "Wednesday") or (day_2 == "Thursday") or (day_2 == "Friday"):
@@ -530,10 +505,6 @@ def main_1():
 	global true_0, false_0
 	foo_1("Saturday")
 
-#######################################################
-###### The miracle from GoLite to Python2.7 ends ######
-#######################################################
-
 (overhead: 2nd-part, same as above)
 \end{lstlisting}
 
@@ -541,11 +512,11 @@ def main_1():
 
 Our compiler still has a lot of room left for optimization with respect to our compilers output. For example, right now all global variables are declared at the beginning of each function, even if some of them are not used inside some functions.
 
-In order to handle Go's integer overflow and underflow in Python we decided to implement a function called ``normalize" that ensured proper runtime behaviour for ints and runes. With this function enabled our output runs \textit{a lot} slower. We did make a few attempts to minimize this issue with some success (e.g., we no longer wrap int and rune literals with normalize unless they are large), but we believe data flow analysis would be useful for figuring out how to apply normalization more efficiently.
+In order to handle Go's integer overflow and underflow in Python we decided to implement a function called ``normalize" that ensured proper run-time behaviour for integers and runes. However this function produced significant slowdowns for output programs (10x on average). We did make a few attempts to mitigate this issue with some success (e.g., we no longer wrap literals with normalize unless they are large), but we believe more sophisticated techniques involving data flow analysis would be much more useful for figuring out when to apply normalization for efficiency.
 
-There are a few edge cases that require modifying our grammar, but we did not notice until the late stages of developing our compiler so they remain unresolved. In particular, we found a few edge cases for multiline comments that went uncaught at first. It could also be worthwhile to modify our AST to include ``elif" statements (this would simplify our control structures during code generation and improve our maximum if/else depth).
+There are a few edge cases that require modifying our grammar, but we did not notice until the late stages of developing our compiler so they remain unresolved. In particular, we found a few edge cases for multi-line comments that went uncaught at first. It could also be worthwhile to modify our AST to include ``elif" statements (this would simplify our control structures during code generation and improve our maximum if/else depth).
 
-One extension that we feel would improve the compiler would be the inclusion of implicit typecasts, although it was considerably simpler to typecheck expressions (and ensure proper runtime behaviour) without this feature.
+One extension that we feel would improve the compiler would be the inclusion of implicit typecasts, although it was considerably simpler to type check expressions (and ensure proper run-time behaviour) without this feature.
 
 Overall, we will miss our compiler, whom we have affectionately named ``Compylor the Gopher Eating Python". \lstinline|git fork| in peace, Compylor.
 
