@@ -33,8 +33,8 @@ def binarySearch_1(array_2, size_2, target_2):
 			if (normalize(array_2[mid_4]) > normalize(target_2)):
 				high_2 = normalize((normalize(mid_4) - 1))
 			else:
-				return mid_4
-	return (- 1)
+				return normalize(mid_4)
+	return normalize((- 1))
 
 def main_1():
 	global true_0, false_0, array_1
