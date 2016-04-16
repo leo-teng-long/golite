@@ -1207,9 +1207,13 @@ public class CodeGenerator extends DepthFirstAdapter {
             exitCodeBlock(isBlockEmpty(copy));
         }
 
-        addTabs();
-        buffer.append("else");
-        addColon();
+        if (!isBlockEmpty(node.getElseBlock())) {
+            addTabs();
+            buffer.append("else");
+            addColon();
+        } else {
+            deleteLastCharacter();
+        }
 
         {
             enterCodeBlock();
@@ -1225,7 +1229,7 @@ public class CodeGenerator extends DepthFirstAdapter {
             // Exit the scope for the else-block.
             this.symbolTable.unscope();
 
-            exitCodeBlock(isBlockEmpty(copy));
+            exitCodeBlock(false);
         }
 
         // Exit the scope for the if-else initializer and blocks.
