@@ -1,11 +1,13 @@
 \documentclass{article}
 \usepackage[utf8]{inputenc}
-\usepackage{tikz}
+\usepackage[margin=1.0in]{geometry}
 \usepackage{hyperref}
 \usepackage{listings}
+\usepackage{tikz}
 
-\title{Comp 520: Milestone \#4}
-\author{The Heapsters: \\Teng Long, Ethan Macdonald, Hardik Vala}
+\title{Comp 520: Final Project Report}
+\author{The Heapsters: Teng Long, Ethan Macdonald, Hardik Vala}
+\date{}
 
 \begin{document}
 
@@ -13,20 +15,29 @@
 
 \section{Introduction}
 
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=7.5cm]{gopher_python.png}
+  \caption{The symbiotic relationship between a Gopher and a Python.}
+  \label{fig:gopher-python}
+\end{figure}
+
+\noindent This report gives an overview of our GoLite to Python compiler. The compiler source is available here: \href{https://github.com/Sable/comp520-2016-05}{https://github.com/Sable/comp520-2016-05}
+
 \subsection{Motivation}
-We decided to work on a GoLite project for a few key reasons. First of all, we wanted to gain insight into the inner-workings of the languages we most frequently use. Most of these are imperative, general purpose languages like Go. Secondly, we were more interested in the engineering aspects of the compiler than the design of a domain-specific language. Lastly, we felt that the project might have a bit more structure (i.e., more detailed specifications). We believed this be a good thing since all of us were new to writing compilers and were still developing our intuition with regard to the workload created by various design choices (i.e., we did not want too many degrees of freedom).
+Our choice to pursue the GoLite project was motivated by the following: First, we wanted to gain insight into the inner-workings of the languages we most frequently use. Most of these are imperative, general purpose languages like GoLite. Secondly, we were more interested in the engineering aspects of the compiler than the design of a domain-specific language. Lastly, we felt that the project might have a bit more structure (i.e., more detailed specifications). We believed this be a good thing since all of us were new to writing compilers and were still developing our intuition with regard to the workload created by various design choices (i.e., we did not want too many degrees of freedom).
 
 We used Java with SableCC3 to build the scanner, parser, and abstract syntax tree (AST) since we had some familiarity with SableCC from the first two assignments, and it simplified much of the heavy lifting for the early stages of the compiler. Thereafter, we utilized the generated SableCC code throughout the rest of the compiler (e.g., for traversing the AST during weeding, type checking, and code generation). This allowed us to focus more the design of our compiler rather than the implementation details. For instance, we were able to focus more on having a correct grammar and well-designed AST in lieu of building our own parser, scanner, and AST from scratch. 
 
 \subsection{Contributions}
 \subsubsection{Overall}
-Although individual contributions did vary from milestone to milestone, the work was pretty evenly distributed between group members over the course of the semester. When possible, we tried to work in the same physical location with one another. This allowed us to bounce ideas off of each other or sort out complicated issues without miscommunication.
+Although individual contributions did vary from milestone to milestone, the work was pretty evenly distributed between group members over the course of the semester. When possible, we tried to work in the same physical location with one another. This allowed us to bounce ideas off of each other and sort out complicated issues without miscommunication.
 
 \subsubsection{Milestone \#1}
 During milestone 1 Ethan and Leo came up with most of the context-free grammar while Hardik modified it to work with SableCC3 and wrote the semicolon insertion rules, Ethan wrote the report, Leo did the pretty printer, and Hardik did most of the AST. 
 
 \subsubsection{Milestone \#2}
-During milestone 2, Ethan and Leo worked on the typechecker and tests together. Ethan wrote the weeder. Hardik wrote the pretty printer and report. 
+During milestone 2, Ethan and Leo worked on the typechecker and tests together. Ethan wrote the weeder. Hardik wrote the type pretty printer and report. 
 
 \subsubsection{Milestone \#3}
 During milestone 3, Hardik re-did the typechecker (everyone agreed it had to be done), Ethan and Leo started redoing the typechecker but passed the task on to Hardik so as not to duplicate work, and Leo did the first part of the code generator. 
@@ -36,7 +47,7 @@ During milestone 4, everyone worked together to finish up the code generator (es
 
 
 \subsection{Resources}
-Aside from SableCC3 and Java, the only resources used were the reference materials and source code referenced in the README.md of our GitHub repository. Below is another list of hyperlinks to those resources.
+Aside from SableCC3 and Java, the only resources consulted were the reference materials and source code referenced in the README.md of our GitHub repository. Below is another list of hyperlinks to those resources.
 
 \subsubsection{Viewed}
 \begin{itemize}
@@ -54,34 +65,29 @@ Aside from SableCC3 and Java, the only resources used were the reference materia
 \end{itemize}
 \section{Compiler Structure}
 
-\subsection{Phase Diagram}
+In the following sub-sections, we describe each phase of our compiler according to Figure \ref{fig:phase}.
 
-\tikzstyle{RectObject}=[rectangle,draw,inner ysep=.25cm]
-\tikzstyle{line}=[draw]
-\tikzstyle{arrow}=[draw, -latex] 
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=\linewidth]{phase.pdf}
+  \caption{Phase diagram.}
+  \label{fig:phase}
+\end{figure}
 
-\begin{tikzpicture}
-\draw(0,0) node[RectObject] (2,1) (Scanner) {Scanner};
-\draw(2.1,0) node[RectObject] (4.5,1) (Parser) {Parser};
-\draw(4.3,0) node[RectObject] (7,1) (Weeder) {Weeder};
-\draw(7,0) node[RectObject] (9.5,1) (Typecheck) {Typechecker};
-\draw(10,0) node[RectObject] (12,1) (Generator) {Generator};
-\path [arrow]  (Scanner) -- (Parser);
-\path [arrow]  (Parser) -- (Weeder);
-\path [arrow]  (Weeder) -- (Typecheck);
-\path [arrow]  (Typecheck) -- (Generator);
+\subsection{Scan}
 
-\end{tikzpicture}
+Implementation of the scanner was made fairly straightforward using SableCC3, multi-line comments and optional terminating semi-colons for statements presenting the most challenge. Our regular expression pattern for matching multi-line comments manages to capture most cases, with the exception of edge cases such as \texttt{/**/} between tokens on the same line. Handling optional semi-colons for terminating statements required the use of a semi-colon insertion rule which inserts semi-colons after certain scanner tokens (e.g. right parenthesis), taking special care to properly ignore any intermediate whitespace.
 
-\subsection{Scanner \& Parser}
 
-The scanner was a pretty straightforward implementation using SableCC3. We did have a bit of difficulty figuring out the regex for the comments. Our scanner takes in a GoLite program and outputs tokens.
+\subsection{Parse}
 
 The parser and AST were also fairly straightforward, it just took a long time to agree upon the precise structure that we eventually went with. The biggest challenge was trying to predict which structures would cause issues during later milestones. During later milestones we wound up going back and modifying our grammar/AST somewhat. Our parser takes in tokens and outputs an AST.
 
-We included constraints within our grammar to reduce the amount of weeding required (e.g., we limited the set of allowed top-level statements). Some issues that we chose to defer until later stages included the removal of quotes/backticks from strings, checking proper usage of breaks and continues, checking that fields and array accesses happen on the correct elements, checking for string casts, checking that expressions in simple\_stmt are valid (e.g., function calls), mismatching numbers of ids and values in declaration statements, and distinguishing between function calls and custom type casts.
+We included constraints within our grammar to reduce the amount of weeding required (e.g., we limited the set of permissible top-level statements). Some issues that we chose to defer until later stages included the removal of quotes/backticks from strings, checking proper usage of breaks and continues, checking that fields and array accesses happen on the correct elements, checking for string casts, checking that expressions in simple\_stmt are valid (e.g., function calls), mismatching numbers of ids and values in declaration statements, and distinguishing between function calls and custom type casts.
 
-\subsection{Weeder}
+Like Go, our parser treats blank tokens, \texttt{\_}, not as regular identifiers, but as "anonymous" identifiers and "null" expressions.
+
+\subsection{Weed}
 
 After our milestone 1 was complete we brainstormed a big list of cases that we needed to weed. Later, we thought of a few more weeding conditions while we were working on the typechecker, so we added them. Our weeder takes in an AST and outputs an AST.
 
@@ -103,72 +109,95 @@ Our weeder throws an exception if one of the following occurs:
 \item Expression statement does not comprise solely of a function call
 \end{itemize}
 
-\subsection{Typechecker}
+\subsection{Symbol \& Type}
 
-Our first attempt at this section was quite messy. We made some poor design choices early on. We didn't store enough information in the symbol table (e.g., what kind of symbol). The symbol table just returned the original AST node where the symbol was defined. While this worked alright at first, traversing the tree to get the correct information every time we encountered a symbol turned out too complicated to manage effectively. This was especially challenging for dealing with aliases, which we never got to work in our original implementation.
+Our symbol table is implemented according to the standard approach of using a cactus stack of hash tables, where each table corresponds to a scope and scopes are pushed and popped when entering and exiting scopes, respectively. The symbol table tracks three types of symbols, \textit{variable}, \textit{type alias}, and \textit{function}. As an added challenge, our compiler optionally allows top-level declarations to occur in any order (hence allowing mutually recursive definitions), and is accomplished by performing an extra pass of the program to fill in top-level declarations before proceeding to other declarations.
 
-In the second implementation, most of these problems were resolved due to better design. In the second iteration we utilized a better symbol table that kept track of more information, like which kind of symbol. Our typechecker takes in an AST and outputs an AST as well as a type/symbol table.
+Our first attempt at this section was quite messy. We made some poor design choices early on. We didn't store enough information in the symbol table (e.g., what kind of symbol). The symbol table just returned the original AST node where the symbol was defined. While this worked alright at first, traversing the tree to get the correct information every time we encountered a symbol turned out too complicated to manage effectively. This was especially challenging for dealing with aliases, which we never got to work in our original implementation. In the second implementation, most of these problems were resolved due to better design. In the second iteration we utilized a better symbol table that kept track of more information, like which kind of symbol. Our typechecker takes in an AST and outputs an AST as well as a type/symbol table.
 
-\subsection{Generator}
+Our final set of type rules were implemented to conform with Vince's GoLite programs released after Milestone \#2.
 
-Python code generation had a few challenges. For example, dynamic scoping was initially a bit of an issue for us, so we decided to go back and alter the names of all of our variables to indicate which scope they were declared in. We also feel like our code runs significantly slower because we chose to handle proper integer overflows, which means we had to make a lot of function calls to force python to behave properly at runtime. Our generator takes in an AST and type/symbol table and outputs python code.
+\subsection{Code}
 
-\subsection{Code Generation Justification}
-Our compiler writes to python for a few reasons. Python is currently more likely to be on a computer than Go. Additionally, Python is interpreted rather than compiled. We believe this sort of compiler could be useful for languages that have a large compile time but a short run time. Instead of sending the source code to many remote machines, where each of them might need to be compiled individually with a Go compiler, it might be more useful to send code that has been pre-compiled by our compiler so that remote machines can simply run the .py file right away.
+We chose Python (2.7) as the target for our compiler for a number of reasons: Python is interpreted rather than compiled, and hence affords the benefits of an interpreted language, e.g. zero time spent compiling. It's well suited for programs with large compile time but a short run time. Moreover, choosing Python as the target allows transmission of compiled output to many remote machines (the output \texttt{.py} file can be run right away, so long as Python 2.7 is installed, which is usually the case for modern machines). The alternative is to transmit the source and compile individually at each remote, as  for many other languages (e.g. C), which can slow down distributed systems. Moreover, we find there is significant overlap between the types of programmers that are attracted to Python and Go, so having a compiler that allows users to convert from one language to the other could prove quite useful (of course, our compiler would require extension to the full language specification of Go). Choosing Python also gave us an opportunity to gain a deeper understanding of static vs. dynamic typing and differing scoping rules, primarily through finding ways to guarantee congruent run-time behaviour between the languages that differ in both these respects. Lastly, the simplicity of Python's language constructs made many aspects of code generation easier to implement. For instance, Python's list and dictionary support proved to be a natural mapping for slices and \texttt{struct} objects, and Python's built-in functions for strings made the handling of string manipulation much easier.
 
-We also thought there were some interesting connections between Python and Go: there are significant overlaps between the types of programmers that are attracted to these languages, so it might be useful to have a compiler that allows users to convert from one language to the other. 
-
-Lastly, we were interested in developing a deeper understanding of static vs. duck typing, as well as static vs. dynamic scoping, since we knew we would have to find a way to guarantee congruent runtime behaviour between languages that differ in both these respects.
-	
-\subsection{Phase Highlights}
-
-\subsubsection{Scanner}
+Nevertheless, generating correct Python code that preserved the semantics of GoLite presented a few challenges:
 \begin{itemize}
-\item Multiline/nested comments issue
-\item Semicolon insertion rule was a bit tricky
+\item The scoping rules for Python are less stringent than GoLite, with new scopes essentially introduced solely by functions. To enforce proper scoping rules, we implemented an elegant solution that simply renames each symbol according to it's scope depth in GoLite. This required the use of the symbol table in code generation to track variable and function symbols along with their scope depth.
+\item Python permits arbitrarily large integers, where GoLite wraps integers around when they surpass the 32-bit range. To address this, the output of every integer and rune expression is passed to a function that enforces the wrap-around using the following formula,
+\begin{equation}
+(\mbox{expression} - 2^{31}) \mbox{ mod } 2^{32} - 2^{31}
+\end{equation}
+Although this solution properly enforces the correct semantics for integer overflow/underflow, it causes a significant slow down in programs performing numerous arithmetic operations. As a result, applying such normalization is left as a compiler option the programmer must explicitly specify.
 \end{itemize}
-\subsubsection{Parser}
-\begin{itemize}
-\item Figuring out a sensible context-free grammar
-\begin{itemize}
-	\item Hardik started working bottom-up, and Leo \& Ethan worked top-down on this until we had the entire CFG defined
-\end{itemize}
-\item Figuring out a sensible abstract syntax tree
-\begin{itemize}
-	\item In later parts of our compiler we wound up having extraneous function calls because of how our AST was defined (e.g., node.getOptId().getId() when, in hindsight, it could have been just node.getId()).
-	\item Since we're generating Python, it might have been better to have an "elif" statement in our AST, but we didn't realize this until hitting roadblocks during code generation
-\end{itemize}
-\item For the most part this milestone went smoothly (maybe our design choices didn't bother us until later)
-\end{itemize}
-\subsubsection{Weeder}
-\begin{itemize}
-\item Cleaning up cases that we didn't want to handle during parsing (e.g., break/continue statements)
-\item This part was pretty fast to implement/went pretty smoothly
-\end{itemize}
-\subsubsection{Typechecker}
-\begin{itemize}
-\item Made a bad design decision that we paid for dearly later
-	\begin{itemize}
-		\item We should have defined our own types
-		\item We should have defined a symbol class
-		\item We wound up redoing the entire thing with the symbol class and types later
-	\end{itemize}
-\item Wound up redoing our typechecker with a more sensible design
-\item Structs and aliases caused us some grief
-	\begin{itemize}
-		\item We never did get aliases correct until after we re-did the whole thing
-		\item Structs were a bit of a pain because we had chosen an AST representation that was more intuitive for writing the AST than it was for writing the typechecker. However, after wrapping our heads around the problem we were able to work around this inconvenience.
-	\end{itemize}
-\end{itemize}
+
+\textbf{TODO}: Discuss how boolean type casting is handled (differs from Go)
+\textbf{TODO}: Discuss handling of printing of float and boolean literals
+\textbf{TODO}: Show examples of generated code for some interesting cases of GoLite (e.g. loops and how continue is handled)
+\textbf{TODO}: Discuss indentation depth issue
+\textbf{TODO}: Discuss how aliasing is handled in general
+
+% \subsubsection{Parser}
+% \begin{itemize}
+% 	\item Hardik started working bottom-up, and Leo \& Ethan worked top-down on this until we had the entire CFG defined
+% \end{itemize}
+% \item Figuring out a sensible abstract syntax tree
+% \begin{itemize}
+% 	\item In later parts of our compiler we wound up having extraneous function calls because of how our AST was defined (e.g., node.getOptId().getId() when, in hindsight, it could have been just node.getId()).
+% 	\item Since we're generating Python, it might have been better to have an "elif" statement in our AST, but we didn't realize this until hitting roadblocks during code generation
+% \end{itemize}
+% \item For the most part this milestone went smoothly (maybe our design choices didn't bother us until later)
+% \end{itemize}
+% \subsubsection{Weeder}
+% \begin{itemize}
+% \item Cleaning up cases that we didn't want to handle during parsing (e.g., break/continue statements)
+% \item This part was pretty fast to implement/went pretty smoothly
+% \end{itemize}
+% \subsubsection{Typechecker}
+% \begin{itemize}
+% \item Made a bad design decision that we paid for dearly later
+% 	\begin{itemize}
+% 		\item We should have defined our own types
+% 		\item We should have defined a symbol class
+% 		\item We wound up redoing the entire thing with the symbol class and types later
+% 	\end{itemize}
+% \item Wound up redoing our typechecker with a more sensible design
+% \item Structs and aliases caused us some grief
+% 	\begin{itemize}
+% 		\item We never did get aliases correct until after we re-did the whole thing
+% 		\item Structs were a bit of a pain because we had chosen an AST representation that was more intuitive for writing the AST than it was for writing the typechecker. However, after wrapping our heads around the problem we were able to work around this inconvenience.
+% 		\textbf{TODO}: Not true
+% 	\end{itemize}
+
 \subsubsection{Generator}
 \begin{itemize}
 \item Dynamic scoping: had to rename all of our variables with their scopes appended to the end so that we were using the right variables for each operation
-\item Had to define a function (normalization) that would synthetically cause our integers to overflow. This slowed our programs down a lot but caused correct runtime behaviour.
+\item Had to define a function (normalization) that would synthetically cause our integers to overflow or underflow. This slowed our programs down a lot but caused correct runtime behaviour.
 \item Structs were turned into dicts! Instead of outputting type definitions, we constructed dicts that we inserted into our code when variables were declared. This allowed us to ensure proper runtime behaviour in a language that uses duck typing instead of static typing.
-\item Python doesn't have switch statements but we found a way to make them work using if/else statements. TODO: Leo?
+\item Python doesn't have switch statements but we found a way to make them work using if/else statements. There are two different cases that need to be considered. The switch statement without expression acts pretty much like an if-else statement, which is fairly easy to implement. The one with expression, however, requires the generated Python code to explicitly compare the values of expressions in switch statement and either case clause.
 \item We used Python while loops in place of Go for loops, because python loops do not map properly to Go for loops (they work more like an iterator than a for loop)
-\item Aliasing was a bit of a highlight. TODO: Hardik?
+\item Aliasing was a bit of a highlight. TODO: Discuss handling through symbol table injection
+\item Since Python does not allow empty indented block, to handle the
+cases such as empty functions, we add the keyword \textit{pass} to the
+generated code to ensure that a call to an empty function would not
+raise any errors.
 \end{itemize}
+
+\textbf{TODO}: Globals
+
+\section{Optimization}
+
+Although optimization is outside the scope of the project, we attempt to
+make our generated Python code as efficient as possible. \textit{1)} When
+generating code for integer and rune literals in safe mode, we check if
+values of the literals are within the range of int32. The normalization 
+is only applied to literals that are outside of the range. \textit{2)}
+Since appending elements to the same slice is a quite common operation,
+we separate it in two different cases when generating the \textit{append}
+statement. When the returned slice is caught by the same identifier, we
+generate the following code: \textit{list.append(...)} (instead of
+\textit{list = list + [...]}), as the later is a slower operation than 
+the former.
 
 \section{Examples}
 \lstset{frame=tb,
