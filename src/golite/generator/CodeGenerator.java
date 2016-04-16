@@ -21,7 +21,7 @@ public class CodeGenerator extends DepthFirstAdapter {
     /** Keep track of how many tabs need to be added. */
     private int tabDepth;
     /** Keep track of the end statement of for loop. */
-    private PStmt lastForEnd;
+    private Stack<PStmt> forEndStmts = new Stack<PStmt>();
     /** Tracks whether the traversal is inside a type specification. */
     private boolean inTypeSpec;
     /** Tracks whether the traversal is inside a struct type expression. */
@@ -1141,8 +1141,8 @@ public class CodeGenerator extends DepthFirstAdapter {
     public void caseAContinueStmt(AContinueStmt node) {
         this.inAContinueStmt(node);
 
-        if (lastForEnd != null) {
-            lastForEnd.apply(this);
+        if (forEndStmts.peek() != null) {
+            forEndStmts.peek().apply(this);
             addLines(1);
             addTabs();
         }
@@ -1206,11 +1206,7 @@ public class CodeGenerator extends DepthFirstAdapter {
 
             exitCodeBlock(isBlockEmpty(copy));
         }
-        /*
-        if (isBlockEmpty(node.getElseBlock())) {
-            return;
-        }
-        */
+
         addTabs();
         buffer.append("else");
         addColon();
@@ -1429,7 +1425,7 @@ public class CodeGenerator extends DepthFirstAdapter {
         /**
          * Only used when generating for Loops
          */
-        lastForEnd = node.getEnd();
+        forEndStmts.push(node.getEnd());
         if (node.getEnd() != null) {
             copy.add(node.getEnd());
         }
@@ -1442,6 +1438,8 @@ public class CodeGenerator extends DepthFirstAdapter {
         }
 
         exitCodeBlock(isBlockEmpty(copy));
+
+        forEndStmts.pop();
 
         // Exit the scope for the loop body.
         this.symbolTable.unscope();
