@@ -1183,7 +1183,7 @@ public class TypeChecker extends DepthFirstAdapter {
     	if (pExpr != null) {
             pExpr.apply(this);
             GoLiteType condType = this.typeTable.get(pExpr);
-            if (!(condType.getUnderlyingType() instanceof BoolType))
+            if (condType != null && !(condType.getUnderlyingType() instanceof BoolType))
                 this.throwTypeCheckException(pExpr,
                 	"Non-bool (type " + condType + ") used as for condition");
         }
