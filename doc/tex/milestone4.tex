@@ -1,5 +1,6 @@
 \documentclass{article}
 \usepackage[utf8]{inputenc}
+\usepackage{courier}
 \usepackage[margin=1.0in]{geometry}
 \usepackage{hyperref}
 \usepackage{listings}
@@ -65,7 +66,7 @@ Aside from SableCC3 and Java, the only resources consulted were the reference ma
 \end{itemize}
 \section{Compiler Structure}
 
-In the following sub-sections, we describe each phase of our compiler according to Figure \ref{fig:phase}.
+In the following sub-sections, we describe each phase of our compiler according to Figure \ref{fig:phase}. (Our compiler doesn't support explicit Resource and Emit phases.)
 
 \begin{figure}[h]
   \centering
@@ -122,19 +123,16 @@ We chose Python (2.7) as the target for our compiler for a number of reasons: Py
 
 Nevertheless, generating correct Python code that preserved the semantics of GoLite presented a few challenges:
 \begin{itemize}
-\item The scoping rules for Python are less stringent than GoLite, with functions being essentially the only program element that introduces new scopes. To enforce the scoping rules of GoLite, we implemented an elegant solution that simply renames each symbol according to it's scope depth in GoLite (See example \textbf{TODO}). This required the use of the symbol table in code generation to track variable and function symbols along with their scope depth.
+\item The scoping rules for Python are less stringent than GoLite, with functions being essentially the only program element that introduces new scopes. To enforce the scoping rules of GoLite, we implemented an elegant solution that simply renames each symbol according to it's scope depth in GoLite (See the Examples section). This required the use of the symbol table in code generation to track variable and function symbols along with their scope depth.
 \item Python permits arbitrarily large integers, where GoLite wraps integers around when they surpass the 32-bit range. To address this, the output of every integer and rune expression is passed to a function that enforces the wrap-around using the following formula,
 \begin{equation}
 (\mbox{expression} - 2^{31}) \mbox{ mod } 2^{32} - 2^{31}
 \end{equation}
-Although this solution properly enforces the correct semantics for integer overflow/underflow, it causes a significant slow down in programs performing numerous arithmetic operations. As a result, applying such normalization is left as a compiler option the programmer must explicitly specify.
-\item We used Python while loops in place of Go for loops, because python loops do not map properly to Go for loops (they work more like an iterator than a for loop) \textbf{TODO}: Refer to example
-\item Python doesn't have switch statements but we found a way to make them work using if/else statements. There are two different cases that need to be considered. The switch statement without expression acts pretty much like an if-else statement, which is fairly easy to implement. The one with expression, however, requires the generated Python code to explicitly compare the values of expressions in switch statement and either case clause.
-\item Since Python does not allow empty indented block, to handle the
-cases such as empty functions, we add the keyword \texttt{pass} to the
-generated code to ensure that a call to an empty function would not
-raise any errors.
-\item An oddity of Python is that functions that reference globally defined variables must be explicitly marked before use in the function (see \textbf{TODO}). Our solution involved marking each global variable, obtained from the global scope of the symbol table, inside every function declaration.
+(See example 4.2.4 in Examples.) Although this solution properly enforces the correct semantics for integer overflow/underflow, it causes a significant slow down in programs performing numerous arithmetic operations. As a result, applying such normalization is left as a compiler option the programmer must explicitly specify.
+\item We used Python while loops in place of Go for loops, because python loops do not map properly to Go for loops (they work more like an iterator than a for loop). (See example 4.2 in Examples.)
+\item Python doesn't have switch statements but we found a way to make them work using if/else statements. There are two different cases that need to be considered. The switch statement without expression acts pretty much like an if-else statement, which is fairly easy to implement. The one with expression, however, requires the generated Python code to explicitly compare the values of expressions in switch statement and either case clause. (See example 4.4 in Examples.)
+\item Since Python does not allow empty indented block, to handle the cases such as empty functions, we add the keyword \texttt{pass} to the generated code to ensure that a call to an empty function would not raise any errors.
+\item An oddity of Python is that functions that reference globally defined variables must be explicitly marked before use in the function (see the Examples section). Our solution involved marking each global variable, obtained from the global scope of the symbol table, inside every function declaration.
 \item Because Python abides by the offset rule to indicate blocks and imposes a limit on indentation depth, severely nested structures in GoLite programs, such as chained if-else statements, may produce target programs that crash. Our current implementation of the compiler does not address this and we leave it as a topic for future work.
 \end{itemize}
 
@@ -177,7 +175,7 @@ In the design of the code generator, the semantics for certain GoLite elements w
 % 		\textbf{TODO}: Not true
 % 	\end{itemize}
 
-\section{Optimization}
+\section{Optimize}
 
 Although optimization is outside the scope of the project, we attempt to
 make our generated Python code as efficient as possible. \textit{1)} When
@@ -192,6 +190,7 @@ generate the following code: \textit{list.append(...)} (instead of
 the former.
 
 \section{Examples}
+
 \lstset{frame=tb,
   showstringspaces=false,
   columns=flexible,
@@ -208,7 +207,9 @@ Basic ``Hello world!" program. Notice that to mimic the behavior of
 \textit{print} statement in GoLite, we use the print function imported
 from Python3. Each expression is first casted to string and then
 concatenated today. To prevent it outputting extra space or new lines,
-we set the end to be empty string (default setting being new line).
+we set the end to be empty string (default setting being new line). Also
+notice that we explicitly introduce global variables true\_0 and false\_0
+to hold the values of True and False.
 
 \subsubsection{GoLite}
 \begin{lstlisting}
@@ -223,16 +224,6 @@ func main() {
 \end{lstlisting}
 \subsubsection{Python (without normalization)}
 \begin{lstlisting}
-'''
-
-Presented by [The Heapsters]:
-
-	@the Generator: Long, Teng
-	@the PrettyPrinter: Macdonald, Ethan
-	@the Stoner: Vala, Hardik
-
-'''
-
 from __future__ import print_function
 
 twoExp31, twoExp32 = 2 ** 31, 2 ** 32
@@ -305,13 +296,7 @@ func main() {
 \subsubsection{Python (without normalization)}
 
 \begin{lstlisting}
-
-from __future__ import print_function
-
-twoExp31, twoExp32 = 2 ** 31, 2 ** 32
-normalize = lambda x : (x + twoExp31) % twoExp32 - twoExp31
-
-true_0, false_0 = True, False
+(overhead: 1st-part, same as above)
 
 #########################################################
 ###### The miracle from GoLite to Python2.7 begins ######
@@ -346,19 +331,12 @@ def main_1():
 ###### The miracle from GoLite to Python2.7 ends ######
 #######################################################
 
-if __name__ == '__main__':
-	main_1()
+(overhead: 2nd-part, same as above)
 \end{lstlisting}
 
 \subsubsection{Python (with normalization)}
 \begin{lstlisting}
-
-from __future__ import print_function
-
-twoExp31, twoExp32 = 2 ** 31, 2 ** 32
-normalize = lambda x : (x + twoExp31) % twoExp32 - twoExp31
-
-true_0, false_0 = True, False
+(overhead: 1st-part, same as above)
 
 #########################################################
 ###### The miracle from GoLite to Python2.7 begins ######
@@ -393,8 +371,7 @@ def main_1():
 ###### The miracle from GoLite to Python2.7 ends ######
 #######################################################
 
-if __name__ == '__main__':
-	main_1()
+(overhead: 2nd-part, same as above)
 \end{lstlisting}
 
 \subsection{Bubble Sort}
@@ -452,13 +429,7 @@ func main() {
 \end{lstlisting}
 \subsubsection{Python (without normalization)}
 \begin{lstlisting}
-
-from __future__ import print_function
-
-twoExp31, twoExp32 = 2 ** 31, 2 ** 32
-normalize = lambda x : (x + twoExp31) % twoExp32 - twoExp31
-
-true_0, false_0 = True, False
+(overhead: 1st-part, same as above)
 
 #########################################################
 ###### The miracle from GoLite to Python2.7 begins ######
@@ -507,9 +478,7 @@ def main_1():
 ###### The miracle from GoLite to Python2.7 ends ######
 #######################################################
 
-if __name__ == '__main__':
-	main_1()
-
+(overhead: 2nd-part, same as above)
 \end{lstlisting}
 
 
@@ -542,13 +511,7 @@ func main() {
 \end{lstlisting}
 \subsubsection{Python (without normalization)}
 \begin{lstlisting}
-
-from __future__ import print_function
-
-twoExp31, twoExp32 = 2 ** 31, 2 ** 32
-normalize = lambda x : (x + twoExp31) % twoExp32 - twoExp31
-
-true_0, false_0 = True, False
+(overhead: 1st-part, same as above)
 
 #########################################################
 ###### The miracle from GoLite to Python2.7 begins ######
@@ -571,9 +534,7 @@ def main_1():
 ###### The miracle from GoLite to Python2.7 ends ######
 #######################################################
 
-if __name__ == '__main__':
-	main_1()
-
+(overhead: 2nd-part, same as above)
 \end{lstlisting}
 
 \section{Conclusion and Future work}
