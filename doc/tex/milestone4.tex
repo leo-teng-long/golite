@@ -106,7 +106,9 @@ Our weeder throws an exception if one of the following occurs:
 
 \subsection{Typechecker}
 
-Our first attempt at this section was quite messy. We made some poor design choices early on (e.g., we didn't define our own types, we used a hashmap that pointed to the AST for our symbol table) that we wound up scrapping after the milestone, in favour of re-writing the entire typechecker. This was especially challenging for dealing with aliases, which we never got to work in our original implementation. However, in the second implementation, most of these problems were resolved. Our typechecker takes in an AST and outputs an AST as well as a type/symbol table.
+Our first attempt at this section was quite messy. We made some poor design choices early on. We didn't store enough information in the symbol table (e.g., what kind of symbol). The symbol table just returned the original AST node where the symbol was defined. While this worked alright at first, traversing the tree to get the correct information every time we encountered a symbol turned out too complicated to manage effectively. This was especially challenging for dealing with aliases, which we never got to work in our original implementation.
+
+In the second implementation, most of these problems were resolved due to better design. In the second iteration we utilized a better symbol table that kept track of more information, like which kind of symbol. Our typechecker takes in an AST and outputs an AST as well as a type/symbol table.
 
 \subsection{Generator}
 
