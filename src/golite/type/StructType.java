@@ -190,6 +190,14 @@ public class StructType extends GoLiteType {
         return true;
     }
 
+    @Override
+    public int hashCode() {
+    	int code = 1;
+		for (Field f : this.fields)
+			code = 31 * code + (f == null ? 0 : f.hashCode());
+		return code;
+    }
+
 	@Override
 	public String toString() {
 		StringBuilder s = new StringBuilder();
