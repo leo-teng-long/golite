@@ -82,7 +82,7 @@ public class SymbolTable {
 			i--;
 		}
 
-		throw new SymbolTableException("ERROR: " + name + " not in Symbol table");
+		throw new SymbolTableException(name + " not in Symbol table");
 	}
 
 	/**
@@ -149,7 +149,7 @@ public class SymbolTable {
 			i--;
 		}
 
-		throw new SymbolTableException("ERROR: Invalid scope depth " + scopeDepth);
+		throw new SymbolTableException("Invalid scope depth " + scopeDepth);
 	}
 
 	/**
