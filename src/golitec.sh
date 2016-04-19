@@ -6,7 +6,7 @@
 
 
 usage() {
-	echo -e "Usage: $0 <scan | tokens | parse | pretty | type | dumpsymtab | pptype | gen | help> [-safe] filepath"
+	echo -e "Usage: $0 <scan | tokens | parse | pretty | ast | type | dumpsymtab | pptype | gen | help> [-safe] filepath"
 }
 
 # Compiler option.
@@ -23,7 +23,7 @@ else
 	PROG_PATH=$3
 fi
 
-if [[ $OPT != "scan" && $OPT != "tokens" && $OPT != "parse" && $OPT != "pretty" && $OPT != "type" && $OPT != "dumpsymtab" && $OPT != "pptype" && $OPT != "gen" && $OPT != "help" ]]
+if [[ $OPT != "scan" && $OPT != "tokens" && $OPT != "parse" && $OPT != "pretty" && $OPT != "ast" && $OPT != "type" && $OPT != "dumpsymtab" && $OPT != "pptype" && $OPT != "gen" && $OPT != "help" ]]
 then
 	usage
 	exit -1

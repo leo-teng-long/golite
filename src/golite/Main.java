@@ -47,6 +47,7 @@ class Main {
         options.addOption("tokens", false, "display the tokens in the program");
         options.addOption("parse", false, "check the program passes parsing");
         options.addOption("pretty", false, "pretty print the program to file");
+        options.addOption("ast", false, "print the AST encoded in treebank format");
         options.addOption("type", false, "check the program passes type checking");
         options.addOption("dumpsymtab", false, "dump the program symbol table to file");
         options.addOption("pptype", false, "typed pretty print the program to file");
@@ -106,6 +107,8 @@ class Main {
                     System.out.println(INVALID_MESSAGE);
             } else if (parsed.hasOption("pretty"))
                 prettyPrint(programPath);
+            else if (parsed.hasOption("ast"))
+                printAST(programPath);
             else if (parsed.hasOption("type")) {
                 if (typeCheck(programPath, ut))
                     System.out.println(VALID_MESSAGE);
@@ -133,8 +136,8 @@ class Main {
      * Prints the command-line usage to stderr.
      */
     private static void printUsage() {
-        System.err.println("Usage: java golite.Main <scan | tokens | parse | pretty | type | "
-            + "dumpsymtab | pptype | gen | help> filepath");
+        System.err.println("Usage: java golite.Main -<scan | tokens | parse | pretty | ast | " +
+            "type | dumpsymtab | pptype | gen | help> filepath");
     }
 
     /**
@@ -234,6 +237,28 @@ class Main {
             tree.apply(pp);
 
             dump(pp.getPrettyPrint(), inPath, ".pretty.go");
+        } catch (Exception e) {
+            System.err.println("ERROR: " + e);
+        }
+    }
+
+    /**
+     * Print the AST a GoLite program in standard treebank format.
+     *
+     * @param inPath - Filepath to GoLite program
+     * @throws IOException
+     */
+    private static void printAST(String inPath) throws IOException {
+        try {
+            Lexer lexer = new GoLiteLexer(new PushbackReader(new FileReader(inPath), 1024));
+            Parser parser = new Parser(lexer);
+
+            Start tree = parser.parse();
+
+            ASTEncoder encoder = new ASTEncoder();
+            tree.apply(encoder);
+
+            System.out.println(encoder.getEncoding());
         } catch (Exception e) {
             System.err.println("ERROR: " + e);
         }
