@@ -51,4 +51,12 @@ public class ASTEncoder extends DepthFirstAdapter {
 		this.sb.append(")");
 	}
 
+	@Override
+	public void inAIdOptId(AIdOptId node) {
+		this.defaultIn(node);
+
+		// Encode the specific Id.
+		this.sb.append(node.getId().getText());
+	}
+
 }
